@@ -67,7 +67,7 @@ export function Modal({ open, onClose, title, description, width = 480, children
               type="button"
               onClick={onClose}
               aria-label="닫기"
-              className="inline-flex size-7 items-center justify-center rounded-md text-sub hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+              className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-sub hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" />

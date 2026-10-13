@@ -1,7 +1,7 @@
 export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 
 const BASE =
-  "inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
+  "inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary: "bg-accent text-white hover:bg-accent-strong",
