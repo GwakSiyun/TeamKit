@@ -20,15 +20,15 @@ flowchart LR
     B -->|실시간 읽기/쓰기<br/>보안 규칙 적용| FS[(Firestore)]
     B -->|녹음 업로드| ST[(Storage)]
     ST -->|업로드 완료 트리거| FN[Cloud Functions]
-    FN -->|음성 인식| CLOVA[CLOVA Speech]
+    FN -->|음성 인식| STT[Whisper large-v3-turbo<br/>Groq API]
     FN -->|결과 저장| FS
     GH[GitHub] -->|웹훅 push / PR| FN
     FN -->|카드 상태 갱신| FS
 ```
 
 - ✅ Auth, Firestore
-- 🔜 Storage · Functions(CLOVA) 8~9주차, Functions(GitHub 웹훅) 12주차
-- Cloud Functions가 외부 API(CLOVA, GitHub)를 호출하려면 **Blaze(종량제) 요금제**가 필요하다.
+- 🔜 Storage · Functions(Whisper 음성 인식) 8~9주차, Functions(GitHub 웹훅) 12주차
+- Cloud Functions가 외부 API(Groq Whisper, GitHub)를 호출하려면 **Blaze(종량제) 요금제**가 필요하다.
 
 ---
 
@@ -113,7 +113,7 @@ erDiagram
 
 | 함수 | 트리거 | 하는 일 | 주차 |
 |---|---|---|---|
-| `transcribeMeeting` | Storage 업로드 완료 | CLOVA Speech 호출 → 문장·타임스탬프 저장 → 규칙 기반 결정사항·할 일 후보 추출 | 9 |
+| `transcribeMeeting` | Storage 업로드 완료 | Groq Whisper API 호출 → 문장·타임스탬프 저장 → 규칙 기반 결정사항·할 일 후보 추출 | 9 |
 | `githubWebhook` | HTTPS (GitHub 웹훅) | 서명 검증 → 카드 번호 추출 → 카드 상태·PR 정보 갱신 | 12 |
 
 리전은 Firestore와 같은 `asia-northeast3`.

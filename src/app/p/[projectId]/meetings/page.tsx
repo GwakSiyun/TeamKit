@@ -12,7 +12,7 @@ export default function MeetingsPage() {
         icon="mic"
         week="8~9주차"
         title="회의 녹음 · 음성 인식"
-        description="녹음 → CLOVA Speech 텍스트 변환 → 결정사항 · 할 일 후보 검토 → 보드에 추가."
+        description="녹음 → Whisper 음성 인식으로 텍스트 변환 → 결정사항 · 할 일 후보 검토 → 보드에 추가."
       />
     </>
   );

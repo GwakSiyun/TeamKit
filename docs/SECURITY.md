@@ -12,7 +12,7 @@ TeamKit은 GitHub 토큰, 회의 녹음, 팀원 정보를 다룬다. 별도 백�
 |---|---|---|
 | 1 | **기본은 전부 거부** | 규칙에 적힌 경로·조건만 허용, 나머지는 모두 차단 (Firestore 프로덕션 모드로 생성) |
 | 2 | **본인 데이터는 본인만** | `users/{uid}` 쓰기와 `private` 하위 경로는 `request.auth.uid == uid` 일 때만 |
-| 3 | **시크릿은 브라우저에 두지 않음** | GitHub Client Secret · CLOVA 키 · 웹훅 Secret은 코드/저장소에 없음 |
+| 3 | **시크릿은 브라우저에 두지 않음** | GitHub Client Secret · Groq API 키 · 웹훅 Secret은 코드/저장소에 없음 |
 | 4 | **최소 정보 노출** | 비밀번호 재설정은 가입 여부를 알려주지 않음 |
 | 5 | **프로젝트 데이터는 멤버만** | 프로젝트는 멤버만 읽기 ✅, 할 일·회의록·투표도 같은 방식 🔜 |
 
@@ -141,7 +141,7 @@ sequenceDiagram
 | Firebase 웹 설정 (`apiKey` 등) | `.env.local` (`NEXT_PUBLIC_*`) | 노출됨 — **공개용 값**. 보안은 규칙이 담당 |
 | GitHub OAuth Client Secret | Firebase 콘솔에만 입력 | ❌ 코드·저장소 어디에도 없음 |
 | 사용자 GitHub 토큰 | Firestore `private` 경로 (본인만) | 본인 브라우저에서만 |
-| CLOVA Speech API 키 🔜 9주차 | Cloud Functions 환경 변수 | ❌ |
+| Groq API 키 (Whisper 음성 인식) 🔜 9주차 | Cloud Functions 시크릿 (`GROQ_API_KEY`) | ❌ |
 | GitHub 웹훅 Secret 🔜 12주차 | `githubRepos` 컬렉션 (클라이언트 접근 금지) | ❌ |
 
 - `.env.local` 은 `.gitignore` 로 제외, 예시 파일 `.env.local.example` 만 커밋
@@ -155,7 +155,7 @@ sequenceDiagram
 |---|---|
 | 6주차 ✅ | 프로젝트 멤버 규칙, 초대 코드 검증, 멤버가 아닌 사람 접근 차단 화면, 규칙 자동 테스트 |
 | 8~9주차 | Storage 규칙: 회의 녹음 파일은 해당 프로젝트 멤버만 업로드·재생 |
-| 9주차 | CLOVA API 호출은 Cloud Functions에서만 (키를 브라우저에 두지 않음) |
+| 9주차 | 음성 인식(Groq Whisper) 호출은 Cloud Functions에서만 (키를 브라우저에 두지 않음) |
 | 11주차 | GitHub API 호출을 Cloud Functions로 옮기고, `private/github` 의 **클라이언트 읽기 차단** (쓰기만 허용, 서버가 Admin SDK로 읽음) |
 | 12주차 | GitHub 웹훅 **서명 검증**(`X-Hub-Signature-256`, HMAC-SHA256) + `X-GitHub-Delivery` 로 중복 처리 방지 |
 
