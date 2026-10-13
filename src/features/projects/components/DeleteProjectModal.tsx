@@ -6,6 +6,7 @@ import { buttonClass } from "@/components/ui/button";
 import { Field } from "@/components/ui/Field";
 import { Modal, ModalBody, ModalFooter } from "@/components/ui/Modal";
 import { Notice } from "@/components/ui/Notice";
+import { eulReul } from "@/lib/josa";
 import { deleteProject } from "../services";
 import type { Project } from "../types";
 
@@ -48,7 +49,7 @@ export function DeleteProjectModal({ project, open, onClose }: { project: Projec
           </Notice>
           <Field
             id="delete-project-confirm"
-            label={`확인을 위해 프로젝트 이름 "${project.name}"을(를) 입력하세요`}
+            label={`확인을 위해 프로젝트 이름 "${project.name}"${eulReul(project.name)} 입력하세요`}
             autoComplete="off"
             autoFocus
             value={typed}

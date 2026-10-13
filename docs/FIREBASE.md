@@ -82,8 +82,8 @@ erDiagram
 | `projects/{projectId}` | `name`, `inviteCode`, `ownerId`, `memberIds[]`, `taskCounter`, `createdAt` (+ `github{owner, repo}` 11주차) | ✅ | `memberIds` 배열 → `array-contains` 로 "내 프로젝트" 조회 |
 | `inviteCodes/{code}` | `projectId`, `createdAt` | ✅ | 코드 → 프로젝트 찾기. 단건 조회만 허용 |
 | `…/joins/{uid}` | `code`, `at` | ✅ | 참여 증명. 규칙이 현재 초대 코드와 비교 ([보안](SECURITY.md#초대-코드-참여-설계-)) |
-| `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `branch`, `github{prNumber, prState, prUrl}`, `sourceMeetingId`, `updatedAt` | 🔜 7주차 | `status`: `todo` · `doing` · `done`. `startDate`~`dueDate` 로 간트 막대 |
-| `…/tasks/{taskId}/history/{id}` | `from`, `to`, `source`(사람/GitHub), `actor`, `at` | 🔜 7주차 | 상태 변경 기록 |
+| `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}`, `sourceMeetingId` 11~12주차) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
+| `…/tasks/{taskId}/history/{id}` | `from`, `to`, `source`(`manual`/`github`), `actor`, `at` | ✅ | 상태 변경 기록. 생성 · 상태 버튼마다 추가 |
 | `…/meetings/{meetingId}` | `title`, `recordedAt`, `durationSec`, `audioPath`, `sttStatus`, `segments[]`, `decisions[]`, `actionItems[]` | 🔜 8~9주차 | `sttStatus`: `uploading` · `processing` · `done` · `failed` |
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`, `durationHours`, `status`, `confirmedSlot` | 🔜 10주차 | |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"`), `updatedAt` | 🔜 10주차 | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
