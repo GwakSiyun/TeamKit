@@ -6,7 +6,9 @@ Next.js App Router 기반. **화면(라우트)은 `app/`, 기능 코드는 `feat
 TeamKit/
 ├─ .github/PULL_REQUEST_TEMPLATE.md   PR 본문 양식
 ├─ docs/                              설계 문서 (이 폴더)
-├─ firestore.rules                    Firestore 보안 규칙 (콘솔에 게시)
+├─ firestore.rules                    Firestore 보안 규칙
+├─ firebase.json · .firebaserc        Firebase CLI 설정 (규칙 배포 · 에뮬레이터)
+├─ tests/firestore.rules.test.mjs     보안 규칙 자동 테스트 (에뮬레이터)
 ├─ .env.local.example                 Firebase 웹 설정 예시 (실제 값은 .env.local, 커밋 안 함)
 └─ src/
    ├─ app/                            라우트 (폴더 = URL)
@@ -18,7 +20,8 @@ TeamKit/
    │  │  ├─ login/page.tsx            /login
    │  │  ├─ signup/page.tsx           /signup
    │  │  └─ reset-password/page.tsx   /reset-password
-   │  └─ projects/page.tsx            /projects (지금은 로그인 확인용 임시 화면)
+   │  ├─ projects/page.tsx            /projects 내 프로젝트 목록
+   │  └─ p/[projectId]/page.tsx       /p/{id} 프로젝트 (멤버가 아니면 접근 불가 화면)
    │
    ├─ features/                       기능별 코드
    │  └─ auth/
@@ -30,11 +33,20 @@ TeamKit/
    │     └─ components/               이 기능에서만 쓰는 화면 조각
    │        ├─ LoginForm · SignupForm · ResetPasswordForm
    │        ├─ GithubButton · GithubLinkRow
-   │        └─ AuthGate                로그인 여부로 화면 접근 제어
+   │        ├─ AuthGate                로그인 여부로 화면 접근 제어
+   │        └─ UserMenu                헤더의 이름 · 로그아웃
+   │  └─ projects/
+   │     ├─ services.ts               프로젝트 만들기 · 초대 코드로 참여 (배치 쓰기)
+   │     ├─ hooks.ts                  내 프로젝트 목록 · 프로젝트 한 개 실시간 구독
+   │     ├─ inviteCode.ts             초대 코드 생성 · 형식 검사 (규칙과 같은 패턴)
+   │     ├─ types.ts
+   │     └─ components/               ProjectsView · ProjectCard · NewProjectModal ·
+   │                                  JoinProjectModal · ProjectHome · NoAccess
    │
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
-   │  ├─ ui/                          Field(입력) · Notice(안내) · button(버튼 스타일)
-   │  │                               추가 예정: Modal · Tag · Avatar · EmptyState
+   │  ├─ ui/                          Modal · EmptyState · Field · Notice · Icon · button
+   │  │                               추가 예정: Tag · Avatar
+   │  ├─ layout/                      PlainLayout (사이드바 없는 화면의 헤더 + 본문)
    │  └─ common/                      BrandMark(로고)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
    └─ constants/app.ts                앱 이름
@@ -44,7 +56,6 @@ TeamKit/
 
 | 기능 | 라우트 | 기능 코드 |
 |---|---|---|
-| 프로젝트 · 초대 코드 (6주차) | `app/projects/` | `features/projects/` |
 | 프로젝트 내부 틀 (사이드바) | `app/p/[projectId]/layout.tsx` | `components/layout/` |
 | 할 일 보드 (7주차) | `app/p/[projectId]/board/` | `features/tasks/` |
 | 대시보드 · 간트 | `app/p/[projectId]/` | `features/dashboard/` |
