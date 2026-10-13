@@ -41,7 +41,7 @@ export function ConfirmModal({ open, onClose, title, children, confirmLabel, onC
   return (
     <Modal open={open} onClose={close} title={title} width={400}>
       <ModalBody>
-        {children && <div className="leading-relaxed text-sub">{children}</div>}
+        {children && <div className="text-center leading-relaxed break-keep text-balance text-sub">{children}</div>}
         {error && <Notice tone="error">{error}</Notice>}
       </ModalBody>
       <ModalFooter>

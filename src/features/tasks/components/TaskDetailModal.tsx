@@ -11,6 +11,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { useTransientState } from "@/hooks/useTransientState";
 import { formatDateTime, formatShort } from "@/lib/dates";
+import { eulReul } from "@/lib/josa";
 import { STATUS_META, taskKey } from "../constants";
 import { lateDays } from "../deadline";
 import { useTaskHistory } from "../hooks";
@@ -129,11 +130,13 @@ export function TaskDetailModal({ task, today, onClose, onEdit }: TaskDetailModa
       <ConfirmModal
         open={confirmDelete}
         onClose={() => setConfirmDelete(false)}
-        title={`${taskKey(task.number)}을(를) 삭제할까요?`}
+        title={`${taskKey(task.number)}${eulReul(taskKey(task.number))} 삭제할까요?`}
         confirmLabel="삭제"
         onConfirm={handleDelete}
       >
-        <b className="text-ink">{task.title}</b>와(과) 변경 기록이 지워져요. 되돌릴 수 없어요.
+        <b className="text-ink">{task.title}</b>
+          <br />
+          변경 기록까지 함께 지워지고, 되돌릴 수 없어요.
       </ConfirmModal>
     </>
   );
