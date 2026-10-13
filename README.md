@@ -5,12 +5,12 @@
 | 문제 | 해결 기능 |
 |---|---|
 | 진행상황 공유 부재 — 마감 직전에야 문제를 앎 | **할 일 보드 + 간트 대시보드**, GitHub 커밋·PR로 카드 상태 **자동 반영** |
-| 회의 내용 휘발 — 같은 논의 반복 | **회의록**: 녹음 → CLOVA Speech 텍스트 변환 → 결정사항·할 일 후보 추출 |
+| 회의 내용 휘발 — 같은 논의 반복 | **회의록**: 녹음 → Whisper(음성 인식) 텍스트 변환 → 결정사항·할 일 후보 추출 |
 | 일정 조율 어려움 — 메신저로 시간 소모 | **일정 맞추기**: 가능 시간 입력 → 공통 시간 추천 |
 
 ## 기술 스택
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Firebase (Authentication, Firestore, Cloud Functions, Storage) · GitHub OAuth · CLOVA Speech
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Firebase (Authentication, Firestore, Cloud Functions, Storage) · GitHub OAuth · Whisper large-v3-turbo (Groq API)
 
 ## 진행 상황
 
@@ -33,6 +33,7 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Firebase 
 | [Firebase 구조](docs/FIREBASE.md) | 서비스 구성도, 컬렉션 · 필드, 설계 이유 |
 | [파일 구조](docs/ARCHITECTURE.md) | 폴더 구성, 기능별 위치, 코드 흐름 |
 | [개발 규칙](docs/DEVELOPMENT.md) | 브랜치 · 커밋 · PR 규칙, 코드 규칙 |
+| [음성 인식(STT) 선택](docs/STT.md) | CLOVA → Whisper 변경 이유, 후보 비교, 처리 구조 |
 
 ## 시작하기
 
