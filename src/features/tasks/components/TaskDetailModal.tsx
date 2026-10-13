@@ -1,0 +1,129 @@
+"use client";
+
+import { useState, type ReactNode } from "react";
+import { Avatar } from "@/components/ui/Avatar";
+import { buttonClass } from "@/components/ui/button";
+import { Icon, type IconName } from "@/components/ui/Icon";
+import { Modal } from "@/components/ui/Modal";
+import { Notice } from "@/components/ui/Notice";
+import { Tag } from "@/components/ui/Tag";
+import { useCurrentProject } from "@/features/projects/ProjectContext";
+import { formatDateTime, formatShort } from "@/lib/dates";
+import { STATUS_META, taskKey } from "../constants";
+import { lateDays } from "../deadline";
+import { useTaskHistory } from "../hooks";
+import { deleteTask } from "../services";
+import type { Task } from "../types";
+import { StatusButtons } from "./StatusButtons";
+
+function Prop({ icon, label, children }: { icon: IconName; label: string; children: ReactNode }) {
+  return (
+    <div className="grid min-h-[34px] grid-cols-[130px_minmax(0,1fr)] items-center gap-2">
+      <span className="flex items-center gap-2 text-sm text-muted">
+        <Icon name={icon} size={15} />
+        {label}
+      </span>
+      <div className="flex flex-wrap items-center gap-2 text-sm">{children}</div>
+    </div>
+  );
+}
+
+interface TaskDetailModalProps {
+  task: Task;
+  today: string;
+  onClose: () => void;
+  onEdit: () => void;
+}
+
+/** 노션 페이지처럼 보는 할 일 상세. 상태 변경 · 수정 · 삭제 · 변경 기록 */
+export function TaskDetailModal({ task, today, onClose, onEdit }: TaskDetailModalProps) {
+  const { project, members } = useCurrentProject();
+  const history = useTaskHistory(project.id, task.id);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const nameOf = (uid: string | null): string => members.find((m) => m.id === uid)?.name ?? "알 수 없음";
+  const late = lateDays(task, today);
+
+  async function handleDelete(): Promise<void> {
+    const result = await deleteTask(project.id, task.id);
+    if (result.ok) onClose();
+    else setError(result.message);
+  }
+
+  return (
+    <Modal open onClose={onClose} title={`${taskKey(task.number)} ${task.title}`} width={720}>
+      <div className="flex flex-col gap-5 px-6 pt-4 pb-6">
+        {error && <Notice tone="error">{error}</Notice>}
+        <div className="flex flex-col">
+          <Prop icon="board" label="상태">
+            <Tag tone={STATUS_META[task.status].tone}>{STATUS_META[task.status].label}</Tag>
+            <StatusButtons projectId={project.id} task={task} size="normal" />
+            {task.statusSource === "github" && <Tag tone="purple">GitHub로 변경됨</Tag>}
+          </Prop>
+          <Prop icon="user" label="담당자">
+            {task.assigneeId ? (
+              <span className="flex items-center gap-1.5">
+                <Avatar seed={task.assigneeId} name={nameOf(task.assigneeId)} size={20} />
+                {nameOf(task.assigneeId)}
+              </span>
+            ) : (
+              <span className="text-muted">없음</span>
+            )}
+          </Prop>
+          <Prop icon="calendar" label="기간">
+            {task.startDate || task.dueDate ? (
+              <span className="tabular-nums">
+                {task.startDate ? formatShort(task.startDate) : "?"} → {task.dueDate ? formatShort(task.dueDate) : "?"}
+              </span>
+            ) : (
+              <span className="text-muted">정하지 않음</span>
+            )}
+            {late > 0 && <Tag tone="red">{late}일 지연</Tag>}
+          </Prop>
+          <Prop icon="github" label="GitHub">
+            <span className="text-muted">
+              브랜치 · 커밋 · PR에 <span className="font-mono text-ink">{taskKey(task.number)}</span>를 넣으면 여기에 연결돼요 (11~12주차)
+            </span>
+          </Prop>
+        </div>
+
+        <section className="flex flex-col gap-2 border-t border-line pt-4">
+          <h3 className="text-[13px] font-semibold text-sub">설명</h3>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{task.description || <span className="text-muted">설명 없음</span>}</p>
+        </section>
+
+        <section className="flex flex-col gap-1 border-t border-line pt-4">
+          <h3 className="mb-1 text-[13px] font-semibold text-sub">변경 기록</h3>
+          {history.map((h) => (
+            <div key={h.id} className="grid grid-cols-[90px_auto_minmax(0,1fr)] items-center gap-2 py-1 text-[13px]">
+              <span className="text-faint tabular-nums">{h.at ? formatDateTime(h.at.toDate()) : ""}</span>
+              <Tag tone={h.source === "github" ? "purple" : "gray"}>{h.source === "github" ? "GitHub" : nameOf(h.actor)}</Tag>
+              <span className="text-sub">{h.from ? `${STATUS_META[h.from].label} → ${STATUS_META[h.to].label}` : "할 일 생성"}</span>
+            </div>
+          ))}
+        </section>
+
+        <div className="flex items-center justify-between gap-2 border-t border-line pt-4">
+          {confirmDelete ? (
+            <span className="flex items-center gap-2 text-sm">
+              <span className="text-danger">정말 삭제할까요?</span>
+              <button type="button" onClick={() => setConfirmDelete(false)} className={buttonClass("secondary", "h-7")}>
+                취소
+              </button>
+              <button type="button" onClick={handleDelete} className={buttonClass("danger", "h-7")}>
+                삭제
+              </button>
+            </span>
+          ) : (
+            <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass("ghost", "h-7 text-danger hover:text-danger")}>
+              삭제
+            </button>
+          )}
+          <button type="button" onClick={onEdit} className={buttonClass("secondary")}>
+            수정
+          </button>
+        </div>
+      </div>
+    </Modal>
+  );
+}

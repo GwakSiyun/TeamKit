@@ -80,6 +80,17 @@ projects/{projectId}/joins/{uid}   (참여 증명)
   read           : 만든 사람만 (삭제 때 정리용)
   delete         : 본인(나가기) 또는 만든 사람(프로젝트 삭제)
 
+projects/{projectId}/tasks/{taskId}  (할 일)
+  read, delete : 멤버만
+  create       : 멤버 + 같은 트랜잭션에서 taskCounter 를 정확히 1 올리고 그 번호를 카드 번호로 사용
+                 (번호 중복 · 건너뛰기 불가), 형식 검사(제목 1~100자, 상태 값, 날짜 형식, 시작일 ≤ 마감일),
+                 담당자는 멤버만, createdBy = 본인
+  update       : 멤버 + 형식 검사, 카드 번호 · 만든 사람 · 만든 시각은 못 바꿈
+
+projects/{projectId}/tasks/{taskId}/history/{id}  (상태 변경 기록)
+  read, delete : 멤버만
+  create       : 멤버 + actor = 본인, source = manual 만 (GitHub 기록은 서버만 씀) / 수정 불가
+
 그 외 모든 경로 : 거부 (규칙에 없으면 기본 거부)
 ```
 
@@ -106,7 +117,7 @@ sequenceDiagram
 
 ### 규칙 자동 테스트 ✅
 
-[`tests/firestore.rules.test.mjs`](../tests/firestore.rules.test.mjs) — Firebase 에뮬레이터에서 실제 규칙으로 **26개 시나리오** 검증 (`npm run test:rules`)
+[`tests/firestore.rules.test.mjs`](../tests/firestore.rules.test.mjs) — Firebase 에뮬레이터에서 실제 규칙으로 **38개 시나리오** 검증 (`npm run test:rules`)
 
 | 분류 | 확인하는 것 (예) |
 |---|---|
@@ -116,6 +127,7 @@ sequenceDiagram
 | 참여 | 맞는 코드면 허용, 틀린 코드 거부, 증명 없이 memberIds 수정 거부, 남까지 끼워 넣기 거부, 다른 필드 수정 거부, 남의 이름으로 증명 쓰기 거부 |
 | 나가기 | 자기 자신만 빠지기 허용, 다른 멤버 내보내기 거부, 만든 사람 나가기 거부 |
 | 삭제 | 만든 사람은 프로젝트 · 초대 코드 · 참여 기록 한 번에 삭제, 멤버는 프로젝트 · 초대 코드 삭제 거부, 멤버는 참여 기록 목록 조회 거부 |
+| 할 일 | 멤버는 번호 +1 과 함께 생성, 비멤버 생성 · 읽기 거부, 번호 건너뛰기 · 중복 거부, 비멤버 담당자 거부, 시작일 > 마감일 거부, 상태 변경 허용, 번호 수정 거부, taskCounter 외 필드 수정 거부, 기록에 남의 이름 · GitHub 출처 쓰기 거부 |
 
 ### 다음 규칙 🔜
 
@@ -123,7 +135,7 @@ sequenceDiagram
 |---|---|---|---|
 | `projects/{id}` 이름 변경 · 코드 재발급 · 멤버 내보내기 | – | 만든 사람만 | 프로젝트 설정 화면 |
 | 프로젝트 삭제 시 하위 데이터(할 일 · 회의록 등) 정리 | – | Cloud Functions 재귀 삭제 | 하위 데이터가 생긴 뒤 |
-| `projects/{id}/tasks` 등 하위 전부 | 멤버만 | 멤버만 | 7주차~ (상위 프로젝트 memberIds를 `get()` 으로 확인) |
+| `projects/{id}/meetings` · `polls` | 멤버만 | 멤버만 | 8~10주차 (할 일과 같은 `isMember()` 방식) |
 
 ---
 

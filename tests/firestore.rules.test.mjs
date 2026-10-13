@@ -5,6 +5,8 @@ import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
 import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 
+const TASK = { title: "로그인 화면", description: "", status: "todo", statusSource: "manual", assigneeId: null, startDate: null, dueDate: null };
+
 const CODE = "K7Q2MX";
 const PID = "p1";
 
@@ -200,5 +202,80 @@ describe("프로젝트 삭제", () => {
   test("멤버는 참여 기록 목록을 볼 수 없다", async () => {
     await seedProject({ withBob: true });
     await assertFails(getDocs(collection(db("bob"), "projects", PID, "joins")));
+  });
+});
+
+/** 앱의 createTask 와 같은 쓰기: taskCounter +1 과 같은 번호로 할 일 생성 (+ 생성 기록) */
+function createTaskBatch(uid, { number = 1, counter = 1, extra = {} } = {}) {
+  const d = db(uid);
+  const b = writeBatch(d);
+  b.update(doc(d, "projects", PID), { taskCounter: counter });
+  b.set(doc(d, "projects", PID, "tasks", "t1"), { ...TASK, ...extra, number, createdBy: uid, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+  b.set(doc(d, "projects", PID, "tasks", "t1", "history", "h1"), { from: null, to: "todo", source: "manual", actor: uid, at: serverTimestamp() });
+  return b;
+}
+
+async function seedTask() {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    const admin = ctx.firestore();
+    await updateDoc(doc(admin, "projects", PID), { taskCounter: 1 });
+    await setDoc(doc(admin, "projects", PID, "tasks", "t1"), { ...TASK, number: 1, createdBy: "alice", createdAt: new Date(), updatedAt: new Date() });
+  });
+}
+
+describe("할 일", () => {
+  test("멤버는 카드 번호를 1 올리면서 할 일을 만들 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds(createTaskBatch("bob").commit());
+  });
+  test("멤버가 아니면 할 일을 만들 수 없다", async () => {
+    await seedProject();
+    await assertFails(createTaskBatch("mallory").commit());
+  });
+  test("카드 번호를 건너뛸 수 없다 (counter 0 → 2)", async () => {
+    await seedProject();
+    await assertFails(createTaskBatch("alice", { number: 2, counter: 2 }).commit());
+  });
+  test("번호를 안 올리고 만들 수 없다 (중복 번호 방지)", async () => {
+    await seedProject();
+    const d = db("alice");
+    await assertFails(setDoc(doc(d, "projects", PID, "tasks", "t1"), { ...TASK, number: 0, createdBy: "alice", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+  });
+  test("멤버가 아닌 사람을 담당자로 지정할 수 없다", async () => {
+    await seedProject();
+    await assertFails(createTaskBatch("alice", { extra: { assigneeId: "mallory" } }).commit());
+  });
+  test("시작일이 마감일보다 늦을 수 없다", async () => {
+    await seedProject();
+    await assertFails(createTaskBatch("alice", { extra: { startDate: "2026-10-20", dueDate: "2026-10-10" } }).commit());
+  });
+  test("멤버가 아니면 할 일을 읽을 수 없다", async () => {
+    await seedProject();
+    await seedTask();
+    await assertFails(getDoc(doc(db("mallory"), "projects", PID, "tasks", "t1")));
+  });
+  test("멤버는 상태를 바꿀 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedTask();
+    await assertSucceeds(updateDoc(doc(db("bob"), "projects", PID, "tasks", "t1"), { status: "doing", updatedAt: serverTimestamp() }));
+  });
+  test("카드 번호는 바꿀 수 없다", async () => {
+    await seedProject();
+    await seedTask();
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { number: 99, updatedAt: serverTimestamp() }));
+  });
+  test("taskCounter 외의 프로젝트 필드는 같이 못 바꾼다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { taskCounter: 1, name: "해킹" }));
+  });
+  test("변경 기록에 남의 이름을 쓸 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedTask();
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "done", source: "manual", actor: "alice", at: serverTimestamp() }));
+  });
+  test("변경 기록에 GitHub 출처를 직접 쓸 수 없다 (서버 전용)", async () => {
+    await seedProject({ withBob: true });
+    await seedTask();
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "done", source: "github", actor: "bob", at: serverTimestamp() }));
   });
 });

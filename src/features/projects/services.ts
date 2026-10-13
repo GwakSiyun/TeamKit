@@ -1,5 +1,15 @@
 import { FirebaseError } from "firebase/app";
-import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  writeBatch,
+  type DocumentReference,
+} from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from "./inviteCode";
 import type { JoinResult, Project, ProjectResult } from "./types";
@@ -95,9 +105,23 @@ export async function joinProject(rawCode: string): Promise<JoinResult> {
 
 export type SimpleResult = { ok: true } | { ok: false; message: string };
 
+// Firestore 배치 한 번에 최대 500건 → 여유 있게 나눠 지운다
+const BATCH_LIMIT = 450;
+
+async function deleteInChunks(refs: DocumentReference[]): Promise<void> {
+  const db = firestore();
+  for (let i = 0; i < refs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    refs.slice(i, i + BATCH_LIMIT).forEach((ref) => batch.delete(ref));
+    await batch.commit();
+  }
+}
+
 /**
- * 프로젝트 삭제 (만든 사람만). 참여 기록 · 초대 코드 · 프로젝트를 한 배치로 지운다.
- * TODO(7주차~): 할 일 · 회의록 등 하위 데이터가 생기면 Cloud Functions 의 재귀 삭제로 옮긴다.
+ * 프로젝트 삭제 (만든 사람만).
+ * 1) 할 일 · 변경 기록을 먼저 지우고 2) 참여 기록 · 초대 코드 · 프로젝트를 한 배치로 지운다.
+ * 프로젝트 문서가 마지막에 지워져야 규칙의 멤버 확인(get)이 끝까지 통과한다.
+ * TODO(8주차~): 회의록 · 녹음 파일이 생기면 Cloud Functions 재귀 삭제로 옮긴다.
  */
 export async function deleteProject(project: Project): Promise<SimpleResult> {
   const uid = firebaseAuth().currentUser?.uid;
@@ -105,6 +129,10 @@ export async function deleteProject(project: Project): Promise<SimpleResult> {
 
   const db = firestore();
   try {
+    const tasks = await getDocs(collection(db, "projects", project.id, "tasks"));
+    const histories = await Promise.all(tasks.docs.map((t) => getDocs(collection(t.ref, "history"))));
+    await deleteInChunks([...histories.flatMap((h) => h.docs.map((d) => d.ref)), ...tasks.docs.map((t) => t.ref)]);
+
     const joins = await getDocs(collection(db, "projects", project.id, "joins"));
     const batch = writeBatch(db);
     joins.forEach((j) => batch.delete(j.ref));

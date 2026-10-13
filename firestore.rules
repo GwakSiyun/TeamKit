@@ -11,6 +11,29 @@ service cloud.firestore {
       return /databases/$(database)/documents/projects/$(projectId);
     }
 
+    function isMember(projectId) {
+      return signedIn() && request.auth.uid in get(projectPath(projectId)).data.memberIds;
+    }
+
+    function isDateOrNull(v) {
+      return v == null || (v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
+    }
+
+    // 할 일 문서 형식 (만들기 · 수정 공통)
+    function validTask(projectId, t) {
+      return t.keys().hasOnly(['number', 'title', 'description', 'status', 'statusSource', 'assigneeId',
+                               'startDate', 'dueDate', 'createdBy', 'createdAt', 'updatedAt'])
+        && t.title is string && t.title.size() >= 1 && t.title.size() <= 100
+        && t.description is string && t.description.size() <= 2000
+        && t.status in ['todo', 'doing', 'done']
+        && t.statusSource in ['manual', 'github']
+        && (t.assigneeId == null || t.assigneeId in get(projectPath(projectId)).data.memberIds)
+        && isDateOrNull(t.startDate)
+        && isDateOrNull(t.dueDate)
+        && (t.startDate == null || t.dueDate == null || t.startDate <= t.dueDate)
+        && t.updatedAt == request.time;
+    }
+
     // 회원 기본 정보: 로그인한 사람은 읽기(팀원 이름 표시용), 쓰기는 본인만
     match /users/{uid} {
       allow read: if signedIn();
@@ -69,8 +92,44 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
         && request.resource.data.memberIds == resource.data.memberIds.removeAll([request.auth.uid]);
 
+      // 카드 번호 발급: 멤버가 taskCounter 를 정확히 1 올림 (할 일 만들기 트랜잭션)
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.memberIds
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['taskCounter'])
+        && request.resource.data.taskCounter == resource.data.taskCounter + 1;
+
       // 삭제: 만든 사람만
       allow delete: if signedIn() && request.auth.uid == resource.data.ownerId;
+
+      // 할 일: 멤버만. 카드 번호는 같은 트랜잭션에서 올린 taskCounter 와 같아야 함(중복 · 건너뛰기 방지)
+      match /tasks/{taskId} {
+        allow read: if isMember(projectId);
+        allow create: if isMember(projectId)
+          && validTask(projectId, request.resource.data)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.number == getAfter(projectPath(projectId)).data.taskCounter
+          && getAfter(projectPath(projectId)).data.taskCounter == get(projectPath(projectId)).data.taskCounter + 1;
+        // 수정: 번호 · 만든 사람 · 만든 시각은 못 바꿈
+        allow update: if isMember(projectId)
+          && validTask(projectId, request.resource.data)
+          && request.resource.data.number == resource.data.number
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if isMember(projectId);
+
+        // 상태 변경 기록: 멤버만 읽기, 본인 이름으로만 추가, 수정 · 삭제 불가 (GitHub 반영은 서버가 Admin SDK로 기록)
+        match /history/{historyId} {
+          allow read: if isMember(projectId);
+          allow create: if isMember(projectId)
+            && request.resource.data.keys().hasOnly(['from', 'to', 'source', 'actor', 'at'])
+            && request.resource.data.source == 'manual'
+            && request.resource.data.actor == request.auth.uid
+            && request.resource.data.at == request.time;
+          // 할 일을 지울 때 기록도 함께 지움
+          allow delete: if isMember(projectId);
+        }
+      }
 
       // 참여 증명: 쓰기는 본인 문서만, 코드가 맞을 때만.
       // 읽기는 만든 사람만(삭제 때 정리용), 삭제는 본인(나가기) 또는 만든 사람(프로젝트 삭제).

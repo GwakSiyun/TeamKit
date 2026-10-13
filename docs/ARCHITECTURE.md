@@ -40,6 +40,11 @@ TeamKit/
    │        ├─ AuthGate                로그인 여부로 화면 접근 제어
    │        ├─ UserMenu                헤더의 이름(→ 계정 설정) · 로그아웃
    │        └─ AccountView             계정 설정 화면
+   │  ├─ tasks/                       할 일 보드
+   │  │  ├─ services.ts               만들기(카드 번호 트랜잭션) · 수정 · 상태 변경(+기록) · 삭제
+   │  │  ├─ hooks.ts                  할 일 목록 · 변경 기록 실시간 구독
+   │  │  ├─ constants.ts · deadline.ts  상태 · 카드 번호(TM-n) · 지연 일수
+   │  │  └─ components/               BoardView · TaskCard · StatusButtons · TaskFormModal · TaskDetailModal
    │  └─ projects/
    │     ├─ services.ts               프로젝트 만들기 · 참여 · 나가기 · 삭제 (배치 쓰기)
    │     ├─ hooks.ts                  내 프로젝트 목록 · 프로젝트 한 개 · 멤버 실시간 구독
@@ -53,12 +58,12 @@ TeamKit/
    │        └─ shell/                 ProjectShell(멤버 확인 + 틀) · Sidebar · ProjectSwitcher(프로젝트 전환) · Topbar
    │
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
-   │  ├─ ui/                          Modal · Dropdown · EmptyState · Field · Notice · Icon · Avatar · button
-   │  │                               추가 예정: Tag
+   │  ├─ ui/                          Modal · Dropdown · EmptyState · Field(Select · TextArea) · Notice · Icon · Avatar · Tag · button
    │  ├─ layout/                      PlainLayout (사이드바 없는 화면) · PageHeader (페이지 제목)
    │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)
    ├─ hooks/useTransientState.ts      화면을 떠나면 처음 값으로 돌아가는 상태 (모달 · 드롭다운)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
+   ├─ lib/dates.ts                    "YYYY-MM-DD" 날짜 계산 · 표시
    └─ constants/app.ts                앱 이름
 ```
 
@@ -66,7 +71,6 @@ TeamKit/
 
 | 기능 | 라우트 | 기능 코드 |
 |---|---|---|
-| 할 일 보드 (7주차) | `app/p/[projectId]/board/` | `features/tasks/` |
 | 대시보드 · 간트 | `app/p/[projectId]/` | `features/dashboard/` |
 | 회의록 (8~9주차) | `app/p/[projectId]/meetings/` | `features/meetings/` + `functions/` |
 | 일정 맞추기 (10주차) | `app/p/[projectId]/polls/` | `features/polls/` |
