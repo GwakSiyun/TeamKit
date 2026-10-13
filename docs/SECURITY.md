@@ -14,7 +14,7 @@ TeamKit은 GitHub 토큰, 회의 녹음, 팀원 정보를 다룬다. 별도 백�
 | 2 | **본인 데이터는 본인만** | `users/{uid}` 쓰기와 `private` 하위 경로는 `request.auth.uid == uid` 일 때만 |
 | 3 | **시크릿은 브라우저에 두지 않음** | GitHub Client Secret · CLOVA 키 · 웹훅 Secret은 코드/저장소에 없음 |
 | 4 | **최소 정보 노출** | 비밀번호 재설정은 가입 여부를 알려주지 않음 |
-| 5 | **프로젝트 데이터는 멤버만** | 프로젝트·할 일·회의록·투표는 멤버 목록에 있는 사람만 읽기/쓰기 🔜 |
+| 5 | **프로젝트 데이터는 멤버만** | 프로젝트는 멤버만 읽기 ✅, 할 일·회의록·투표도 같은 방식 🔜 |
 
 ---
 
@@ -63,18 +63,59 @@ users/{uid}
 users/{uid}/private/{docId}        (GitHub 토큰)
   read, write : 본인만
 
+inviteCodes/{code}                 (초대 코드 → 프로젝트 ID)
+  get    : 로그인한 사용자 (코드를 알아야 조회 가능, 목록 조회 불가)
+  create : 같은 배치로 만드는 프로젝트의 만든 사람만, 이미 있는 코드는 불가
+
+projects/{projectId}
+  read   : 멤버만
+  create : 본인이 만든 사람이자 유일한 멤버 + 초대 코드 문서와 같은 배치로만
+  update : 참여 — 멤버가 아닌 사람이 자기 자신만 추가, 코드 증명 필요
+
+projects/{projectId}/joins/{uid}   (참여 증명)
+  create, update : 본인 문서만, 코드가 프로젝트의 현재 초대 코드와 같을 때만 / 읽기 불가
+
 그 외 모든 경로 : 거부 (규칙에 없으면 기본 거부)
 ```
 
-### 프로젝트 규칙 🔜 6주차 (다음 PR)
+### 초대 코드 참여 설계 ✅
 
-| 경로 | 읽기 | 쓰기 | 핵심 |
+문제: 멤버가 아니면 프로젝트를 읽을 수 없는데, 참여하려면 그 프로젝트를 찾고 자기를 멤버로 넣어야 한다. 그렇다고 "아무나 memberIds에 자기를 추가할 수 있게" 열면 프로젝트 ID만 알면 누구나 들어온다.
+
+```mermaid
+sequenceDiagram
+    participant B as 참여하려는 사람
+    participant F as Firestore 규칙
+
+    B->>F: inviteCodes/K7Q2MX 단건 조회
+    F-->>B: projectId (코드를 아는 사람만 알 수 있음)
+    B->>F: 배치 쓰기 ① joins/{내 uid} = { code: "K7Q2MX" }<br/>② projects/{id}.memberIds 에 내 uid 추가
+    Note over F: ① code == 프로젝트의 현재 inviteCode ?<br/>② 바뀐 필드가 memberIds 뿐인가?<br/>   추가된 사람이 나 하나뿐인가?<br/>   같은 배치의 joins/{내 uid}.code 가 맞는가? (getAfter)
+    F-->>B: 모두 통과하면 참여 완료
+```
+
+- 프로젝트 ID가 유출돼도 **코드 없이는 참여 불가**
+- 코드를 재발급하면 이전 코드로는 참여 불가 (joins.code 가 현재 코드와 달라짐)
+- 코드 중복은 규칙이 막는다: 이미 있는 `inviteCodes/{code}` 를 다시 쓰면 "수정"이 되어 거부 → 앱이 새 코드로 재시도
+- 초대 코드는 헷갈리는 `0 · O · 1 · I` 를 뺀 32자 × 6자리 (약 10억 가지), `crypto.getRandomValues` 로 생성
+
+### 규칙 자동 테스트 ✅
+
+[`tests/firestore.rules.test.mjs`](../tests/firestore.rules.test.mjs) — Firebase 에뮬레이터에서 실제 규칙으로 **19개 시나리오** 검증 (`npm run test:rules`)
+
+| 분류 | 확인하는 것 (예) |
+|---|---|
+| users | 남의 문서 쓰기 거부, 남의 GitHub 토큰 읽기 거부, 로그인 안 하면 읽기 거부 |
+| 프로젝트 만들기 | 코드 문서 없이 생성 거부, 다른 사람을 멤버·만든 사람으로 지정 거부, 중복 코드 거부, 형식 틀린 코드 거부 |
+| 프로젝트 읽기 | 멤버는 허용, 멤버가 아니면 거부 |
+| 참여 | 맞는 코드면 허용, 틀린 코드 거부, 증명 없이 memberIds 수정 거부, 남까지 끼워 넣기 거부, 다른 필드 수정 거부, 남의 이름으로 증명 쓰기 거부 |
+
+### 다음 규칙 🔜
+
+| 경로 | 읽기 | 쓰기 | 주차 |
 |---|---|---|---|
-| `projects/{id}` | 멤버만 | 만든 사람만 (이름·초대 코드) | `request.auth.uid in resource.data.memberIds` |
-| 참여 (memberIds에 본인 추가) | – | **초대 코드를 아는 사람만**, **자기 자신만** 추가 가능 | 다른 필드는 못 바꿈, 남을 넣을 수 없음 |
-| `projects/{id}/tasks` 등 하위 전부 | 멤버만 | 멤버만 | 상위 프로젝트의 memberIds를 `get()` 으로 확인 |
-
-초대 코드 참여가 가장 까다로운 부분이다. 멤버가 아니면 프로젝트를 읽을 수 없는데, 참여하려면 그 프로젝트를 찾아야 한다. 이를 **코드 → 프로젝트 ID 조회 문서**를 따로 두고, 참여 요청에 코드를 함께 보내 규칙이 프로젝트의 실제 코드와 비교하는 방식으로 푼다. (자세한 설계는 PR #2에서)
+| `projects/{id}` 이름 변경 · 코드 재발급 · 멤버 내보내기 | – | 만든 사람만 | 프로젝트 설정 화면 |
+| `projects/{id}/tasks` 등 하위 전부 | 멤버만 | 멤버만 | 7주차~ (상위 프로젝트 memberIds를 `get()` 으로 확인) |
 
 ---
 
@@ -97,7 +138,7 @@ users/{uid}/private/{docId}        (GitHub 토큰)
 
 | 주차 | 작업 |
 |---|---|
-| 6주차 | 프로젝트 멤버 규칙, 초대 코드 검증, 멤버가 아닌 사람 접근 차단 화면 |
+| 6주차 ✅ | 프로젝트 멤버 규칙, 초대 코드 검증, 멤버가 아닌 사람 접근 차단 화면, 규칙 자동 테스트 |
 | 8~9주차 | Storage 규칙: 회의 녹음 파일은 해당 프로젝트 멤버만 업로드·재생 |
 | 9주차 | CLOVA API 호출은 Cloud Functions에서만 (키를 브라우저에 두지 않음) |
 | 11주차 | GitHub API 호출을 Cloud Functions로 옮기고, `private/github` 의 **클라이언트 읽기 차단** (쓰기만 허용, 서버가 Admin SDK로 읽음) |

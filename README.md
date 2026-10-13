@@ -18,7 +18,7 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Firebase 
 |---|---|---|
 | 5 | 기술 스택 · 개발 환경 · Firestore 설계 · 상세 기획 · 디자인 | ✅ |
 | 6 | 이메일·GitHub 회원가입/로그인 (#1) | ✅ |
-| 6 | 프로젝트 생성 · 초대 코드 참여 | 🔨 진행 중 |
+| 6 | 프로젝트 생성 · 초대 코드 참여 · 보안 규칙 자동 테스트 19개 | ✅ |
 | 7 | 할 일 보드 (칸반 · 카드 번호) | ⏳ |
 | 8~9 | 회의 녹음 · 음성 인식 · 후보 추출 | ⏳ |
 | 10 | 일정 맞추기 | ⏳ |
@@ -41,4 +41,4 @@ cp .env.local.example .env.local   # Firebase 웹 앱 설정값 채우기
 npm run dev                        # http://localhost:3000
 ```
 
-Firestore 보안 규칙은 [`firestore.rules`](firestore.rules) 를 Firebase 콘솔 → Firestore → 규칙에 게시한다.
+Firestore 보안 규칙: [`firestore.rules`](firestore.rules) · 테스트 `npm run test:rules` · 게시 `npx firebase deploy --only firestore:rules`

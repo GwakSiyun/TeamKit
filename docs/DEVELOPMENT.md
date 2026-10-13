@@ -83,4 +83,9 @@ cp .env.local.example .env.local   # 값 채우기
 npm run dev                        # 개발 서버
 npm run lint                       # 린트
 npm run build                      # 프로덕션 빌드 (개발 서버를 끄고 실행)
+npm run test:rules                 # Firestore 보안 규칙 테스트 (에뮬레이터, Java 필요)
+npx firebase deploy --only firestore:rules   # 규칙을 실제 프로젝트에 게시
 ```
+
+- `firestore.rules` 를 바꾸면 **`npm run test:rules` 통과 → 규칙 게시** 순서를 지킨다
+- 테스트는 실제 프로젝트가 아닌 에뮬레이터(`demo-teamkit`)에서 돌아서 실데이터에 영향 없음
