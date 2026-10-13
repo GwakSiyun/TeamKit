@@ -32,8 +32,9 @@ TeamKit/
    │        ├─ GithubButton · GithubLinkRow
    │        └─ AuthGate                로그인 여부로 화면 접근 제어
    │
-   ├─ components/                     여러 기능이 같이 쓰는 UI
+   ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
    │  ├─ ui/                          Field(입력) · Notice(안내) · button(버튼 스타일)
+   │  │                               추가 예정: Modal · Tag · Avatar · EmptyState
    │  └─ common/                      BrandMark(로고)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
    └─ constants/app.ts                앱 이름
