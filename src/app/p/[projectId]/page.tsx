@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { PlainLayout } from "@/components/layout/PlainLayout";
-import { AuthGate } from "@/features/auth/components/AuthGate";
-import { ProjectHome } from "@/features/projects/components/ProjectHome";
+import { PlannedFeature } from "@/components/common/PlannedFeature";
+import { PageHeader } from "@/components/layout/PageHeader";
 
-export const metadata: Metadata = { title: "프로젝트" };
+export const metadata: Metadata = { title: "대시보드" };
 
-// 프로젝트 데이터는 브라우저에서 Firestore 규칙(멤버만 읽기)을 거쳐 읽는다. projectId 는 ProjectHome 이 useParams 로 읽는다.
-export default function ProjectPage() {
+export default function DashboardPage() {
   return (
-    <PlainLayout back={{ href: "/projects", label: "내 프로젝트로 돌아가기" }}>
-      <AuthGate require="signed-in">
-        <ProjectHome />
-      </AuthGate>
-    </PlainLayout>
+    <>
+      <PageHeader title="대시보드" />
+      <PlannedFeature
+        icon="dashboard"
+        week="할 일 보드 다음"
+        title="전체 진행률과 간트 차트가 여기에 보여요"
+        description="담당자별 할 일 기간 · 지연 · 다음 회의 · 최근 GitHub 활동을 한 화면에서 봐요."
+      />
+    </>
   );
 }
