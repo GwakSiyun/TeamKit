@@ -64,6 +64,7 @@ gitGraph
 | Firebase 호출은 `features/*/services.ts` 에만 | 화면과 데이터 로직 분리, 오류 처리 한곳에서 |
 | **공통 UI는 `components/ui/` 로 빼서 재사용** — 모달 · 버튼 · 입력 · 태그 · 아바타 · 빈 상태 등 여러 화면에 나오는 것. 새로 만들기 전에 `components/ui/` 부터 확인 | 같은 모양을 여러 번 만들지 않음, 디자인 일관성 |
 | 한 기능에서만 쓰는 조각은 `features/<기능>/components/` | 공통 UI와 기능 전용 UI 구분 |
+| 모달 · 드롭다운처럼 잠깐 열리는 UI의 열림 상태는 `useTransientState` (`src/hooks/`) | Next 16(cacheComponents)은 이전 화면을 숨겨만 둬서, 일반 `useState` 면 뒤로가기 시 열린 채로 돌아온다 |
 | 객체 모양은 `interface`, 유니언·별칭은 `type` | |
 | `any` 금지 → `unknown` + 타입 좁히기 | 타입 안정성 |
 | 색 · 글꼴은 `globals.css` 디자인 토큰(`text-muted`, `bg-side`, `border-line` …)만 사용 | 디자인 캔버스와 일치 |

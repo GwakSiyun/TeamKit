@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useTransientState } from "@/hooks/useTransientState";
 import { useMyProjects } from "../hooks";
 import { JoinProjectModal } from "./JoinProjectModal";
 import { NewProjectModal } from "./NewProjectModal";
@@ -18,7 +18,7 @@ export function ProjectsView() {
   const { user } = useAuth();
   const uid = user?.uid ?? "";
   const list = useMyProjects(uid);
-  const [modal, setModal] = useState<OpenModal>(null);
+  const [modal, setModal] = useTransientState<OpenModal>(null);
 
   const actions = (
     <>

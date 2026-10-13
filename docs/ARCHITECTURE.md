@@ -56,6 +56,7 @@ TeamKit/
    │  │                               추가 예정: Tag
    │  ├─ layout/                      PlainLayout (사이드바 없는 화면) · PageHeader (페이지 제목)
    │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)
+   ├─ hooks/useTransientState.ts      화면을 떠나면 처음 값으로 돌아가는 상태 (모달 · 드롭다운)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
    └─ constants/app.ts                앱 이름
 ```

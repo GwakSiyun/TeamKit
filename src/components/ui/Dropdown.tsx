@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useTransientState } from "@/hooks/useTransientState";
 
 interface DropdownProps {
   /** 버튼 안에 보일 내용 */
@@ -19,7 +20,7 @@ interface DropdownProps {
  * 항목은 <DropdownLink>, <DropdownButton>, <DropdownLabel>, <DropdownDivider> 로 구성한다.
  */
 export function Dropdown({ button, label, buttonClassName, children, width = 240 }: DropdownProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useTransientState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
@@ -41,7 +42,7 @@ export function Dropdown({ button, label, buttonClassName, children, width = 240
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, setOpen]);
 
   return (
     <div ref={rootRef} className="relative">

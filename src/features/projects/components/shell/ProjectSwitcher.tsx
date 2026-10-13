@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { Dropdown, DropdownButton, DropdownDivider, DropdownLabel, DropdownLink } from "@/components/ui/Dropdown";
 import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/features/auth/AuthProvider";
+import { useTransientState } from "@/hooks/useTransientState";
 import { useMyProjects } from "../../hooks";
 import { projectBase } from "../../navigation";
 import { useCurrentProject } from "../../ProjectContext";
@@ -26,7 +26,7 @@ export function ProjectSwitcher() {
   const { project } = useCurrentProject();
   const { user } = useAuth();
   const list = useMyProjects(user?.uid ?? "");
-  const [modal, setModal] = useState<"new" | "join" | null>(null);
+  const [modal, setModal] = useTransientState<"new" | "join" | null>(null);
 
   return (
     <>
