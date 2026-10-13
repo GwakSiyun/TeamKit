@@ -40,7 +40,10 @@ export function BoardView() {
       role="tab"
       aria-selected={filter === value}
       onClick={() => setFilter(value)}
-      className={buttonClass("ghost", `h-7 ${filter === value ? "bg-hover text-ink" : ""}`)}
+      // 공통 ghost 버튼은 bg-transparent 라 선택 배경이 덮이므로, 탭은 선택 여부에 따라 클래스를 따로 준다
+      className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent ${
+        filter === value ? "bg-hover font-semibold text-ink" : "text-sub hover:bg-hover hover:text-ink"
+      }`}
     >
       {label} <span className="text-faint">{count}</span>
     </button>
