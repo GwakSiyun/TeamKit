@@ -30,6 +30,9 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['projectId', 'createdAt'])
         && getAfter(projectPath(request.resource.data.projectId)).data.ownerId == request.auth.uid
         && getAfter(projectPath(request.resource.data.projectId)).data.inviteCode == code;
+      // 삭제: 그 프로젝트를 만든 사람만 (프로젝트 삭제 배치에서 함께 지움)
+      allow delete: if signedIn()
+        && get(projectPath(resource.data.projectId)).data.ownerId == request.auth.uid;
     }
 
     match /projects/{projectId} {
@@ -59,12 +62,26 @@ service cloud.firestore {
         && request.resource.data.memberIds.size() <= 10
         && getAfter(/databases/$(database)/documents/projects/$(projectId)/joins/$(request.auth.uid)).data.code == resource.data.inviteCode;
 
-      // 참여 증명: 본인 문서만, 코드가 맞을 때만. 읽기는 아무도 못 함.
+      // 나가기: 만든 사람이 아닌 멤버가 "자기 자신만" 빠짐, 다른 필드는 못 바꿈
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.memberIds
+        && request.auth.uid != resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+        && request.resource.data.memberIds == resource.data.memberIds.removeAll([request.auth.uid]);
+
+      // 삭제: 만든 사람만
+      allow delete: if signedIn() && request.auth.uid == resource.data.ownerId;
+
+      // 참여 증명: 쓰기는 본인 문서만, 코드가 맞을 때만.
+      // 읽기는 만든 사람만(삭제 때 정리용), 삭제는 본인(나가기) 또는 만든 사람(프로젝트 삭제).
       match /joins/{uid} {
         allow create, update: if signedIn()
           && request.auth.uid == uid
           && request.resource.data.keys().hasOnly(['code', 'at'])
           && request.resource.data.code == get(projectPath(projectId)).data.inviteCode;
+        allow read: if signedIn() && get(projectPath(projectId)).data.ownerId == request.auth.uid;
+        allow delete: if signedIn()
+          && (request.auth.uid == uid || get(projectPath(projectId)).data.ownerId == request.auth.uid);
       }
     }
   }

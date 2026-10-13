@@ -6,6 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/button";
 import { Icon } from "@/components/ui/Icon";
 import { useCurrentProject } from "../ProjectContext";
+import { DangerZone } from "./DangerZone";
 
 const COPIED_MS = 1500;
 
@@ -55,6 +56,8 @@ export function ProjectSettingsView() {
         </ul>
         <p className="mt-2 text-xs text-muted">이름 변경 · 초대 코드 재발급 · 멤버 내보내기는 다음 작업에서 추가돼요.</p>
       </section>
+
+      <DangerZone />
     </>
   );
 }

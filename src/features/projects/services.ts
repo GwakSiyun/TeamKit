@@ -1,8 +1,8 @@
 import { FirebaseError } from "firebase/app";
-import { arrayUnion, collection, doc, getDoc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, serverTimestamp, writeBatch } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from "./inviteCode";
-import type { JoinResult, ProjectResult } from "./types";
+import type { JoinResult, Project, ProjectResult } from "./types";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -90,5 +90,49 @@ export async function joinProject(rawCode: string): Promise<JoinResult> {
       return { status: "error", message: "이 코드로 참여할 수 없어요. 코드가 바뀌었거나 인원이 가득 찼을 수 있어요." };
     }
     return { status: "error", message: failureMessage(e) };
+  }
+}
+
+export type SimpleResult = { ok: true } | { ok: false; message: string };
+
+/**
+ * 프로젝트 삭제 (만든 사람만). 참여 기록 · 초대 코드 · 프로젝트를 한 배치로 지운다.
+ * TODO(7주차~): 할 일 · 회의록 등 하위 데이터가 생기면 Cloud Functions 의 재귀 삭제로 옮긴다.
+ */
+export async function deleteProject(project: Project): Promise<SimpleResult> {
+  const uid = firebaseAuth().currentUser?.uid;
+  if (!uid || uid !== project.ownerId) return { ok: false, message: "프로젝트를 만든 사람만 삭제할 수 있어요." };
+
+  const db = firestore();
+  try {
+    const joins = await getDocs(collection(db, "projects", project.id, "joins"));
+    const batch = writeBatch(db);
+    joins.forEach((j) => batch.delete(j.ref));
+    batch.delete(doc(db, "inviteCodes", project.inviteCode));
+    batch.delete(doc(db, "projects", project.id));
+    await batch.commit();
+    return { ok: true };
+  } catch (e) {
+    if (isPermissionDenied(e)) return { ok: false, message: "삭제 권한이 없어요." };
+    return { ok: false, message: failureMessage(e) };
+  }
+}
+
+/** 프로젝트 나가기 (만든 사람 제외). 멤버 목록에서 나를 빼고 내 참여 기록을 지운다 */
+export async function leaveProject(project: Project): Promise<SimpleResult> {
+  const uid = firebaseAuth().currentUser?.uid;
+  if (!uid) return { ok: false, message: "로그인한 뒤 나갈 수 있어요." };
+  if (uid === project.ownerId) return { ok: false, message: "만든 사람은 나갈 수 없어요. 프로젝트를 삭제해주세요." };
+
+  const db = firestore();
+  try {
+    const batch = writeBatch(db);
+    batch.update(doc(db, "projects", project.id), { memberIds: arrayRemove(uid) });
+    batch.delete(doc(db, "projects", project.id, "joins", uid));
+    await batch.commit();
+    return { ok: true };
+  } catch (e) {
+    if (isPermissionDenied(e)) return { ok: false, message: "나가기 권한이 없어요." };
+    return { ok: false, message: failureMessage(e) };
   }
 }

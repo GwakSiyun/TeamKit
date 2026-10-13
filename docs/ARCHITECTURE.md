@@ -41,14 +41,15 @@ TeamKit/
    │        ├─ UserMenu                헤더의 이름(→ 계정 설정) · 로그아웃
    │        └─ AccountView             계정 설정 화면
    │  └─ projects/
-   │     ├─ services.ts               프로젝트 만들기 · 초대 코드로 참여 (배치 쓰기)
+   │     ├─ services.ts               프로젝트 만들기 · 참여 · 나가기 · 삭제 (배치 쓰기)
    │     ├─ hooks.ts                  내 프로젝트 목록 · 프로젝트 한 개 · 멤버 실시간 구독
    │     ├─ ProjectContext.tsx        내부 화면에서 useCurrentProject() 로 프로젝트 · 멤버 사용
    │     ├─ navigation.ts             사이드바 메뉴 정의 · 현재 메뉴 판별
    │     ├─ inviteCode.ts             초대 코드 생성 · 형식 검사 (규칙과 같은 패턴)
    │     ├─ types.ts
    │     └─ components/               ProjectsView · ProjectCard · NewProjectModal ·
-   │        │                         JoinProjectModal · ProjectSettingsView · NoAccess
+   │        │                         JoinProjectModal · ProjectSettingsView · DangerZone ·
+   │        │                         DeleteProjectModal · LeaveProjectModal · NoAccess
    │        └─ shell/                 ProjectShell(멤버 확인 + 틀) · Sidebar · ProjectSwitcher(프로젝트 전환) · Topbar
    │
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
