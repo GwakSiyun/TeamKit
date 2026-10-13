@@ -1,8 +1,9 @@
 // Firestore 보안 규칙 테스트 — 에뮬레이터에서 실행: npm run test:rules
+import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { arrayUnion, doc, getDoc, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 
 const CODE = "K7Q2MX";
 const PID = "p1";
@@ -26,20 +27,32 @@ beforeEach(async () => {
 
 const db = (uid) => (uid ? env.authenticatedContext(uid).firestore() : env.unauthenticatedContext().firestore());
 
-/** 규칙을 거치지 않고 프로젝트(owner = alice) + 초대 코드를 미리 만든다 */
-async function seedProject() {
+/** 규칙을 거치지 않고 프로젝트(owner = alice) + 초대 코드를 미리 만든다. withBob 이면 bob 이 참여한 상태 */
+async function seedProject({ withBob = false } = {}) {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const admin = ctx.firestore();
     await setDoc(doc(admin, "projects", PID), {
       name: "쇼핑몰 클론",
       inviteCode: CODE,
       ownerId: "alice",
-      memberIds: ["alice"],
+      memberIds: withBob ? ["alice", "bob"] : ["alice"],
       taskCounter: 0,
       createdAt: new Date(),
     });
     await setDoc(doc(admin, "inviteCodes", CODE), { projectId: PID, createdAt: new Date() });
+    if (withBob) await setDoc(doc(admin, "projects", PID, "joins", "bob"), { code: CODE, at: new Date() });
   });
+}
+
+/** 앱의 deleteProject 와 같은 배치 (참여 기록 → 초대 코드 → 프로젝트) */
+async function deleteBatch(uid) {
+  const d = db(uid);
+  const joins = await getDocs(collection(d, "projects", PID, "joins"));
+  const b = writeBatch(d);
+  joins.forEach((j) => b.delete(j.ref));
+  b.delete(doc(d, "inviteCodes", CODE));
+  b.delete(doc(d, "projects", PID));
+  return b;
 }
 
 /** 앱의 createProject 와 같은 배치 */
@@ -146,5 +159,46 @@ describe("초대 코드로 참여", () => {
   test("다른 사람 이름으로 참여 증명을 쓸 수 없다", async () => {
     await seedProject();
     await assertFails(setDoc(doc(db("bob"), "projects", PID, "joins", "carol"), { code: CODE, at: serverTimestamp() }));
+  });
+});
+
+describe("나가기", () => {
+  test("멤버는 자기 자신만 빼고 나갈 수 있다", async () => {
+    await seedProject({ withBob: true });
+    const d = db("bob");
+    const b = writeBatch(d);
+    b.update(doc(d, "projects", PID), { memberIds: arrayRemove("bob") });
+    b.delete(doc(d, "projects", PID, "joins", "bob"));
+    await assertSucceeds(b.commit());
+    await assertFails(getDoc(doc(db("bob"), "projects", PID)));
+  });
+  test("다른 멤버를 내보낼 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { memberIds: arrayRemove("alice") }));
+  });
+  test("만든 사람은 나가기로 빠질 수 없다 (삭제만 가능)", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { memberIds: arrayRemove("alice") }));
+  });
+});
+
+describe("프로젝트 삭제", () => {
+  test("만든 사람은 프로젝트 · 초대 코드 · 참여 기록을 한 번에 지울 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds((await deleteBatch("alice")).commit());
+    const code = await getDoc(doc(db("bob"), "inviteCodes", CODE));
+    assert.equal(code.exists(), false, "초대 코드도 함께 지워져야 함");
+  });
+  test("멤버는 프로젝트를 지울 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(deleteDoc(doc(db("bob"), "projects", PID)));
+  });
+  test("멤버는 초대 코드를 지울 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(deleteDoc(doc(db("bob"), "inviteCodes", CODE)));
+  });
+  test("멤버는 참여 기록 목록을 볼 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(getDocs(collection(db("bob"), "projects", PID, "joins")));
   });
 });
