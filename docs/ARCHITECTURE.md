@@ -58,7 +58,7 @@ TeamKit/
    │        └─ shell/                 ProjectShell(멤버 확인 + 틀) · Sidebar · ProjectSwitcher(프로젝트 전환) · Topbar
    │
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
-   │  ├─ ui/                          Modal · Dropdown · EmptyState · Field(Select · TextArea) · Notice · Icon · Avatar · Tag · button
+   │  ├─ ui/                          Modal · ConfirmModal · Dropdown · EmptyState · Field(Select · TextArea) · Notice · Icon · Avatar · Tag · button
    │  ├─ layout/                      PlainLayout (사이드바 없는 화면) · PageHeader (페이지 제목)
    │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)
    ├─ hooks/useTransientState.ts      화면을 떠나면 처음 값으로 돌아가는 상태 (모달 · 드롭다운)
