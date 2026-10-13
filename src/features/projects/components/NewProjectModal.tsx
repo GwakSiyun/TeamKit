@@ -33,8 +33,13 @@ export function NewProjectModal({ open, onClose }: { open: boolean; onClose: () 
     setError(null);
     const result = await createProject(trimmed);
     setPending(false);
-    if (result.ok) router.push(`/p/${result.projectId}`);
-    else setError(result.message);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    // 모달을 닫고 입력값을 비운 뒤 이동 → 뒤로가기로 돌아와도 모달이 열려 있지 않다
+    close();
+    router.push(`/p/${result.projectId}`);
   }
 
   return (

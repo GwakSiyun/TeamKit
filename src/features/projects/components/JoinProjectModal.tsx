@@ -40,8 +40,11 @@ export function JoinProjectModal({ open, onClose }: { open: boolean; onClose: ()
     setAlready(null);
     const result = await joinProject(code);
     setPending(false);
-    if (result.status === "joined") router.push(`/p/${result.projectId}`);
-    else if (result.status === "already-member") setAlready({ projectId: result.projectId, projectName: result.projectName });
+    if (result.status === "joined") {
+      // 모달을 닫고 입력값을 비운 뒤 이동 → 뒤로가기로 돌아와도 모달이 열려 있지 않다
+      close();
+      router.push(`/p/${result.projectId}`);
+    } else if (result.status === "already-member") setAlready({ projectId: result.projectId, projectName: result.projectName });
     else setError(result.message);
   }
 
@@ -75,7 +78,7 @@ export function JoinProjectModal({ open, onClose }: { open: boolean; onClose: ()
             {already ? "닫기" : "취소"}
           </button>
           {already ? (
-            <Link href={`/p/${already.projectId}`} className={buttonClass("primary")}>
+            <Link href={`/p/${already.projectId}`} onClick={close} className={buttonClass("primary")}>
               프로젝트로 이동
             </Link>
           ) : (
