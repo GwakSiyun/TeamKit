@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* 디자인 토큰 — 디자인 캔버스 왼쪽 "디자인 규칙" 메모와 동일 */
+@theme inline {
+  --color-ink: #37352f;
+  --color-sub: #5f5e5b;
+  --color-muted: #787774;
+  --color-faint: #9b9a97;
+  --color-line: #e9e9e7;
+  --color-field: #e0dfdc;
+  --color-side: #f7f7f5;
+  --color-hover: #efefed;
+  --color-accent: #2383e2;
+  --color-accent-strong: #0b6ec5;
+  --color-danger: #e03e3e;
+  --color-danger-strong: #c4302b;
+
+  --font-sans: var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
+}
+
+body {
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+}

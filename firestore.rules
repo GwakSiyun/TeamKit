@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Firebase 콘솔 → Firestore Database → 규칙 탭에 붙여넣는다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 회원 기본 정보: 로그인한 사람은 읽기(팀원 이름 표시용), 쓰기는 본인만
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+
+      // GitHub 토큰: 본인만 읽고 쓰기
+      match /private/{docId} {
+        allow read, write: if request.auth != null && request.auth.uid == uid;
+      }
+    }
+  }
+}
