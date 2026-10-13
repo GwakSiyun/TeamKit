@@ -49,10 +49,10 @@ TeamKit/
    │     ├─ types.ts
    │     └─ components/               ProjectsView · ProjectCard · NewProjectModal ·
    │        │                         JoinProjectModal · ProjectSettingsView · NoAccess
-   │        └─ shell/                 ProjectShell(멤버 확인 + 틀) · Sidebar · Topbar
+   │        └─ shell/                 ProjectShell(멤버 확인 + 틀) · Sidebar · ProjectSwitcher(프로젝트 전환) · Topbar
    │
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
-   │  ├─ ui/                          Modal · EmptyState · Field · Notice · Icon · Avatar · button
+   │  ├─ ui/                          Modal · Dropdown · EmptyState · Field · Notice · Icon · Avatar · button
    │  │                               추가 예정: Tag
    │  ├─ layout/                      PlainLayout (사이드바 없는 화면) · PageHeader (페이지 제목)
    │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)

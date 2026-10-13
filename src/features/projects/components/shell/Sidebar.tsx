@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { logout } from "@/features/auth/services";
 import { activeNavItem, MAIN_NAV, PROJECT_NAV, projectBase, type NavItem } from "../../navigation";
 import { useCurrentProject } from "../../ProjectContext";
+import { ProjectSwitcher } from "./ProjectSwitcher";
 
 const ITEM = "flex h-[30px] items-center gap-2 rounded-md px-2.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-accent";
 
@@ -39,15 +40,7 @@ export function Sidebar() {
 
   return (
     <nav aria-label="프로젝트 메뉴" className="hidden w-60 shrink-0 flex-col gap-0.5 border-r border-line bg-side px-2 pt-2.5 pb-3 md:flex">
-      <Link href="/projects" title="내 프로젝트 목록으로" className={`${ITEM} mb-2 h-10 text-ink hover:bg-hover`}>
-        <span className="inline-flex size-[22px] shrink-0 items-center justify-center rounded-[5px] bg-ink text-xs font-bold text-white">
-          {project.name.slice(0, 1)}
-        </span>
-        <span className="flex-1 truncate font-semibold">{project.name}</span>
-        <span className="text-faint">
-          <Icon name="chevronDown" size={14} />
-        </span>
-      </Link>
+      <ProjectSwitcher />
 
       {MAIN_NAV.map((item) => (
         <NavLink key={item.path} item={item} href={base + item.path} active={active === item} />
