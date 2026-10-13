@@ -1,10 +1,10 @@
 "use client";
 
 import { FirebaseError } from "firebase/app";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, documentId, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { firestore } from "@/lib/firebase";
-import type { Project, ProjectDoc } from "./types";
+import type { Member, Project, ProjectDoc } from "./types";
 
 type ListState = { status: "loading" } | { status: "ready"; projects: Project[] } | { status: "error" };
 
@@ -52,4 +52,30 @@ export function useProject(projectId: string): ProjectState {
   }, [projectId]);
 
   return state;
+}
+
+// Firestore 'in' 조건은 한 번에 최대 30개. 프로젝트 인원 상한(규칙: 10명) 안이라 한 번으로 충분하다.
+const IN_QUERY_LIMIT = 30;
+
+/** 멤버 이름·이메일 (users/{uid} 실시간 구독). memberIds 순서를 유지한다 */
+export function useMembers(memberIds: string[]): Member[] {
+  const [members, setMembers] = useState<Member[]>([]);
+  const key = memberIds.join(",");
+
+  useEffect(() => {
+    const ids = key ? key.split(",").slice(0, IN_QUERY_LIMIT) : [];
+    if (ids.length === 0) return;
+    const q = query(collection(firestore(), "users"), where(documentId(), "in", ids));
+    return onSnapshot(q, (snap) => {
+      const byId = new Map(snap.docs.map((d) => [d.id, d.data()]));
+      setMembers(
+        ids.map((id) => {
+          const data = byId.get(id);
+          return { id, name: typeof data?.name === "string" ? data.name : "알 수 없음", email: typeof data?.email === "string" ? data.email : "" };
+        }),
+      );
+    });
+  }, [key]);
+
+  return members;
 }
