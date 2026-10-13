@@ -19,6 +19,14 @@ service cloud.firestore {
       return v == null || (v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
     }
 
+    // 할 일 삭제 권한: 할 일을 만든 사람 · 담당자 · 프로젝트를 만든 사람
+    function canDeleteTask(projectId, task) {
+      return isMember(projectId)
+        && (task.createdBy == request.auth.uid
+          || task.assigneeId == request.auth.uid
+          || get(projectPath(projectId)).data.ownerId == request.auth.uid);
+    }
+
     // 할 일 문서 형식 (만들기 · 수정 공통)
     function validTask(projectId, t) {
       return t.keys().hasOnly(['number', 'title', 'description', 'status', 'statusSource', 'assigneeId',
@@ -116,7 +124,7 @@ service cloud.firestore {
           && request.resource.data.number == resource.data.number
           && request.resource.data.createdBy == resource.data.createdBy
           && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if isMember(projectId);
+        allow delete: if canDeleteTask(projectId, resource.data);
 
         // 상태 변경 기록: 멤버만 읽기, 본인 이름으로만 추가, 수정 · 삭제 불가 (GitHub 반영은 서버가 Admin SDK로 기록)
         match /history/{historyId} {
@@ -126,8 +134,8 @@ service cloud.firestore {
             && request.resource.data.source == 'manual'
             && request.resource.data.actor == request.auth.uid
             && request.resource.data.at == request.time;
-          // 할 일을 지울 때 기록도 함께 지움
-          allow delete: if isMember(projectId);
+          // 할 일을 지울 때 기록도 함께 지움 (할 일 삭제 권한이 있는 사람만)
+          allow delete: if canDeleteTask(projectId, get(/databases/$(database)/documents/projects/$(projectId)/tasks/$(taskId)).data);
         }
       }
 

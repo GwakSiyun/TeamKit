@@ -7,6 +7,7 @@ import { Icon, type IconName } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Notice } from "@/components/ui/Notice";
 import { Tag } from "@/components/ui/Tag";
+import { useAuth } from "@/features/auth/AuthProvider";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { formatDateTime, formatShort } from "@/lib/dates";
 import { STATUS_META, taskKey } from "../constants";
@@ -38,6 +39,9 @@ interface TaskDetailModalProps {
 /** 노션 페이지처럼 보는 할 일 상세. 상태 변경 · 수정 · 삭제 · 변경 기록 */
 export function TaskDetailModal({ task, today, onClose, onEdit }: TaskDetailModalProps) {
   const { project, members } = useCurrentProject();
+  const { user } = useAuth();
+  // 규칙(canDeleteTask)과 같은 조건 — 버튼만 숨기는 게 아니라 규칙에서도 막는다
+  const canDelete = !!user && [task.createdBy, task.assigneeId, project.ownerId].includes(user.uid);
   const history = useTaskHistory(project.id, task.id);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +108,9 @@ export function TaskDetailModal({ task, today, onClose, onEdit }: TaskDetailModa
         </section>
 
         <div className="flex items-center justify-between gap-2 border-t border-line pt-4">
-          {confirmDelete ? (
+          {!canDelete ? (
+            <span className="text-xs text-muted">삭제는 만든 사람 · 담당자 · 프로젝트를 만든 사람만 할 수 있어요</span>
+          ) : confirmDelete ? (
             <span className="flex items-center gap-2 text-sm">
               <span className="text-danger">정말 삭제할까요?</span>
               <button type="button" onClick={() => setConfirmDelete(false)} className={buttonClass("secondary", "h-7")}>
@@ -115,7 +121,11 @@ export function TaskDetailModal({ task, today, onClose, onEdit }: TaskDetailModa
               </button>
             </span>
           ) : (
-            <button type="button" onClick={() => setConfirmDelete(true)} className={buttonClass("ghost", "h-7 text-danger hover:text-danger")}>
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="inline-flex h-7 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-[#FFF5F4] focus-visible:outline-2 focus-visible:outline-accent"
+            >
               삭제
             </button>
           )}

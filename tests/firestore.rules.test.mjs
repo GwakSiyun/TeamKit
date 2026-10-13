@@ -215,11 +215,19 @@ function createTaskBatch(uid, { number = 1, counter = 1, extra = {} } = {}) {
   return b;
 }
 
-async function seedTask() {
+async function seedTask({ createdBy = "alice", assigneeId = null } = {}) {
   await env.withSecurityRulesDisabled(async (ctx) => {
     const admin = ctx.firestore();
     await updateDoc(doc(admin, "projects", PID), { taskCounter: 1 });
-    await setDoc(doc(admin, "projects", PID, "tasks", "t1"), { ...TASK, number: 1, createdBy: "alice", createdAt: new Date(), updatedAt: new Date() });
+    await setDoc(doc(admin, "projects", PID, "tasks", "t1"), { ...TASK, assigneeId, number: 1, createdBy, createdAt: new Date(), updatedAt: new Date() });
+  });
+}
+
+/** alice(프로젝트 만든 사람) + bob + carol 멤버 */
+async function seedThreeMembers() {
+  await seedProject({ withBob: true });
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), "projects", PID), { memberIds: ["alice", "bob", "carol"] });
   });
 }
 
@@ -277,5 +285,28 @@ describe("할 일", () => {
     await seedProject({ withBob: true });
     await seedTask();
     await assertFails(setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "done", source: "github", actor: "bob", at: serverTimestamp() }));
+  });
+});
+
+describe("할 일 삭제 권한", () => {
+  test("만든 사람도 담당자도 아닌 멤버는 삭제할 수 없다", async () => {
+    await seedThreeMembers();
+    await seedTask({ createdBy: "bob", assigneeId: "bob" });
+    await assertFails(deleteDoc(doc(db("carol"), "projects", PID, "tasks", "t1")));
+  });
+  test("할 일을 만든 사람은 삭제할 수 있다", async () => {
+    await seedThreeMembers();
+    await seedTask({ createdBy: "carol" });
+    await assertSucceeds(deleteDoc(doc(db("carol"), "projects", PID, "tasks", "t1")));
+  });
+  test("담당자는 삭제할 수 있다", async () => {
+    await seedThreeMembers();
+    await seedTask({ createdBy: "bob", assigneeId: "carol" });
+    await assertSucceeds(deleteDoc(doc(db("carol"), "projects", PID, "tasks", "t1")));
+  });
+  test("프로젝트를 만든 사람은 삭제할 수 있다", async () => {
+    await seedThreeMembers();
+    await seedTask({ createdBy: "bob", assigneeId: "carol" });
+    await assertSucceeds(deleteDoc(doc(db("alice"), "projects", PID, "tasks", "t1")));
   });
 });
