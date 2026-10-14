@@ -161,7 +161,7 @@ export function DashboardView() {
               return (
                 <>
                   {t.dueDate && formatShort(t.dueDate)}
-                  {lateBy > 0 ? <Tag tone="red">{lateBy}일 지연</Tag> : <Tag tone={urgencyTone(left)}>{left === 0 ? "오늘 마감" : `${left}일 남음`}</Tag>}
+                  {lateBy > 0 ? <Tag tone="redSolid">{lateBy}일 지연</Tag> : <Tag tone={urgencyTone(left)}>{left === 0 ? "오늘 마감" : `${left}일 남음`}</Tag>}
                 </>
               );
             }}
