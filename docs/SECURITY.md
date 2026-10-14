@@ -160,6 +160,7 @@ sequenceDiagram
 | GitHub 웹훅 Secret 🔜 12주차 | `githubRepos` 컬렉션 (클라이언트 접근 금지) | ❌ |
 
 - `.env.local` 은 `.gitignore` 로 제외, 예시 파일 `.env.local.example` 만 커밋
+- 배포 설정 `apphosting.yaml` 에는 공개용 Firebase 웹 설정만 값으로 둔다. 시크릿(Groq 키 등)은 App Hosting / Functions **secret** 으로 등록하고 파일에는 이름만 적는다
 - PR 체크리스트에 "민감 정보 미포함" 항목 고정
 
 ---
