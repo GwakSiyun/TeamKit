@@ -30,7 +30,8 @@ export function TaskList({ tasks, nameOf, trailing, empty, onOpenTask }: TaskLis
             >
               {/* 앞의 작은 네모 = 간트 막대와 같은 색 → 차트에서 어떤 막대인지 찾게. 목록에서 강한 색은 남은 일수 태그만 */}
               <span className="flex min-w-0 items-center gap-2">
-                <span aria-hidden className="size-2 shrink-0 rounded-[2px]" style={{ background: taskColor(t.id).bg, boxShadow: `inset 0 0 0 1px ${taskColor(t.id).fg}33` }} />
+                {/* Noto Sans KR 은 글자가 줄 상자 안에서 아래쪽에 앉아서, 상자 기준 가운데 정렬이면 네모가 떠 보인다 → 1.5px 내림 */}
+                <span aria-hidden className="size-2 shrink-0 translate-y-[1.5px] rounded-[2px]" style={{ background: taskColor(t.id).bg, boxShadow: `inset 0 0 0 1px ${taskColor(t.id).fg}33` }} />
                 <span className="truncate">{t.title}</span>
               </span>
               {t.assigneeId && name ? <Avatar seed={t.assigneeId} name={name} size={20} /> : <span />}
