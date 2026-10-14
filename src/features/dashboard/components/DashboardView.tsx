@@ -22,6 +22,13 @@ import { StatCard } from "./StatCard";
 import { TaskList } from "./TaskList";
 
 const DUE_SOON_DAYS = 7;
+
+/** 남은 일수 → 태그 색: 오늘·1일 빨강, 2~4일 주황, 5일 이상 초록 */
+function urgencyTone(daysLeft: number): "red" | "orange" | "green" {
+  if (daysLeft <= 1) return "red";
+  if (daysLeft <= 4) return "orange";
+  return "green";
+}
 const LIST_SIZE = 5;
 
 type OpenModal = { kind: "detail"; taskId: string } | { kind: "edit"; taskId: string } | null;
@@ -154,7 +161,7 @@ export function DashboardView() {
               return (
                 <>
                   {t.dueDate && formatShort(t.dueDate)}
-                  {lateBy > 0 ? <Tag tone="red">{lateBy}일 지연</Tag> : <Tag tone={left <= 1 ? "yellow" : "gray"}>{left === 0 ? "오늘" : `${left}일 남음`}</Tag>}
+                  {lateBy > 0 ? <Tag tone="red">{lateBy}일 지연</Tag> : <Tag tone={urgencyTone(left)}>{left === 0 ? "오늘 마감" : `${left}일 남음`}</Tag>}
                 </>
               );
             }}

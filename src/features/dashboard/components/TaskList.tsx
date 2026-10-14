@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import type { Task } from "@/features/tasks/types";
+import { taskColor } from "../colors";
 
 interface TaskListProps {
   tasks: Task[];
@@ -27,7 +28,10 @@ export function TaskList({ tasks, nameOf, trailing, empty, onOpenTask }: TaskLis
               onClick={() => onOpenTask(t.id)}
               className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-[#F1F1EF] px-2 py-2 text-left text-sm hover:bg-side"
             >
-              <span className="truncate">{t.title}</span>
+              {/* 제목 밑줄 = 간트 막대와 같은 색 → 차트에서 어떤 막대인지 바로 찾게 */}
+              <span className="min-w-0 justify-self-start truncate border-b-[3px] pb-px" style={{ borderColor: taskColor(t.id).bg }}>
+                {t.title}
+              </span>
               {t.assigneeId && name ? <Avatar seed={t.assigneeId} name={name} size={20} /> : <span />}
               <span className="flex items-center gap-1.5 text-xs text-muted tabular-nums">{trailing(t)}</span>
             </button>
