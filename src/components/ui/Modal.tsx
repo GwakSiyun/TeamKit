@@ -10,8 +10,11 @@ interface ModalProps {
   /** 최대 너비(px). 기본 480 */
   width?: number;
   children: ReactNode;
-  /** 오른쪽 위 X 버튼 숨기기 (취소 버튼이 따로 있는 확인 창 등). ESC · 배경 클릭으로는 그대로 닫힌다 */
-  hideCloseButton?: boolean;
+  /**
+   * 오른쪽 위 X 버튼 보이기. 기본은 숨김 — 하단에 취소 버튼이 있는 모달에 X 까지 있으면 닫는 방법이 겹친다.
+   * 취소 버튼이 없는 모달(할 일 상세 등)만 켠다. ESC · 배경 클릭 닫기는 항상 동작한다.
+   */
+  showCloseButton?: boolean;
 }
 
 /**
@@ -26,7 +29,7 @@ export function Modal({
   description,
   width = 480,
   children,
-  hideCloseButton = false,
+  showCloseButton = false,
 }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -73,7 +76,7 @@ export function Modal({
                 </p>
               )}
             </div>
-            {!hideCloseButton && (
+            {showCloseButton && (
               <button
                 type="button"
                 onClick={onClose}
