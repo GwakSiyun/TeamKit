@@ -52,7 +52,7 @@ export function ConfirmModal({
       onClose={close}
       title={title}
       width={400}
-      hideCloseButton={true}
+      hideCloseButton
     >
       <ModalBody>
         {children && (

@@ -81,7 +81,6 @@ export function TaskDetailModal({
         onClose={onClose}
         title={`${taskKey(task.number)} ${task.title}`}
         width={720}
-        hideCloseButton={false}
       >
         <div className="flex flex-col gap-5 px-6 pt-4 pb-6">
           <div className="flex flex-col">

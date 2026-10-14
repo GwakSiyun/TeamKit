@@ -10,6 +10,7 @@ interface ModalProps {
   /** 최대 너비(px). 기본 480 */
   width?: number;
   children: ReactNode;
+  /** 오른쪽 위 X 버튼 숨기기 (취소 버튼이 따로 있는 확인 창 등). ESC · 배경 클릭으로는 그대로 닫힌다 */
   hideCloseButton?: boolean;
 }
 
