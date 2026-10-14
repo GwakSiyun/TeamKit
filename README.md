@@ -44,4 +44,8 @@ cp .env.local.example .env.local   # Firebase 웹 앱 설정값 채우기
 npm run dev                        # http://localhost:3000
 ```
 
+## 배포
+
+Firebase App Hosting (Blaze 요금제) — `main` 에 머지되면 자동으로 빌드 · 배포된다. 환경 변수와 인스턴스 수는 [`apphosting.yaml`](apphosting.yaml).
+
 Firestore 보안 규칙: [`firestore.rules`](firestore.rules) · 테스트 `npm run test:rules` · 게시 `npx firebase deploy --only firestore:rules`
