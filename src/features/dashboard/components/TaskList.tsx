@@ -28,8 +28,11 @@ export function TaskList({ tasks, nameOf, trailing, empty, onOpenTask }: TaskLis
               onClick={() => onOpenTask(t.id)}
               className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-[#F1F1EF] px-2 py-2 text-left text-sm hover:bg-side"
             >
-              {/* 제목 밑줄 = 간트 막대와 같은 색 → 차트에서 어떤 막대인지 바로 찾게 */}
-              <span className="min-w-0 justify-self-start truncate border-b-[3px] pb-px" style={{ borderColor: taskColor(t.id).bg }}>
+              {/* 제목 배경 = 간트 막대와 같은 색 → 차트에서 어떤 막대인지 바로 찾게 */}
+              <span
+                className="min-w-0 justify-self-start truncate rounded px-2 py-0.5 font-medium"
+                style={{ background: taskColor(t.id).bg, color: taskColor(t.id).fg }}
+              >
                 {t.title}
               </span>
               {t.assigneeId && name ? <Avatar seed={t.assigneeId} name={name} size={20} /> : <span />}
