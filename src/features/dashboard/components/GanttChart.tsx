@@ -9,12 +9,28 @@ import type { GanttGroup, GanttRange } from "../gantt";
 const LABEL_WIDTH = 240;
 const DAY_MIN = 24;
 
-// 막대 색: 상태 + 지연
-function barStyle(task: Task, today: string): string {
-  if (lateDays(task, today) > 0) return "bg-danger text-white";
-  if (task.status === "done") return "bg-[#4DAB9A] text-white";
-  if (task.status === "doing") return "bg-accent text-white";
-  return "bg-[#D3D1CB] text-ink";
+// 막대 색: 할 일마다 다른 파스텔 색 (id 해시라 항상 같은 색). 빨강은 지연 표시용이라 뺀다
+const BAR_COLORS = [
+  "bg-[#C6DCF5] text-[#183A5E]",
+  "bg-[#CDEBD2] text-[#1C4A2B]",
+  "bg-[#FBE3A6] text-[#5A4110]",
+  "bg-[#F9CFB0] text-[#5C2E10]",
+  "bg-[#DDD0F0] text-[#3D2766]",
+  "bg-[#F5CFE0] text-[#5C1F3B]",
+  "bg-[#C8E8E5] text-[#16443F]",
+] as const;
+
+function barColor(taskId: string): string {
+  let hash = 0;
+  for (const ch of taskId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+  return BAR_COLORS[hash % BAR_COLORS.length];
+}
+
+/** 상태 표시: 완료는 흐리게, 지연은 빨간 테두리 */
+function barState(task: Task, today: string): string {
+  if (task.status === "done") return "opacity-50";
+  if (lateDays(task, today) > 0) return "ring-2 ring-danger ring-inset";
+  return "";
 }
 
 function columnStyle(count: number): React.CSSProperties {
@@ -95,13 +111,18 @@ export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
                 title={b.task.title}
-                className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barStyle(b.task, today)} ${
+                className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center justify-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barColor(b.task.id)} ${barState(b.task, today)} ${
                   b.clippedStart ? "rounded-l-none" : "rounded-l"
                 } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
                 style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}` }}
               >
                 {/* 이틀 이상인 막대에만 제목 (넘치면 잘림) */}
-                {b.to - b.from >= 1 ? <span className="truncate">{b.task.title}</span> : null}
+                {b.to - b.from >= 1 ? (
+                  <span className="truncate">
+                    {b.task.status === "done" ? "✓ " : ""}
+                    {b.task.title}
+                  </span>
+                ) : null}
               </button>
             </div>
           ))}
@@ -113,10 +134,8 @@ export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps
 
 export function GanttLegend() {
   const items: { cls: string; label: string }[] = [
-    { cls: "bg-[#D3D1CB]", label: "할 일" },
-    { cls: "bg-accent", label: "진행 중" },
-    { cls: "bg-[#4DAB9A]", label: "완료" },
-    { cls: "bg-danger", label: "지연" },
+    { cls: "bg-[#C6DCF5] opacity-50", label: "완료" },
+    { cls: "bg-[#FBE3A6] shadow-[inset_0_0_0_2px_var(--color-danger)]", label: "지연" },
     { cls: "bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]", label: "오늘" },
   ];
   return (
