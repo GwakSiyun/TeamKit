@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-export type TagTone = "gray" | "blue" | "green" | "yellow" | "red" | "purple" | "orange";
+export type TagTone = "gray" | "blue" | "green" | "yellow" | "red" | "purple" | "orange" | "redSolid";
 
 // 디자인 캔버스의 노션 태그 색 (배경 · 글자)
 const TONES: Record<TagTone, string> = {
@@ -11,6 +11,8 @@ const TONES: Record<TagTone, string> = {
   red: "bg-[#FFE2DD] text-[#5D1715]",
   purple: "bg-[#E8DEEE] text-[#412454]",
   orange: "bg-[#FADEC9] text-[#49290E]",
+  // 이미 늦은 것처럼 연한 빨강(임박)과 확실히 구분해야 할 때
+  redSolid: "bg-danger font-semibold text-white",
 };
 
 export function Tag({ tone = "gray", children }: { tone?: TagTone; children: ReactNode }) {

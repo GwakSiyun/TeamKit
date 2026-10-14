@@ -117,7 +117,7 @@ export function TaskDetailModal({
               ) : (
                 <span className="text-muted">정하지 않음</span>
               )}
-              {late > 0 && <Tag tone="red">{late}일 지연</Tag>}
+              {late > 0 && <Tag tone="redSolid">{late}일 지연</Tag>}
             </Prop>
             <Prop icon="github" label="GitHub">
               <span className="text-muted">
