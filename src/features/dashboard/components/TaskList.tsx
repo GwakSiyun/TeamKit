@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { taskKey } from "@/features/tasks/constants";
 import type { Task } from "@/features/tasks/types";
 
 interface TaskListProps {
@@ -26,9 +25,8 @@ export function TaskList({ tasks, nameOf, trailing, empty, onOpenTask }: TaskLis
             <button
               type="button"
               onClick={() => onOpenTask(t.id)}
-              className="grid w-full cursor-pointer grid-cols-[auto_minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-[#F1F1EF] px-2 py-2 text-left text-sm hover:bg-side"
+              className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-[#F1F1EF] px-2 py-2 text-left text-sm hover:bg-side"
             >
-              <span className="font-mono text-xs text-muted">{taskKey(t.number)}</span>
               <span className="truncate">{t.title}</span>
               {t.assigneeId && name ? <Avatar seed={t.assigneeId} name={name} size={20} /> : <span />}
               <span className="flex items-center gap-1.5 text-xs text-muted tabular-nums">{trailing(t)}</span>

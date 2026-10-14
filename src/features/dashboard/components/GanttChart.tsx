@@ -2,7 +2,6 @@
 
 import { Avatar } from "@/components/ui/Avatar";
 import { weekdayOf } from "@/lib/dates";
-import { taskKey } from "@/features/tasks/constants";
 import { lateDays } from "@/features/tasks/deadline";
 import type { Task } from "@/features/tasks/types";
 import type { GanttGroup, GanttRange } from "../gantt";
@@ -90,19 +89,19 @@ export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps
                 className="flex min-w-0 cursor-pointer items-center gap-2 pr-3 pl-[38px] text-left text-[13px] hover:underline hover:decoration-[#C9C7C2]"
                 style={{ gridRow: 1, gridColumn: 1 }}
               >
-                <span className="shrink-0 font-mono text-xs text-muted">{taskKey(b.task.number)}</span>
                 <span className="truncate">{b.task.title}</span>
               </button>
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
-                title={`${taskKey(b.task.number)} ${b.task.title}`}
-                className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center self-center overflow-hidden px-1.5 font-mono text-[11px] font-medium whitespace-nowrap ${barStyle(b.task, today)} ${
+                title={b.task.title}
+                className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barStyle(b.task, today)} ${
                   b.clippedStart ? "rounded-l-none" : "rounded-l"
                 } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
                 style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}` }}
               >
-                {b.to - b.from >= 1 ? taskKey(b.task.number) : ""}
+                {/* 이틀 이상인 막대에만 제목 (넘치면 잘림) */}
+                {b.to - b.from >= 1 ? <span className="truncate">{b.task.title}</span> : null}
               </button>
             </div>
           ))}
