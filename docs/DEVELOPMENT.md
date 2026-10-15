@@ -90,4 +90,5 @@ npx firebase deploy --only firestore:rules   # 규칙을 실제 프로젝트에 
 ```
 
 - `firestore.rules` 를 바꾸면 **`npm run test:rules` 통과 → 규칙 게시** 순서를 지킨다
+- GitHub 연동 서버 API(`/api/github/*`)는 **배포 주소에서만** 동작한다. 로컬에는 Admin SDK 자격 증명이 없고, GitHub 웹훅이 localhost 로 올 수 없기 때문
 - 테스트는 실제 프로젝트가 아닌 에뮬레이터(`demo-teamkit`)에서 돌아서 실데이터에 영향 없음

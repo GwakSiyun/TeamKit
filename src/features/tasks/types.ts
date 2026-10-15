@@ -16,6 +16,17 @@ export interface TaskDoc {
   createdBy: string;
   createdAt: Timestamp | null;
   updatedAt: Timestamp | null;
+  /** GitHub 웹훅 서버만 씀: 처음 연결된 브랜치 */
+  branch?: string | null;
+  /** GitHub 웹훅 서버만 씀: 연결된 PR */
+  github?: TaskGithub | null;
+}
+
+export interface TaskGithub {
+  prNumber: number;
+  prTitle: string;
+  prState: "open" | "merged" | "closed";
+  prUrl: string;
 }
 
 export interface Task extends TaskDoc {

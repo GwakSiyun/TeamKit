@@ -8,6 +8,8 @@ export interface ProjectDoc {
   memberIds: string[];
   taskCounter: number;
   createdAt: Timestamp | null;
+  /** 연결된 GitHub 레포 (서버가 씀) */
+  github?: { owner: string; repo: string; connectedBy: string; connectedAt: Timestamp | null } | null;
 }
 
 export interface Project extends ProjectDoc {
