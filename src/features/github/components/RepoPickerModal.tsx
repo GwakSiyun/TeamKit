@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { controlClass } from "@/components/ui/Field";
@@ -50,7 +51,14 @@ export function RepoPickerModal({ onClose }: { onClose: () => void }) {
         </label>
         <input id="repo-search" className={controlClass(null, "h-9")} placeholder="레포 이름 검색" value={query} onChange={(e) => setQuery(e.target.value)} />
         {load.status === "loading" && <p className="py-6 text-center text-sm text-muted">GitHub에서 불러오는 중…</p>}
-        {load.status === "error" && <Notice tone="error">{load.message}</Notice>}
+        {load.status === "error" && (
+          <Notice tone="error">
+            {load.message}{" "}
+            <Link href="/account" className="font-semibold underline">
+              계정 설정으로
+            </Link>
+          </Notice>
+        )}
         {load.status === "ready" && (
           <div role="radiogroup" aria-label="레포" className="flex max-h-[300px] flex-col gap-0.5 overflow-auto">
             {repos.length === 0 && <p className="py-6 text-center text-sm text-muted">맞는 레포가 없어요</p>}
