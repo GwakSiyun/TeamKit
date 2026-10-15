@@ -43,3 +43,9 @@ env:
     value: "https://teamkit.site"
     availability:
       - RUNTIME
+
+  # 회의 녹음 음성 인식(Groq Whisper) 키 — 값은 Secret Manager 에만 (firebase apphosting:secrets:set GROQ_API_KEY)
+  - variable: GROQ_API_KEY
+    secret: GROQ_API_KEY
+    availability:
+      - RUNTIME

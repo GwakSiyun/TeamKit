@@ -18,17 +18,17 @@
 flowchart LR
     B[브라우저<br/>Next.js] -->|로그인| AUTH[Firebase Auth]
     B -->|실시간 읽기/쓰기<br/>보안 규칙 적용| FS[(Firestore)]
-    B -->|녹음 업로드| ST[(Storage)]
-    ST -->|업로드 완료 트리거| FN[Cloud Functions]
-    FN -->|음성 인식| STT[Whisper large-v3-turbo<br/>Groq API]
-    FN -->|결과 저장| FS
-    GH[GitHub] -->|웹훅 push / PR| FN
-    FN -->|카드 상태 갱신| FS
+    B -->|녹음 · 파일 · 메모| API[App Hosting 서버<br/>Next.js API 라우트]
+    API -->|음성 인식| STT[Whisper large-v3-turbo<br/>Groq API]
+    API -->|회의록 · 후보 저장| FS
+    GH[GitHub] -->|웹훅 push / PR| API
+    API -->|카드 상태 갱신| FS
 ```
 
-- ✅ Auth, Firestore
-- 🔜 Storage · Functions(Whisper 음성 인식) 8~9주차, GitHub 웹훅은 Functions 대신 App Hosting 서버의 Next.js API 라우트로 처리 ✅
-- Cloud Functions가 외부 API(Groq Whisper, GitHub)를 호출하려면 **Blaze(종량제) 요금제**가 필요하다.
+- ✅ Auth, Firestore, App Hosting(Next.js 서버)
+- 처음 계획한 Storage + Cloud Functions 대신, **App Hosting 서버의 Next.js API 라우트**가 음성 인식(`/api/meetings`)과 GitHub 웹훅(`/api/github/webhook`)을 처리한다. 서버가 하나라 배포 · 시크릿 관리가 단순하다.
+- 녹음 파일은 **저장하지 않는다** (텍스트로 바꾼 뒤 버림) → Storage 불필요, 회의 음성이 남지 않음
+- App Hosting(Cloud Run)이 외부 API(Groq Whisper, GitHub)를 호출하려면 **Blaze(종량제) 요금제**가 필요하다.
 
 ---
 
@@ -82,9 +82,9 @@ erDiagram
 | `projects/{projectId}` | `name`, `inviteCode`, `ownerId`, `memberIds[]`, `taskCounter`, `createdAt` (+ `github{owner, repo}` 11주차) | ✅ | `memberIds` 배열 → `array-contains` 로 "내 프로젝트" 조회 |
 | `inviteCodes/{code}` | `projectId`, `createdAt` | ✅ | 코드 → 프로젝트 찾기. 단건 조회만 허용 |
 | `…/joins/{uid}` | `code`, `at` | ✅ | 참여 증명. 규칙이 현재 초대 코드와 비교 ([보안](SECURITY.md#초대-코드-참여-설계-)) |
-| `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}`, `sourceMeetingId` 11~12주차) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
+| `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}` — 웹훅 서버만 씀) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
 | `…/tasks/{taskId}/history/{id}` | `from`, `to`, `source`(`manual`/`github`), `actor`, `at` | ✅ | 상태 변경 기록. 생성 · 상태 버튼마다 추가 |
-| `…/meetings/{meetingId}` | `title`, `recordedAt`, `durationSec`, `audioPath`, `sttStatus`, `segments[]`, `decisions[]`, `actionItems[]` | 🔜 8~9주차 | `sttStatus`: `uploading` · `processing` · `done` · `failed` |
+| `…/meetings/{meetingId}` | `title`, `source`(`audio`/`text`), `durationSec`, `segments[]{start, text}`, `decisions[]{text, segment}`, `actionItems[]{text, segment, taskNumber}`, `createdBy`, `createdAt` | ✅ | 만들기는 서버(`/api/meetings`)만. 브라우저는 `actionItems` 의 `taskNumber`(보드에 추가됨)만 수정 |
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
 | `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |
@@ -101,19 +101,12 @@ erDiagram
 
 ---
 
-## 3. Storage 🔜 8주차
+## 3. 서버 API (App Hosting · Next.js API 라우트) ✅
 
-| 경로 | 내용 |
-|---|---|
-| `meetings/{projectId}/{meetingId}.webm` | 회의 녹음 (최대 60분). 해당 프로젝트 멤버만 업로드·재생 |
+| 경로 | 호출 | 하는 일 |
+|---|---|---|
+| `POST /api/meetings` | 브라우저 (Firebase ID 토큰) | 멤버 확인 → 음성이면 Groq Whisper(`whisper-large-v3-turbo`, 한국어) 호출 · 메모면 줄 단위로 나눔 → 규칙 기반 결정사항 · 할 일 후보 추출 → `meetings` 저장 |
+| `POST /api/github/repos` · `connect` · `disconnect` | 브라우저 (Firebase ID 토큰) | 레포 목록 · 웹훅 등록 · 해제 |
+| `POST /api/github/webhook` | GitHub | 서명 검증 → 카드 번호 추출 → 카드 상태 · PR 정보 갱신 |
 
----
-
-## 4. Cloud Functions 🔜
-
-| 함수 | 트리거 | 하는 일 | 주차 |
-|---|---|---|---|
-| `transcribeMeeting` | Storage 업로드 완료 | Groq Whisper API 호출 → 문장·타임스탬프 저장 → 규칙 기반 결정사항·할 일 후보 추출 | 9 |
-| `githubWebhook` | HTTPS (GitHub 웹훅) | 서명 검증 → 카드 번호 추출 → 카드 상태·PR 정보 갱신 | 12 |
-
-리전은 Firestore와 같은 `asia-northeast3`.
+리전은 App Hosting 백엔드 `asia-east1`, Firestore 는 `asia-northeast3`. Storage · Cloud Functions 는 쓰지 않는다.

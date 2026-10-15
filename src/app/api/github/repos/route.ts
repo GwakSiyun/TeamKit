@@ -1,4 +1,5 @@
-import { fail, githubFetch, githubTokenOf, json, requireUser } from "@/features/github/server/http";
+import { githubFetch, githubTokenOf } from "@/features/github/server/http";
+import { fail, json, requireUser } from "@/lib/server/http";
 
 interface GithubRepo {
   full_name: string;

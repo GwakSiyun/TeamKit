@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { repoDocId } from "@/features/github/sync";
-import { fail, githubFetch, githubTokenOf, json, readBody, requireUser } from "@/features/github/server/http";
+import { githubFetch, githubTokenOf } from "@/features/github/server/http";
+import { fail, json, readBody, requireUser } from "@/lib/server/http";
 import { adminDb } from "@/lib/server/firebaseAdmin";
 
 /** 레포 연결 해제 (프로젝트를 만든 사람만). 웹훅 삭제는 실패해도(이미 지워짐 등) 연결 정보는 지운다 */

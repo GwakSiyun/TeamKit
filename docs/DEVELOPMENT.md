@@ -75,7 +75,7 @@ gitGraph
 
 - 실제 값은 `.env.local` (커밋 안 함), 예시는 `.env.local.example`
 - `NEXT_PUBLIC_` 이 붙은 값은 브라우저에 노출된다 → **공개돼도 되는 값만** (Firebase 웹 설정)
-- 시크릿(GitHub Client Secret, Groq API 키, 웹훅 Secret)은 Firebase 콘솔 / Cloud Functions 환경 변수에만 → [보안 설계](SECURITY.md)
+- 시크릿(GitHub Client Secret, Groq API 키, 웹훅 Secret)은 Firebase 콘솔 / App Hosting 시크릿(Secret Manager)에만 → [보안 설계](SECURITY.md)
 
 ## 7. 실행
 

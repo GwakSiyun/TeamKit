@@ -133,6 +133,10 @@ export async function deleteProject(project: Project): Promise<SimpleResult> {
     const histories = await Promise.all(tasks.docs.map((t) => getDocs(collection(t.ref, "history"))));
     await deleteInChunks([...histories.flatMap((h) => h.docs.map((d) => d.ref)), ...tasks.docs.map((t) => t.ref)]);
 
+    // 회의록에는 회의 내용 전문이 있으니 프로젝트와 함께 지운다
+    const meetings = await getDocs(collection(db, "projects", project.id, "meetings"));
+    await deleteInChunks(meetings.docs.map((m) => m.ref));
+
     const joins = await getDocs(collection(db, "projects", project.id, "joins"));
     const batch = writeBatch(db);
     joins.forEach((j) => batch.delete(j.ref));
