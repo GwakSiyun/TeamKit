@@ -27,7 +27,7 @@ flowchart LR
 ```
 
 - ✅ Auth, Firestore
-- 🔜 Storage · Functions(Whisper 음성 인식) 8~9주차, Functions(GitHub 웹훅) 12주차
+- 🔜 Storage · Functions(Whisper 음성 인식) 8~9주차, GitHub 웹훅은 Functions 대신 App Hosting 서버의 Next.js API 라우트로 처리 ✅
 - Cloud Functions가 외부 API(Groq Whisper, GitHub)를 호출하려면 **Blaze(종량제) 요금제**가 필요하다.
 
 ---
@@ -87,8 +87,8 @@ erDiagram
 | `…/meetings/{meetingId}` | `title`, `recordedAt`, `durationSec`, `audioPath`, `sttStatus`, `segments[]`, `decisions[]`, `actionItems[]` | 🔜 8~9주차 | `sttStatus`: `uploading` · `processing` · `done` · `failed` |
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
-| `…/githubEvents/{deliveryId}` | `type`, `title`, `author`, `url`, `taskNumber`, `at` | 🔜 12주차 | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지 |
-| `githubRepos/{owner__repo}` | `projectId`, `webhookSecret` | 🔜 12주차 | 클라이언트 접근 금지, Functions만 |
+| `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |
+| `githubRepos/{owner__repo}` | `projectId`, `fullName`, `webhookSecret`, `hookId`, `connectedBy`, `connectedAt` | ✅ | 브라우저 접근 금지, 서버(Admin SDK)만 |
 
 `…` = `projects/{projectId}`
 

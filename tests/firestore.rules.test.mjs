@@ -367,3 +367,41 @@ describe("일정 투표", () => {
     await assertFails(getDoc(doc(db("mallory"), "projects", PID, "polls", "p1", "responses", "alice")));
   });
 });
+
+describe("GitHub 연동 데이터", () => {
+  test("멤버는 GitHub 활동 기록을 읽을 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "projects", PID, "githubEvents", "d1"), { type: "push", title: "TM-1 로그인", taskNumbers: [1] });
+    });
+    await assertSucceeds(getDoc(doc(db("bob"), "projects", PID, "githubEvents", "d1")));
+  });
+  test("브라우저는 GitHub 활동 기록을 쓸 수 없다 (가짜 이벤트 방지)", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "githubEvents", "fake"), { type: "pull_request", title: "가짜 머지" }));
+  });
+  test("브라우저는 웹훅 secret 을 읽을 수 없다", async () => {
+    await seedProject();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "githubRepos", "owner__repo"), { projectId: PID, webhookSecret: "s3cret" });
+    });
+    await assertFails(getDoc(doc(db("alice"), "githubRepos", "owner__repo")));
+  });
+  test("브라우저는 할 일의 PR 정보를 위조할 수 없다", async () => {
+    await seedProject();
+    await seedTask();
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { github: { prNumber: 1, prState: "merged" }, updatedAt: serverTimestamp() }));
+  });
+  test("브라우저는 할 일을 만들 때 브랜치를 넣을 수 없다", async () => {
+    await seedProject();
+    await assertFails(createTaskBatch("alice", { extra: { branch: "feature/TM-1" } }).commit());
+  });
+  test("GitHub 정보가 붙은 할 일도 일반 수정은 된다", async () => {
+    await seedProject();
+    await seedTask();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "projects", PID, "tasks", "t1"), { branch: "feature/TM-1", github: { prNumber: 3, prTitle: "x", prState: "open", prUrl: "u" } });
+    });
+    await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { title: "로그인 화면 v2", updatedAt: serverTimestamp() }));
+  });
+});

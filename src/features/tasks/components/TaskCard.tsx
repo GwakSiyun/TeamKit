@@ -5,6 +5,7 @@ import { formatShort } from "@/lib/dates";
 import { taskKey } from "../constants";
 import { lateDays } from "../deadline";
 import type { Task } from "../types";
+import { GithubBadge } from "./GithubBadge";
 import { StatusButtons } from "./StatusButtons";
 
 interface TaskCardProps {
@@ -23,6 +24,11 @@ export function TaskCard({ projectId, task, assigneeName, today, onOpen }: TaskC
       <button type="button" onClick={onOpen} className="cursor-pointer text-left text-sm leading-snug font-medium hover:underline hover:decoration-[#C9C7C2]">
         {task.title}
       </button>
+      {(task.github || task.branch) && (
+        <div className="flex flex-wrap gap-1">
+          <GithubBadge task={task} />
+        </div>
+      )}
       <div className="flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-2">
           <span className="font-mono text-xs text-muted">{taskKey(task.number)}</span>

@@ -88,6 +88,14 @@ projects/{projectId}/tasks/{taskId}  (할 일)
                  담당자는 멤버만, createdBy = 본인
   update       : 멤버 + 형식 검사, 카드 번호 · 만든 사람 · 만든 시각은 못 바꿈
 
+projects/{projectId}/githubEvents/{deliveryId}  (GitHub 활동)
+  read   : 멤버만 / 쓰기는 웹훅 서버만 (브라우저 쓰기 규칙 없음)
+
+githubRepos/{owner__repo}  (레포 → 프로젝트, 웹훅 secret)
+  규칙 없음 → 브라우저 읽기 · 쓰기 전부 거부. 서버(Admin SDK)만 접근
+
+할 일의 branch · github(PR 정보): 브라우저는 만들 때 넣을 수 없고 수정할 때 바꿀 수 없음 → 웹훅 서버만
+
 projects/{projectId}/polls/{pollId}  (일정 투표)
   read   : 멤버만
   create : 멤버 + 형식 검사(기간 최대 14일, 0~24시, 회의 길이 1·2시간), 처음엔 반드시 open · 확정 시간 없음
@@ -130,7 +138,7 @@ sequenceDiagram
 
 ### 규칙 자동 테스트 ✅
 
-[`tests/firestore.rules.test.mjs`](../tests/firestore.rules.test.mjs) — Firebase 에뮬레이터에서 실제 규칙으로 **52개 시나리오** 검증 (`npm run test:rules`)
+[`tests/firestore.rules.test.mjs`](../tests/firestore.rules.test.mjs) — Firebase 에뮬레이터에서 실제 규칙으로 **58개 시나리오** 검증 (`npm run test:rules`)
 
 | 분류 | 확인하는 것 (예) |
 |---|---|
@@ -142,6 +150,7 @@ sequenceDiagram
 | 삭제 | 만든 사람은 프로젝트 · 초대 코드 · 참여 기록 한 번에 삭제, 멤버는 프로젝트 · 초대 코드 삭제 거부, 멤버는 참여 기록 목록 조회 거부 |
 | 할 일 | 멤버는 번호 +1 과 함께 생성, 비멤버 생성 · 읽기 거부, 번호 건너뛰기 · 중복 거부, 비멤버 담당자 거부, 시작일 > 마감일 거부, 상태 변경 허용, 번호 수정 거부, taskCounter 외 필드 수정 거부, 기록에 남의 이름 · GitHub 출처 쓰기 거부 |
 | 할 일 삭제 권한 | 관계없는 멤버 삭제 거부, 만든 사람 · 담당자 · 프로젝트를 만든 사람 삭제 허용 |
+| GitHub 연동 데이터 | 멤버는 활동 기록 읽기 허용, 브라우저의 활동 기록 쓰기 거부(가짜 이벤트), 웹훅 secret 읽기 거부, 할 일 PR 정보 위조 거부, 생성 시 브랜치 지정 거부 |
 | 일정 투표 | 멤버 생성 허용 · 비멤버 거부, 14일 초과 거부, 처음부터 확정 거부, 만든 사람만 확정, 본인 응답만, 확정 후 응답 거부, 비멤버 응답 조회 거부 |
 
 ### 다음 규칙 🔜
@@ -161,6 +170,25 @@ sequenceDiagram
 
 ---
 
+### GitHub 웹훅 처리 ✅
+
+```mermaid
+sequenceDiagram
+    participant G as GitHub
+    participant W as /api/github/webhook (App Hosting)
+    participant D as Firestore (Admin SDK)
+
+    G->>W: push / create / pull_request + X-Hub-Signature-256
+    W->>D: githubRepos/{레포} 에서 projectId · secret 조회 (없으면 404)
+    W->>W: HMAC-SHA256(secret, 원본 body) 와 서명 비교 → 다르면 401
+    W->>D: githubEvents/{X-GitHub-Delivery} create → 이미 있으면 중복이라 종료
+    W->>W: 브랜치 · 커밋 · PR 제목에서 TM-n 추출
+    W->>D: 카드 상태 앞으로만 이동 + PR 정보 + 변경 기록(source: github)
+```
+
+- 레포 연결 · 해제 API(`/api/github/connect` · `disconnect`)는 **Firebase ID 토큰**을 서버에서 검증하고, **프로젝트를 만든 사람**인지 확인한 뒤 사용자 GitHub 토큰으로 웹훅을 만든다/지운다
+- 웹훅 secret 은 레포마다 32바이트 난수, 브라우저로 내려가지 않는다
+
 ## 4. 시크릿 관리
 
 | 값 | 어디에 있나 | 브라우저 노출 |
@@ -169,7 +197,7 @@ sequenceDiagram
 | GitHub OAuth Client Secret | Firebase 콘솔에만 입력 | ❌ 코드·저장소 어디에도 없음 |
 | 사용자 GitHub 토큰 | Firestore `private` 경로 (본인만) | 본인 브라우저에서만 |
 | Groq API 키 (Whisper 음성 인식) 🔜 9주차 | Cloud Functions 시크릿 (`GROQ_API_KEY`) | ❌ |
-| GitHub 웹훅 Secret 🔜 12주차 | `githubRepos` 컬렉션 (클라이언트 접근 금지) | ❌ |
+| GitHub 웹훅 Secret ✅ | `githubRepos/{owner__repo}` — 규칙이 없어 브라우저 접근 불가, 서버(Admin SDK)만 | ❌ |
 
 - `.env.local` 은 `.gitignore` 로 제외, 예시 파일 `.env.local.example` 만 커밋
 - 배포 설정 `apphosting.yaml` 에는 공개용 Firebase 웹 설정만 값으로 둔다. 시크릿(Groq 키 등)은 App Hosting / Functions **secret** 으로 등록하고 파일에는 이름만 적는다
@@ -185,7 +213,7 @@ sequenceDiagram
 | 8~9주차 | Storage 규칙: 회의 녹음 파일은 해당 프로젝트 멤버만 업로드·재생 |
 | 9주차 | 음성 인식(Groq Whisper) 호출은 Cloud Functions에서만 (키를 브라우저에 두지 않음) |
 | 11주차 | GitHub API 호출을 Cloud Functions로 옮기고, `private/github` 의 **클라이언트 읽기 차단** (쓰기만 허용, 서버가 Admin SDK로 읽음) |
-| 12주차 | GitHub 웹훅 **서명 검증**(`X-Hub-Signature-256`, HMAC-SHA256) + `X-GitHub-Delivery` 로 중복 처리 방지 |
+| 12주차 ✅ | GitHub 웹훅 **서명 검증**(`X-Hub-Signature-256`, HMAC-SHA256, 상수 시간 비교) + `X-GitHub-Delivery` 로 중복 처리 방지, 서버 API 는 Firebase ID 토큰 검증 후 동작 |
 
 ## 6. 알려진 한계 ⚠️
 

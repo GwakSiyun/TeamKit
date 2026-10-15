@@ -17,6 +17,7 @@ import { lateDays } from '../deadline';
 import { useTaskHistory } from '../hooks';
 import { deleteTask } from '../services';
 import type { Task } from '../types';
+import { GithubBadge } from './GithubBadge';
 import { StatusButtons } from './StatusButtons';
 
 function Prop({
@@ -120,13 +121,29 @@ export function TaskDetailModal({
               {late > 0 && <Tag tone="redSolid">{late}일 지연</Tag>}
             </Prop>
             <Prop icon="github" label="GitHub">
-              <span className="text-muted">
-                브랜치 · 커밋 · PR에{' '}
-                <span className="font-mono text-ink">
-                  {taskKey(task.number)}
+              {task.branch || task.github ? (
+                <>
+                  {task.branch && (
+                    <span className="rounded bg-side px-1.5 py-0.5 font-mono text-xs">
+                      {task.branch}
+                    </span>
+                  )}
+                  <GithubBadge task={task} linked />
+                  {task.github && (
+                    <span className="min-w-0 truncate text-xs text-muted">
+                      {task.github.prTitle}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted">
+                  브랜치 · 커밋 · PR에{' '}
+                  <span className="font-mono text-ink">
+                    {taskKey(task.number)}
+                  </span>
+                  를 넣으면 자동으로 연결돼요
                 </span>
-                를 넣으면 여기에 연결돼요 (11~12주차)
-              </span>
+              )}
             </Prop>
           </div>
 
@@ -152,7 +169,9 @@ export function TaskDetailModal({
                   {h.at ? formatDateTime(h.at.toDate()) : ''}
                 </span>
                 <Tag tone={h.source === 'github' ? 'purple' : 'gray'}>
-                  {h.source === 'github' ? 'GitHub' : nameOf(h.actor)}
+                  {h.source === 'github'
+                    ? `GitHub · ${h.actor.replace(/^github:/, '')}`
+                    : nameOf(h.actor)}
                 </Tag>
                 <span className="text-sub">
                   {h.from

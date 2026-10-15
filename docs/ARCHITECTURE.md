@@ -20,6 +20,7 @@ TeamKit/
    │  │  ├─ login/page.tsx            /login
    │  │  ├─ signup/page.tsx           /signup
    │  │  └─ reset-password/page.tsx   /reset-password
+   │  ├─ api/github/                  서버 API (App Hosting) — repos · connect · disconnect · webhook
    │  ├─ projects/page.tsx            /projects 내 프로젝트 목록
    │  ├─ account/page.tsx             /account 계정 설정 (GitHub 연결)
    │  └─ p/[projectId]/               프로젝트 내부 (멤버가 아니면 접근 불가 화면)
@@ -43,6 +44,11 @@ TeamKit/
    │  ├─ dashboard/                   대시보드 (간트)
    │  │  ├─ gantt.ts                  간트 기간 계산 · 담당자별 막대 (순수 함수)
    │  │  └─ components/               DashboardView · GanttChart · StatCard · TaskList
+   │  ├─ github/                      GitHub 연동
+   │  │  ├─ sync.ts                   카드 번호 추출 · 상태 앞으로만 이동 — 순수 함수
+   │  │  ├─ server/http.ts            (서버 전용) ID 토큰 검증 · GitHub REST 호출
+   │  │  ├─ api.ts · hooks.ts         브라우저 → 서버 API 호출 / 활동 기록 구독
+   │  │  └─ components/               GithubView · RepoPickerModal
    │  ├─ polls/                       일정 맞추기
    │  │  ├─ slots.ts                  날짜 · 시간 칸, 추천(연속 N시간 모두 되는 사람 수) — 순수 함수
    │  │  ├─ services.ts · hooks.ts    투표 · 내 응답 저장 · 확정 / 실시간 구독
@@ -70,6 +76,7 @@ TeamKit/
    │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)
    ├─ hooks/useTransientState.ts      화면을 떠나면 처음 값으로 돌아가는 상태 (모달 · 드롭다운)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
+   ├─ lib/server/firebaseAdmin.ts     (서버 전용) Firebase Admin SDK — App Hosting 서비스 계정으로 동작
    ├─ lib/dates.ts                    "YYYY-MM-DD" 날짜 계산 · 표시
    └─ constants/app.ts                앱 이름
 ```
@@ -79,7 +86,6 @@ TeamKit/
 | 기능 | 라우트 | 기능 코드 |
 |---|---|---|
 | 회의록 (8~9주차) | `app/p/[projectId]/meetings/` | `features/meetings/` + `functions/` |
-| GitHub 연동 (11~12주차) | `app/p/[projectId]/github/` | `features/github/` + `functions/` |
 
 ## 코드 흐름
 
