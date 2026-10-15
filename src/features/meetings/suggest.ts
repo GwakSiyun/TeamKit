@@ -2,7 +2,7 @@ import { addDays, weekdayOf } from "@/lib/dates";
 
 /**
  * 할 일 후보 문장 → 카드에 넣을 값 (규칙 기반).
- * "기준씨는 금요일까지 비밀번호 찾기 담당해주시고" → 제목 "비밀번호 찾기" · 담당 손기준 · 마감 금요일.
+ * "기준씨는 금요일까지 비밀번호 찾기 담당해주시고" → 제목 "비밀번호 찾기" · 담당 손기준 · 회의한 날 ~ 금요일.
  * 화면에서 폼에 미리 채워 보여주고, 사람이 확인 · 수정한 뒤 추가한다.
  */
 
@@ -190,7 +190,8 @@ export function suggestTask(text: string, members: readonly SuggestMember[], bas
   return {
     title: title.length >= 2 ? title.slice(0, 100) : text.slice(0, 100),
     assigneeId: assignee.id,
-    startDate: dates.startDate,
+    // "~부터" 가 없으면 회의한 날부터 시작 (마감일이 회의 날보다 앞이면 비워둔다)
+    startDate: dates.startDate ?? (!dates.dueDate || dates.dueDate >= baseISO ? baseISO : null),
     dueDate: dates.dueDate,
   };
 }
