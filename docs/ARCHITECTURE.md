@@ -43,6 +43,10 @@ TeamKit/
    │  ├─ dashboard/                   대시보드 (간트)
    │  │  ├─ gantt.ts                  간트 기간 계산 · 담당자별 막대 (순수 함수)
    │  │  └─ components/               DashboardView · GanttChart · StatCard · TaskList
+   │  ├─ polls/                       일정 맞추기
+   │  │  ├─ slots.ts                  날짜 · 시간 칸, 추천(연속 N시간 모두 되는 사람 수) — 순수 함수
+   │  │  ├─ services.ts · hooks.ts    투표 · 내 응답 저장 · 확정 / 실시간 구독
+   │  │  └─ components/               PollsView · PollFormModal · PollDetailView · Heatmap(드래그 입력)
    │  ├─ tasks/                       할 일 보드
    │  │  ├─ services.ts               만들기(카드 번호 트랜잭션) · 수정 · 상태 변경(+기록) · 삭제
    │  │  ├─ hooks.ts                  할 일 목록 · 변경 기록 실시간 구독
@@ -75,7 +79,6 @@ TeamKit/
 | 기능 | 라우트 | 기능 코드 |
 |---|---|---|
 | 회의록 (8~9주차) | `app/p/[projectId]/meetings/` | `features/meetings/` + `functions/` |
-| 일정 맞추기 (10주차) | `app/p/[projectId]/polls/` | `features/polls/` |
 | GitHub 연동 (11~12주차) | `app/p/[projectId]/github/` | `features/github/` + `functions/` |
 
 ## 코드 흐름

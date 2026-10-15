@@ -19,6 +19,25 @@ service cloud.firestore {
       return v == null || (v is string && v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
     }
 
+    function toDate(iso) {
+      return timestamp.date(int(iso[0:4]), int(iso[5:7]), int(iso[8:10]));
+    }
+
+    // 일정 투표 형식: 기간 최대 14일, 하루 중 시간 0~24시, 회의 길이 1 · 2시간
+    function validPoll(p) {
+      return p.keys().hasOnly(['title', 'startDate', 'endDate', 'startHour', 'endHour', 'durationHours',
+                               'status', 'confirmedSlot', 'createdBy', 'createdAt'])
+        && p.title is string && p.title.size() >= 1 && p.title.size() <= 60
+        && isDateOrNull(p.startDate) && p.startDate != null
+        && isDateOrNull(p.endDate) && p.endDate != null
+        && p.startDate <= p.endDate
+        && toDate(p.endDate) - toDate(p.startDate) <= duration.value(13, 'd')
+        && p.startHour is int && p.endHour is int
+        && p.startHour >= 0 && p.endHour <= 24 && p.startHour < p.endHour
+        && p.durationHours in [1, 2]
+        && p.status in ['open', 'confirmed'];
+    }
+
     // 할 일 삭제 권한: 할 일을 만든 사람 · 담당자 · 프로젝트를 만든 사람
     function canDeleteTask(projectId, task) {
       return isMember(projectId)
@@ -149,6 +168,40 @@ service cloud.firestore {
         allow read: if signedIn() && get(projectPath(projectId)).data.ownerId == request.auth.uid;
         allow delete: if signedIn()
           && (request.auth.uid == uid || get(projectPath(projectId)).data.ownerId == request.auth.uid);
+      }
+
+      // 일정 투표: 멤버만 보고 만든다. 확정 · 다시 열기 · 삭제는 투표를 만든 사람(삭제는 프로젝트 만든 사람도)
+      match /polls/{pollId} {
+        allow read: if isMember(projectId);
+        allow create: if isMember(projectId)
+          && validPoll(request.resource.data)
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.status == 'open'
+          && request.resource.data.confirmedSlot == null;
+        allow update: if isMember(projectId)
+          && resource.data.createdBy == request.auth.uid
+          && validPoll(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedSlot']);
+        allow delete: if isMember(projectId)
+          && (resource.data.createdBy == request.auth.uid || get(projectPath(projectId)).data.ownerId == request.auth.uid);
+
+        // 가능 시간 응답: 사람마다 문서 1개, 본인 것만 쓰기, 투표가 열려 있을 때만
+        match /responses/{uid} {
+          allow read: if isMember(projectId);
+          allow write: if isMember(projectId)
+            && request.auth.uid == uid
+            && get(/databases/$(database)/documents/projects/$(projectId)/polls/$(pollId)).data.status == 'open'
+            && request.resource.data.keys().hasOnly(['slots', 'updatedAt'])
+            && request.resource.data.slots is list
+            && request.resource.data.slots.size() <= 336
+            && request.resource.data.updatedAt == request.time;
+          // 본인, 또는 투표를 지울 수 있는 사람(투표를 만든 사람 · 프로젝트를 만든 사람)이 투표와 함께 지움
+          allow delete: if isMember(projectId)
+            && (request.auth.uid == uid
+              || get(/databases/$(database)/documents/projects/$(projectId)/polls/$(pollId)).data.createdBy == request.auth.uid
+              || get(projectPath(projectId)).data.ownerId == request.auth.uid);
+        }
       }
     }
   }
