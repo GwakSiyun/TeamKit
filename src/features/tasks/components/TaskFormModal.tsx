@@ -9,7 +9,7 @@ import { useAuth } from "@/features/auth/AuthProvider";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { DESCRIPTION_MAX, TITLE_MAX, taskKey } from "../constants";
 import { createTask, updateTask } from "../services";
-import type { Task, TaskInput } from "../types";
+import type { Task, TaskInput, TaskResult } from "../types";
 
 const UNASSIGNED = "";
 
@@ -18,19 +18,24 @@ interface TaskFormModalProps {
   onClose: () => void;
   /** 있으면 수정, 없으면 새로 만들기 */
   task?: Task | null;
+  /** 새로 만들 때 미리 채울 값 (회의록 할 일 후보 등) */
+  initial?: TaskInput;
+  /** 새로 만들 때 기본 createTask 대신 쓸 동작 (회의록: 추가됨 표시까지 한 트랜잭션) */
+  onCreate?: (input: TaskInput) => Promise<TaskResult>;
+  heading?: string;
 }
 
-function initialValues(task: Task | null | undefined, myUid: string): TaskInput {
+function initialValues(task: Task | null | undefined, myUid: string, initial?: TaskInput): TaskInput {
   if (task) {
     return { title: task.title, description: task.description, assigneeId: task.assigneeId, startDate: task.startDate, dueDate: task.dueDate };
   }
-  return { title: "", description: "", assigneeId: myUid || null, startDate: null, dueDate: null };
+  return initial ?? { title: "", description: "", assigneeId: myUid || null, startDate: null, dueDate: null };
 }
 
-export function TaskFormModal({ open, onClose, task }: TaskFormModalProps) {
+export function TaskFormModal({ open, onClose, task, initial, onCreate, heading }: TaskFormModalProps) {
   const { project, members } = useCurrentProject();
   const { user } = useAuth();
-  const [values, setValues] = useState<TaskInput>(() => initialValues(task, user?.uid ?? ""));
+  const [values, setValues] = useState<TaskInput>(() => initialValues(task, user?.uid ?? "", initial));
   const [errors, setErrors] = useState<{ title?: string; dueDate?: string }>({});
   const [serverError, setServerError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -40,7 +45,7 @@ export function TaskFormModal({ open, onClose, task }: TaskFormModalProps) {
   }
 
   function close(): void {
-    setValues(initialValues(task, user?.uid ?? ""));
+    setValues(initialValues(task, user?.uid ?? "", initial));
     setErrors({});
     setServerError(null);
     onClose();
@@ -57,7 +62,7 @@ export function TaskFormModal({ open, onClose, task }: TaskFormModalProps) {
 
     setPending(true);
     setServerError(null);
-    const result = task ? await updateTask(project.id, task.id, input) : await createTask(project.id, input);
+    const result = task ? await updateTask(project.id, task.id, input) : onCreate ? await onCreate(input) : await createTask(project.id, input);
     setPending(false);
     if (!result.ok) {
       setServerError(result.message);
@@ -72,7 +77,7 @@ export function TaskFormModal({ open, onClose, task }: TaskFormModalProps) {
   ];
 
   return (
-    <Modal open={open} onClose={close} title={task ? `${taskKey(task.number)} 수정` : "새 할 일"} width={520}>
+    <Modal open={open} onClose={close} title={task ? `${taskKey(task.number)} 수정` : (heading ?? "새 할 일")} width={520}>
       <form onSubmit={handleSubmit} noValidate>
         <ModalBody>
           {serverError && <Notice tone="error">{serverError}</Notice>}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { BackLink } from "@/components/common/BackLink";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
@@ -13,12 +13,14 @@ import { Tag } from "@/components/ui/Tag";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { projectBase } from "@/features/projects/navigation";
+import { TaskFormModal } from "@/features/tasks/components/TaskFormModal";
 import { TASK_KEY_PREFIX } from "@/features/tasks/constants";
 import { useTransientState } from "@/hooks/useTransientState";
-import { formatDateTime } from "@/lib/dates";
+import { formatDateTime, formatShort, todayISO } from "@/lib/dates";
 import { formatClock } from "../extract";
 import { useMeeting } from "../hooks";
 import { addActionItemToBoard, deleteMeeting } from "../services";
+import { suggestTask, type TaskSuggestion } from "../suggest";
 import { KeywordGuide } from "./KeywordGuide";
 
 function Prop({ icon, label, children }: { icon: IconName; label: string; children: ReactNode }) {
@@ -45,6 +47,13 @@ function Section({ title, count, children }: { title: string; count: number; chi
   );
 }
 
+function periodLabel(s: Pick<TaskSuggestion, "startDate" | "dueDate">): string | null {
+  if (s.startDate && s.dueDate) return `${formatShort(s.startDate)}~${formatShort(s.dueDate)}`;
+  if (s.dueDate) return `~${formatShort(s.dueDate)}`;
+  if (s.startDate) return `${formatShort(s.startDate)}~`;
+  return null;
+}
+
 /** 후보를 누르면 본문의 해당 줄로 이동 */
 function segmentId(index: number): string {
   return `seg-${index}`;
@@ -57,8 +66,8 @@ export function MeetingDetailView() {
   const router = useRouter();
   const state = useMeeting(project.id, meetingId);
   const [confirmingDelete, setConfirmingDelete] = useTransientState(false);
-  const [adding, setAdding] = useState<number | null>(null);
-  const [addError, setAddError] = useState<string | null>(null);
+  // 보드에 추가 중인 후보 번호 (폼이 열림)
+  const [adding, setAdding] = useTransientState<number | null>(null);
 
   const base = `${projectBase(project.id)}/meetings`;
 
@@ -78,14 +87,11 @@ export function MeetingDetailView() {
   const creatorName = members.find((m) => m.id === meeting.createdBy)?.name ?? "알 수 없음";
   const decisionSegs = new Set(meeting.decisions.map((d) => d.segment));
   const actionSegs = new Set(meeting.actionItems.map((a) => a.segment));
-
-  async function handleAdd(index: number): Promise<void> {
-    setAdding(index);
-    setAddError(null);
-    const result = await addActionItemToBoard(project.id, meeting.id, index);
-    setAdding(null);
-    if (!result.ok) setAddError(result.message);
-  }
+  // 날짜 표현("금요일까지")은 회의한 날 기준으로 계산
+  const meetingDay = meeting.createdAt ? todayISO(meeting.createdAt.toDate()) : todayISO();
+  const suggestions = meeting.actionItems.map((a) => suggestTask(a.text, members, meetingDay));
+  const nameOf = (id: string): string => members.find((m) => m.id === id)?.name ?? "알 수 없음";
+  const addingItem = adding !== null ? meeting.actionItems[adding] : undefined;
 
   return (
     <>
@@ -152,36 +158,69 @@ export function MeetingDetailView() {
           </Section>
 
           <Section title="할 일 후보" count={meeting.actionItems.length}>
-            {addError && <Notice tone="error">{addError}</Notice>}
             {meeting.actionItems.length === 0 ? (
               <p className="px-2 py-3 text-[13px] text-muted">찾은 할 일 후보가 없어요</p>
             ) : (
               <ul className="flex flex-col">
-                {meeting.actionItems.map((a, i) => (
-                  <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-[#F1F1EF] px-2 py-2">
-                    <a href={`#${segmentId(a.segment)}`} className="text-sm leading-relaxed break-keep hover:underline">
-                      {a.text}
-                    </a>
-                    {a.taskNumber !== null ? (
-                      <Tag tone="green">
-                        <Icon name="check" size={11} />
-                        {TASK_KEY_PREFIX}-{a.taskNumber}
-                      </Tag>
-                    ) : (
-                      <button type="button" onClick={() => handleAdd(i)} disabled={adding !== null} className={buttonClass("secondary", "h-6 px-2 text-xs")}>
-                        {adding === i ? "추가 중…" : "보드에 추가"}
-                      </button>
-                    )}
-                  </li>
-                ))}
+                {meeting.actionItems.map((a, i) => {
+                  const s = suggestions[i];
+                  const period = periodLabel(s);
+                  return (
+                    <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-[#F1F1EF] px-2 py-2.5">
+                      <div className="flex min-w-0 flex-col gap-1">
+                        <span className="text-sm font-semibold break-keep">{s.title}</span>
+                        {(s.assigneeId || period) && (
+                          <span className="flex flex-wrap items-center gap-1.5 text-xs text-sub">
+                            {s.assigneeId && (
+                              <span className="flex items-center gap-1">
+                                <Avatar seed={s.assigneeId} name={nameOf(s.assigneeId)} size={16} />
+                                {nameOf(s.assigneeId)}
+                              </span>
+                            )}
+                            {period && <span className="tabular-nums">{period}</span>}
+                          </span>
+                        )}
+                        <a href={`#${segmentId(a.segment)}`} className="truncate text-xs text-faint hover:text-sub hover:underline" title={a.text}>
+                          “{a.text}”
+                        </a>
+                      </div>
+                      {a.taskNumber !== null ? (
+                        <Tag tone="green">
+                          <Icon name="check" size={11} />
+                          {TASK_KEY_PREFIX}-{a.taskNumber}
+                        </Tag>
+                      ) : (
+                        <button type="button" onClick={() => setAdding(i)} className={buttonClass("secondary", "h-6 px-2 text-xs")}>
+                          보드에 추가
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
-            {meeting.actionItems.length > 0 && <p className="text-xs text-muted">추가하면 할 일 칸에 카드가 생겨요. 담당자 · 기간은 보드에서 정하세요.</p>}
+            {meeting.actionItems.length > 0 && <p className="text-xs text-muted">담당자 · 기간은 문장 속 이름과 “금요일까지” 같은 말로 채워요. 추가 전에 고칠 수 있어요.</p>}
           </Section>
 
           {meeting.decisions.length + meeting.actionItems.length === 0 && <KeywordGuide />}
         </div>
       </div>
+
+      {adding !== null && addingItem && (
+        <TaskFormModal
+          open
+          heading="회의록에서 할 일 추가"
+          initial={{
+            title: suggestions[adding].title,
+            description: `회의록 「${meeting.title}」에서 추가\n“${addingItem.text}”`,
+            assigneeId: suggestions[adding].assigneeId,
+            startDate: suggestions[adding].startDate,
+            dueDate: suggestions[adding].dueDate,
+          }}
+          onCreate={(input) => addActionItemToBoard(project.id, meeting.id, adding, input)}
+          onClose={() => setAdding(null)}
+        />
+      )}
 
       {confirmingDelete && (
         <ConfirmModal

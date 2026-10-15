@@ -1,6 +1,7 @@
 import { FirebaseError } from "firebase/app";
 import { collection, deleteDoc, doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
+import type { TaskInput } from "@/features/tasks/types";
 import type { ActionItem, MeetingResult } from "./types";
 
 function failure(e: unknown): MeetingResult {
@@ -46,10 +47,10 @@ export async function createMeeting(projectId: string, title: string, content: M
 }
 
 /**
- * 할 일 후보 → 보드 카드. 카드 번호 발급 · 할 일 생성 · 회의록에 "추가됨(TM-n)" 표시를 한 트랜잭션으로 처리한다
+ * 할 일 후보 → 보드 카드 (폼에서 확인 · 수정한 값으로). 카드 번호 발급 · 할 일 생성 · 회의록에 "추가됨(TM-n)" 표시를 한 트랜잭션으로 처리한다
  * (둘이 같이 눌러도 같은 후보가 두 번 추가되지 않는다).
  */
-export async function addActionItemToBoard(projectId: string, meetingId: string, index: number): Promise<MeetingResult> {
+export async function addActionItemToBoard(projectId: string, meetingId: string, index: number, input: TaskInput): Promise<MeetingResult> {
   const uid = firebaseAuth().currentUser?.uid;
   if (!uid) return { ok: false, message: "로그인한 뒤 추가할 수 있어요." };
 
@@ -66,14 +67,9 @@ export async function addActionItemToBoard(projectId: string, meetingId: string,
       if (item.taskNumber !== null) return item.taskNumber;
 
       const number = Number(project.data()?.taskCounter ?? 0) + 1;
-      const title = item.text.length > 100 ? `${item.text.slice(0, 99)}…` : item.text;
       tx.update(projectRef, { taskCounter: number });
       tx.set(taskRef, {
-        title,
-        description: `회의록 「${String(meeting.data()?.title ?? "")}」에서 추가`,
-        assigneeId: null,
-        startDate: null,
-        dueDate: null,
+        ...input,
         number,
         status: "todo",
         statusSource: "manual",
