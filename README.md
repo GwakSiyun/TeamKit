@@ -2,6 +2,8 @@
 
 소규모 개발팀(2~6명)의 협업 불편을 줄이는 웹 서비스 · 빅데이터처리 개인 프로젝트
 
+**서비스 주소: https://teamkit.site**
+
 | 문제 | 해결 기능 |
 |---|---|
 | 진행상황 공유 부재 — 마감 직전에야 문제를 앎 | **할 일 보드 + 간트 대시보드**, GitHub 커밋·PR로 카드 상태 **자동 반영** |
@@ -47,6 +49,6 @@ npm run dev                        # http://localhost:3000
 
 ## 배포
 
-Firebase App Hosting (Blaze 요금제) — `main` 에 머지되면 자동으로 빌드 · 배포된다. 환경 변수와 인스턴스 수는 [`apphosting.yaml`](apphosting.yaml).
+Firebase App Hosting (Blaze 요금제) — `main` 에 머지되면 자동으로 빌드 · 배포된다. 커스텀 도메인 `teamkit.site`(가비아 DNS: A · TXT · `_acme-challenge` 레코드), 기본 주소 `teamkit--teamkit-8c6d5.asia-east1.hosted.app` 도 그대로 동작한다. 환경 변수와 인스턴스 수는 [`apphosting.yaml`](apphosting.yaml).
 
 Firestore 보안 규칙: [`firestore.rules`](firestore.rules) · 테스트 `npm run test:rules` · 게시 `npx firebase deploy --only firestore:rules`
