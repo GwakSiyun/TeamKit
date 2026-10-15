@@ -12,6 +12,7 @@ import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { projectBase } from "@/features/projects/navigation";
 import { lateDays } from "@/features/tasks/deadline";
 import { useTasks } from "@/features/tasks/hooks";
+import { usePolls } from "@/features/polls/hooks";
 import { TaskDetailModal } from "@/features/tasks/components/TaskDetailModal";
 import { TaskFormModal } from "@/features/tasks/components/TaskFormModal";
 import { useTransientState } from "@/hooks/useTransientState";
@@ -22,6 +23,10 @@ import { StatCard } from "./StatCard";
 import { TaskList } from "./TaskList";
 
 const DUE_SOON_DAYS = 7;
+
+function hhmm(hour: number): string {
+  return `${String(hour).padStart(2, "0")}:00`;
+}
 
 /** 남은 일수 → 태그 색: 오늘·1일 빨강, 2~4일 주황, 5일 이상 초록 */
 function urgencyTone(daysLeft: number): "red" | "orange" | "green" {
@@ -48,6 +53,7 @@ function Section({ title, right, children }: { title: string; right?: ReactNode;
 export function DashboardView() {
   const { project, members } = useCurrentProject();
   const state = useTasks(project.id);
+  const pollsState = usePolls(project.id);
   const [modal, setModal] = useTransientState<OpenModal>(null);
   const today = todayISO();
   const [, month, day] = today.split("-").map(Number);
@@ -101,6 +107,12 @@ export function DashboardView() {
   const recent = [...tasks].sort((a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0)).slice(0, LIST_SIZE);
 
   const range = ganttRange(tasks, today);
+  // 확정된 회의: 오늘 이후 가장 가까운 것 → "다음 회의" 카드, 전부 → 간트 점선
+  const confirmed = (pollsState.status === "ready" ? pollsState.polls : []).flatMap((p) =>
+    p.status === "confirmed" && p.confirmedSlot ? [{ title: p.title, date: p.confirmedSlot.date, hour: p.confirmedSlot.hour, duration: p.durationHours }] : [],
+  );
+  const nextMeeting = confirmed.filter((m) => m.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour)[0] ?? null;
+  const meetingDates = new Set(confirmed.map((m) => m.date));
   const groups = ganttGroups(tasks, members, range);
   const selected = modal ? (tasks.find((t) => t.id === modal.taskId) ?? null) : null;
 
@@ -121,12 +133,20 @@ export function DashboardView() {
           tone={late.length > 0 ? "danger" : "default"}
           sub={late[0] ? `${late[0].title} · ${nameOf(late[0].assigneeId) ?? "담당자 없음"}` : "마감을 넘긴 할 일 없음"}
         />
-        <StatCard label="다음 회의" value="—" tone="muted" sub="일정 맞추기에서 확정하면 표시돼요" />
+        {nextMeeting ? (
+          <StatCard
+            label="다음 회의"
+            value={<span className="text-[#6940A5]">{`${formatShort(nextMeeting.date)}(${weekdayOf(nextMeeting.date)})`}</span>}
+            sub={`${hhmm(nextMeeting.hour)}–${hhmm(nextMeeting.hour + nextMeeting.duration)} · ${nextMeeting.title}`}
+          />
+        ) : (
+          <StatCard label="다음 회의" value="—" tone="muted" sub="일정 맞추기에서 확정하면 표시돼요" />
+        )}
       </div>
 
       <Section title="일정" right={<GanttLegend />}>
         {groups.length > 0 ? (
-          <GanttChart range={range} groups={groups} today={today} onOpenTask={(id) => setModal({ kind: "detail", taskId: id })} />
+          <GanttChart range={range} groups={groups} today={today} meetings={meetingDates} onOpenTask={(id) => setModal({ kind: "detail", taskId: id })} />
         ) : (
           <Notice tone="info">시작일이나 마감일이 있는 할 일이 이 기간에 없어요.</Notice>
         )}

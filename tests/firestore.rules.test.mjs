@@ -310,3 +310,60 @@ describe("할 일 삭제 권한", () => {
     await assertSucceeds(deleteDoc(doc(db("alice"), "projects", PID, "tasks", "t1")));
   });
 });
+
+const POLL = { title: "2주차 회고", startDate: "2026-10-19", endDate: "2026-10-25", startHour: 10, endHour: 22, durationHours: 2, status: "open", confirmedSlot: null };
+
+async function seedPoll({ status = "open", createdBy = "alice" } = {}) {
+  await env.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), "projects", PID, "polls", "p1"), { ...POLL, status, createdBy, createdAt: new Date() });
+  });
+}
+
+describe("일정 투표", () => {
+  test("멤버는 투표를 만들 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds(setDoc(doc(db("bob"), "projects", PID, "polls", "p1"), { ...POLL, createdBy: "bob", createdAt: serverTimestamp() }));
+  });
+  test("멤버가 아니면 투표를 만들 수 없다", async () => {
+    await seedProject();
+    await assertFails(setDoc(doc(db("mallory"), "projects", PID, "polls", "p1"), { ...POLL, createdBy: "mallory", createdAt: serverTimestamp() }));
+  });
+  test("기간이 14일을 넘으면 거부", async () => {
+    await seedProject();
+    await assertFails(setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, endDate: "2026-11-05", createdBy: "alice", createdAt: serverTimestamp() }));
+  });
+  test("처음부터 확정 상태로 만들 수 없다", async () => {
+    await seedProject();
+    await assertFails(setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, status: "confirmed", createdBy: "alice", createdAt: serverTimestamp() }));
+  });
+  test("만든 사람은 확정할 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedPoll();
+    await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { status: "confirmed", confirmedSlot: { date: "2026-10-20", hour: 19 } }));
+  });
+  test("만든 사람이 아니면 확정할 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedPoll();
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID, "polls", "p1"), { status: "confirmed", confirmedSlot: { date: "2026-10-20", hour: 19 } }));
+  });
+  test("본인 가능 시간은 쓸 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedPoll();
+    await assertSucceeds(setDoc(doc(db("bob"), "projects", PID, "polls", "p1", "responses", "bob"), { slots: ["2026-10-20T19"], updatedAt: serverTimestamp() }));
+  });
+  test("남의 가능 시간은 쓸 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedPoll();
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "polls", "p1", "responses", "alice"), { slots: ["2026-10-20T19"], updatedAt: serverTimestamp() }));
+  });
+  test("확정된 투표에는 응답할 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedPoll({ status: "confirmed" });
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "polls", "p1", "responses", "bob"), { slots: ["2026-10-20T19"], updatedAt: serverTimestamp() }));
+  });
+  test("멤버가 아니면 응답을 볼 수 없다", async () => {
+    await seedProject();
+    await seedPoll();
+    await assertFails(getDoc(doc(db("mallory"), "projects", PID, "polls", "p1", "responses", "alice")));
+  });
+});

@@ -85,8 +85,8 @@ erDiagram
 | `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}`, `sourceMeetingId` 11~12주차) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
 | `…/tasks/{taskId}/history/{id}` | `from`, `to`, `source`(`manual`/`github`), `actor`, `at` | ✅ | 상태 변경 기록. 생성 · 상태 버튼마다 추가 |
 | `…/meetings/{meetingId}` | `title`, `recordedAt`, `durationSec`, `audioPath`, `sttStatus`, `segments[]`, `decisions[]`, `actionItems[]` | 🔜 8~9주차 | `sttStatus`: `uploading` · `processing` · `done` · `failed` |
-| `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`, `durationHours`, `status`, `confirmedSlot` | 🔜 10주차 | |
-| `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"`), `updatedAt` | 🔜 10주차 | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
+| `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
+| `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
 | `…/githubEvents/{deliveryId}` | `type`, `title`, `author`, `url`, `taskNumber`, `at` | 🔜 12주차 | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지 |
 | `githubRepos/{owner__repo}` | `projectId`, `webhookSecret` | 🔜 12주차 | 클라이언트 접근 금지, Functions만 |
 

@@ -21,14 +21,23 @@ function columnStyle(count: number): React.CSSProperties {
   return { gridTemplateColumns: `${LABEL_WIDTH}px repeat(${count}, minmax(${DAY_MIN}px, 1fr))`, minWidth: LABEL_WIDTH + count * DAY_MIN };
 }
 
-/** 주말 · 오늘 배경 칸 (행마다 같은 그리드에 깔린다) */
-function Backdrop({ days, today }: { days: string[]; today: string }) {
+/** 주말 · 오늘 배경 칸 + 확정된 회의 날 세로 점선 (행마다 같은 그리드에 깔린다) */
+function Backdrop({ days, today, meetings }: { days: string[]; today: string; meetings: Set<string> }) {
   return (
     <>
       {days.map((d, i) => {
         const weekend = weekdayOf(d) === "토" || weekdayOf(d) === "일";
-        if (d !== today && !weekend) return null;
-        return <div key={d} aria-hidden className={d === today ? "bg-[#EAF3FB]" : "bg-[#FAFAF9]"} style={{ gridRow: 1, gridColumn: i + 2 }} />;
+        const meeting = meetings.has(d);
+        if (d !== today && !weekend && !meeting) return null;
+        const bg = d === today ? "bg-[#EAF3FB]" : weekend ? "bg-[#FAFAF9]" : "";
+        return (
+          <div
+            key={d}
+            aria-hidden
+            className={`${bg} ${meeting ? "border-l-2 border-dashed border-[#9A6DD7]" : ""}`}
+            style={{ gridRow: 1, gridColumn: i + 2 }}
+          />
+        );
       })}
     </>
   );
@@ -38,10 +47,12 @@ interface GanttChartProps {
   range: GanttRange;
   groups: GanttGroup[];
   today: string;
+  /** 확정된 회의 날짜 ("YYYY-MM-DD") */
+  meetings: Set<string>;
   onOpenTask: (taskId: string) => void;
 }
 
-export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps) {
+export function GanttChart({ range, groups, today, meetings, onOpenTask }: GanttChartProps) {
   const { days } = range;
   const grid = columnStyle(days.length);
 
@@ -49,7 +60,7 @@ export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps
     <div className="overflow-x-auto rounded-lg border border-line">
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
-        <Backdrop days={days} today={today} />
+        <Backdrop days={days} today={today} meetings={meetings} />
         <div className="flex items-center px-3 text-xs font-medium" style={{ gridRow: 1, gridColumn: 1 }}>
           담당자 · 할 일
         </div>
@@ -82,7 +93,7 @@ export function GanttChart({ range, groups, today, onOpenTask }: GanttChartProps
           </div>
           {g.bars.map((b) => (
             <div key={b.task.id} className="grid h-[34px] border-b border-[#F1F1EF] hover:bg-side/60" style={grid}>
-              <Backdrop days={days} today={today} />
+              <Backdrop days={days} today={today} meetings={meetings} />
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
@@ -121,6 +132,7 @@ export function GanttLegend() {
     { cls: "bg-[#C6DCF5] opacity-50", label: "완료" },
     { cls: "bg-[#FBE3A6] shadow-[inset_0_0_0_2px_var(--color-danger)]", label: "지연" },
     { cls: "bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]", label: "오늘" },
+    { cls: "w-0 rounded-none border-l-2 border-dashed border-[#9A6DD7]", label: "확정 회의" },
   ];
   return (
     <div className="flex flex-wrap gap-3 text-xs text-muted">
