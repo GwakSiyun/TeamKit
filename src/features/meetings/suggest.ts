@@ -179,6 +179,7 @@ function cleanTitle(text: string): string {
   return t
     .replace(/(\S)하고\s+/g, "$1 · ")
     .replace(/^(?:은|는|이|가)\s+/, "")
+    .replace(/(\S{2,})(?:은|는)$/, "$1") // 날짜를 뺀 뒤 남은 주제 조사 ("회원가입 화면은" → "회원가입 화면")
     .trim();
 }
 
