@@ -26,7 +26,7 @@ export function DangerZone() {
           </span>
           <span className="text-xs text-muted">
             {isOwner
-              ? '프로젝트와 초대 코드가 지워지고 팀원 모두 들어올 수 없어요. 되돌릴 수 없어요.'
+              ? '할 일 · 회의록 · 투표까지 모두 지워지고 팀원 모두 들어올 수 없어요. 되돌릴 수 없어요.'
               : '나가면 다시 초대 코드를 받아야 들어올 수 있어요.'}
           </span>
         </div>

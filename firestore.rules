@@ -127,6 +127,30 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['taskCounter'])
         && request.resource.data.taskCounter == resource.data.taskCounter + 1;
 
+      // 이름 바꾸기: 만든 사람만, 이름만
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1
+        && request.resource.data.name.size() <= 40;
+
+      // 초대 코드 재발급: 만든 사람만. 같은 배치에서 새 코드 문서가 이 프로젝트를 가리켜야 함
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['inviteCode'])
+        && request.resource.data.inviteCode is string
+        && request.resource.data.inviteCode.matches('^[A-HJ-NP-Z2-9]{6}$')
+        && getAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.projectId == projectId;
+
+      // 멤버 내보내기: 만든 사람만, 한 번에 한 명 빼기만 (추가 · 자기 자신 빼기 불가)
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
+        && resource.data.memberIds.hasAll(request.resource.data.memberIds)
+        && request.resource.data.memberIds.size() == resource.data.memberIds.size() - 1
+        && resource.data.ownerId in request.resource.data.memberIds;
+
       // 삭제: 만든 사람만
       allow delete: if signedIn() && request.auth.uid == resource.data.ownerId;
 
@@ -175,9 +199,10 @@ service cloud.firestore {
           && (request.auth.uid == uid || get(projectPath(projectId)).data.ownerId == request.auth.uid);
       }
 
-      // GitHub 활동 기록: 멤버만 읽기, 쓰기는 웹훅 서버(Admin SDK)만
+      // GitHub 활동 기록: 멤버만 읽기, 쓰기는 웹훅 서버(Admin SDK)만. 삭제는 프로젝트를 지울 때 만든 사람만
       match /githubEvents/{eventId} {
         allow read: if isMember(projectId);
+        allow delete: if signedIn() && get(projectPath(projectId)).data.ownerId == request.auth.uid;
       }
 
       // 회의록: 만들기는 서버(/api/meetings, Admin SDK)만 — 음성 인식 · 후보 추출 결과를 브라우저가 위조하지 못하게.
