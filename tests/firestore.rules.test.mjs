@@ -405,3 +405,69 @@ describe("GitHub 연동 데이터", () => {
     await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { title: "로그인 화면 v2", updatedAt: serverTimestamp() }));
   });
 });
+
+describe("회의록", () => {
+  const MEETING = {
+    title: "3주차 회의",
+    source: "text",
+    durationSec: null,
+    segments: [{ start: null, text: "로그인은 금요일까지 해주세요." }],
+    decisions: [],
+    actionItems: [{ text: "로그인은 금요일까지 해주세요.", segment: 0, taskNumber: null }],
+    createdBy: "bob",
+  };
+
+  async function seedMeeting() {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "projects", PID, "meetings", "m1"), { ...MEETING, createdAt: new Date() });
+    });
+  }
+
+  test("멤버는 회의록을 읽을 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertSucceeds(getDoc(doc(db("alice"), "projects", PID, "meetings", "m1")));
+  });
+  test("멤버가 아니면 회의록을 읽을 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertFails(getDoc(doc(db("mallory"), "projects", PID, "meetings", "m1")));
+  });
+  test("브라우저는 회의록을 직접 만들 수 없다 (서버만)", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(setDoc(doc(db("bob"), "projects", PID, "meetings", "m2"), { ...MEETING, createdAt: serverTimestamp() }));
+  });
+  test("할 일 후보를 보드에 추가 표시할 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertSucceeds(
+      updateDoc(doc(db("alice"), "projects", PID, "meetings", "m1"), { actionItems: [{ ...MEETING.actionItems[0], taskNumber: 1 }] }),
+    );
+  });
+  test("회의 내용 · 결정사항은 고칠 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID, "meetings", "m1"), { segments: [{ start: null, text: "조작" }] }));
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID, "meetings", "m1"), { decisions: [{ text: "가짜 결정", segment: 0 }] }));
+  });
+  test("할 일 후보를 늘리거나 줄일 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID, "meetings", "m1"), { actionItems: [] }));
+  });
+  test("만든 사람은 회의록을 지울 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertSucceeds(deleteDoc(doc(db("bob"), "projects", PID, "meetings", "m1")));
+  });
+  test("프로젝트를 만든 사람은 남의 회의록도 지울 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertSucceeds(deleteDoc(doc(db("alice"), "projects", PID, "meetings", "m1")));
+  });
+  test("다른 멤버는 남의 회의록을 지울 수 없다", async () => {
+    await seedThreeMembers();
+    await seedMeeting();
+    await assertFails(deleteDoc(doc(db("carol"), "projects", PID, "meetings", "m1")));
+  });
+});

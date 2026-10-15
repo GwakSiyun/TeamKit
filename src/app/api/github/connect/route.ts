@@ -1,7 +1,8 @@
 import { randomBytes } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { repoDocId } from "@/features/github/sync";
-import { fail, githubFetch, githubTokenOf, json, readBody, requireUser } from "@/features/github/server/http";
+import { githubFetch, githubTokenOf } from "@/features/github/server/http";
+import { fail, json, readBody, requireUser } from "@/lib/server/http";
 import { adminDb } from "@/lib/server/firebaseAdmin";
 
 const REPO_RE = /^[\w.-]+\/[\w.-]+$/;

@@ -73,7 +73,7 @@ TeamKit/
    ├─ components/                     여러 기능이 같이 쓰는 UI (새로 만들기 전에 여기부터 확인)
    │  ├─ ui/                          Modal · ConfirmModal · Dropdown · EmptyState · Field(Select · TextArea) · Notice · Icon · Avatar · Tag · button
    │  ├─ layout/                      PlainLayout (사이드바 없는 화면) · PageHeader (페이지 제목)
-   │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기) · PlannedFeature(구현 예정 안내)
+   │  └─ common/                      BrandMark(로고) · BackLink(뒤로가기)
    ├─ hooks/useTransientState.ts      화면을 떠나면 처음 값으로 돌아가는 상태 (모달 · 드롭다운)
    ├─ lib/firebase.ts                 Firebase 초기화 (브라우저에서 처음 쓸 때 생성)
    ├─ lib/server/firebaseAdmin.ts     (서버 전용) Firebase Admin SDK — App Hosting 서비스 계정으로 동작
@@ -81,11 +81,12 @@ TeamKit/
    └─ constants/app.ts                앱 이름
 ```
 
-## 앞으로 추가될 위치
+## 회의록 위치
 
 | 기능 | 라우트 | 기능 코드 |
 |---|---|---|
-| 회의록 (8~9주차) | `app/p/[projectId]/meetings/` | `features/meetings/` + `functions/` |
+| 회의록 목록 · 새 회의록 · 상세 | `app/p/[projectId]/meetings/` · `new/` · `[meetingId]/` | `features/meetings/` (`extract.ts` 후보 추출 규칙, `useRecorder.ts` 녹음, `server/groq.ts` 음성 인식) |
+| 회의록 만들기 API | `app/api/meetings/route.ts` | 공통 응답 · 로그인 확인은 `lib/server/http.ts` |
 
 ## 코드 흐름
 

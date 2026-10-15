@@ -14,7 +14,7 @@ TeamKit은 GitHub 토큰, 회의 녹음, 팀원 정보를 다룬다. 별도 백�
 | 2 | **본인 데이터는 본인만** | `users/{uid}` 쓰기와 `private` 하위 경로는 `request.auth.uid == uid` 일 때만 |
 | 3 | **시크릿은 브라우저에 두지 않음** | GitHub Client Secret · Groq API 키 · 웹훅 Secret은 코드/저장소에 없음 |
 | 4 | **최소 정보 노출** | 비밀번호 재설정은 가입 여부를 알려주지 않음 |
-| 5 | **프로젝트 데이터는 멤버만** | 프로젝트는 멤버만 읽기 ✅, 할 일·회의록·투표도 같은 방식 🔜 |
+| 5 | **프로젝트 데이터는 멤버만** | 프로젝트 · 할 일 · 회의록 · 투표 모두 멤버만 읽기 ✅ |
 
 ---
 
@@ -152,14 +152,14 @@ sequenceDiagram
 | 할 일 삭제 권한 | 관계없는 멤버 삭제 거부, 만든 사람 · 담당자 · 프로젝트를 만든 사람 삭제 허용 |
 | GitHub 연동 데이터 | 멤버는 활동 기록 읽기 허용, 브라우저의 활동 기록 쓰기 거부(가짜 이벤트), 웹훅 secret 읽기 거부, 할 일 PR 정보 위조 거부, 생성 시 브랜치 지정 거부 |
 | 일정 투표 | 멤버 생성 허용 · 비멤버 거부, 14일 초과 거부, 처음부터 확정 거부, 만든 사람만 확정, 본인 응답만, 확정 후 응답 거부, 비멤버 응답 조회 거부 |
+| 회의록 | 멤버 읽기 허용 · 비멤버 거부, 브라우저의 회의록 생성 거부(서버만), 할 일 후보 "추가됨" 표시 허용, 회의 내용 · 결정사항 수정 거부, 후보 개수 변경 거부, 만든 사람 · 프로젝트를 만든 사람 삭제 허용, 다른 멤버 삭제 거부 |
 
 ### 다음 규칙 🔜
 
 | 경로 | 읽기 | 쓰기 | 주차 |
 |---|---|---|---|
 | `projects/{id}` 이름 변경 · 코드 재발급 · 멤버 내보내기 | – | 만든 사람만 | 프로젝트 설정 화면 |
-| 프로젝트 삭제 시 하위 데이터(할 일 · 회의록 등) 정리 | – | Cloud Functions 재귀 삭제 | 하위 데이터가 생긴 뒤 |
-| `projects/{id}/meetings` | 멤버만 | 멤버만 | 회의록 (할 일과 같은 `isMember()` 방식) |
+| 프로젝트 삭제 시 투표 · GitHub 활동 기록 정리 | – | 서버(Admin SDK) 재귀 삭제 | 할 일 · 회의록은 삭제 배치에서 함께 지움 ✅ |
 
 ---
 
@@ -196,7 +196,7 @@ sequenceDiagram
 | Firebase 웹 설정 (`apiKey` 등) | `.env.local` (`NEXT_PUBLIC_*`) | 노출됨 — **공개용 값**. 보안은 규칙이 담당 |
 | GitHub OAuth Client Secret | Firebase 콘솔에만 입력 | ❌ 코드·저장소 어디에도 없음 |
 | 사용자 GitHub 토큰 | Firestore `private` 경로 (본인만) | 본인 브라우저에서만 |
-| Groq API 키 (Whisper 음성 인식) 🔜 9주차 | Cloud Functions 시크릿 (`GROQ_API_KEY`) | ❌ |
+| Groq API 키 (Whisper 음성 인식) ✅ | App Hosting 시크릿 (Secret Manager `GROQ_API_KEY`, `apphosting.yaml` 엔 이름만). 로컬은 `.env.local` | ❌ 서버 API(`/api/meetings`)만 사용 |
 | GitHub 웹훅 Secret ✅ | `githubRepos/{owner__repo}` — 규칙이 없어 브라우저 접근 불가, 서버(Admin SDK)만 | ❌ |
 
 - `.env.local` 은 `.gitignore` 로 제외, 예시 파일 `.env.local.example` 만 커밋
@@ -210,8 +210,7 @@ sequenceDiagram
 | 주차 | 작업 |
 |---|---|
 | 6주차 ✅ | 프로젝트 멤버 규칙, 초대 코드 검증, 멤버가 아닌 사람 접근 차단 화면, 규칙 자동 테스트 |
-| 8~9주차 | Storage 규칙: 회의 녹음 파일은 해당 프로젝트 멤버만 업로드·재생 |
-| 9주차 | 음성 인식(Groq Whisper) 호출은 Cloud Functions에서만 (키를 브라우저에 두지 않음) |
+| 8~9주차 ✅ | 음성 인식(Groq Whisper)은 서버 API 에서만 호출 (키를 브라우저에 두지 않음), 호출 전 프로젝트 멤버 확인, 파일 25MB · 형식 제한, 녹음 파일은 저장하지 않음, 회의록은 서버만 생성(규칙) |
 | 11주차 | GitHub API 호출을 Cloud Functions로 옮기고, `private/github` 의 **클라이언트 읽기 차단** (쓰기만 허용, 서버가 Admin SDK로 읽음) |
 | 12주차 ✅ | GitHub 웹훅 **서명 검증**(`X-Hub-Signature-256`, HMAC-SHA256, 상수 시간 비교) + `X-GitHub-Delivery` 로 중복 처리 방지, 서버 API 는 Firebase ID 토큰 검증 후 동작 |
 
