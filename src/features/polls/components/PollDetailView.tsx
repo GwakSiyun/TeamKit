@@ -48,7 +48,9 @@ export function PollDetailView() {
   const { user } = useAuth();
   const router = useRouter();
   const state = usePoll(project.id, pollId);
-  const responses = usePollResponses(project.id, pollId);
+  // 나간 · 내보낸 사람의 응답은 추천 계산에서 뺀다
+  const allResponses = usePollResponses(project.id, pollId);
+  const responses = useMemo(() => allResponses.filter((r) => project.memberIds.includes(r.uid)), [allResponses, project.memberIds]);
   // 내가 칠하는 중인 칸 (저장 전). null 이면 서버의 내 응답을 그대로 보여준다
   const [draft, setDraft] = useState<Set<string> | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");

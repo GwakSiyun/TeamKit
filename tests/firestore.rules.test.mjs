@@ -471,3 +471,83 @@ describe("회의록", () => {
     await assertFails(deleteDoc(doc(db("carol"), "projects", PID, "meetings", "m1")));
   });
 });
+
+describe("프로젝트 설정 (만든 사람)", () => {
+  const NEW_CODE = "M3NV8Q";
+
+  function reissueBatch(uid, { code = NEW_CODE, target = PID } = {}) {
+    const d = db(uid);
+    const b = writeBatch(d);
+    b.set(doc(d, "inviteCodes", code), { projectId: target, createdAt: serverTimestamp() });
+    b.update(doc(d, "projects", PID), { inviteCode: code });
+    b.delete(doc(d, "inviteCodes", CODE));
+    return b;
+  }
+
+  test("만든 사람은 이름을 바꿀 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID), { name: "쇼핑몰 v2" }));
+  });
+  test("멤버는 이름을 바꿀 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { name: "내 마음대로" }));
+  });
+  test("40자를 넘는 이름 · 빈 이름은 거부", async () => {
+    await seedProject();
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { name: "가".repeat(41) }));
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { name: "" }));
+  });
+  test("이름과 다른 필드를 같이 바꿀 수 없다", async () => {
+    await seedProject();
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { name: "x", taskCounter: 99 }));
+  });
+  test("만든 사람은 초대 코드를 재발급할 수 있고, 옛 코드는 사라진다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds(reissueBatch("alice").commit());
+    const old = await getDoc(doc(db("bob"), "inviteCodes", CODE));
+    assert.equal(old.exists(), false);
+  });
+  test("멤버는 초대 코드를 재발급할 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(reissueBatch("bob").commit());
+  });
+  test("새 코드 문서가 다른 프로젝트를 가리키면 거부", async () => {
+    await seedProject();
+    await assertFails(reissueBatch("alice", { target: "other" }).commit());
+  });
+  test("만든 사람은 멤버를 내보낼 수 있고, 내보낸 사람은 프로젝트를 못 읽는다", async () => {
+    await seedProject({ withBob: true });
+    const d = db("alice");
+    const b = writeBatch(d);
+    b.update(doc(d, "projects", PID), { memberIds: arrayRemove("bob") });
+    b.delete(doc(d, "projects", PID, "joins", "bob"));
+    await assertSucceeds(b.commit());
+    await assertFails(getDoc(doc(db("bob"), "projects", PID)));
+  });
+  test("멤버는 다른 멤버를 내보낼 수 없다", async () => {
+    await seedThreeMembers();
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { memberIds: arrayRemove("carol") }));
+  });
+  test("만든 사람도 자기 자신은 뺄 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { memberIds: arrayRemove("alice") }));
+  });
+  test("한 번에 두 명을 빼거나 멤버를 몰래 추가할 수 없다", async () => {
+    await seedThreeMembers();
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { memberIds: ["alice"] }));
+    await assertFails(updateDoc(doc(db("alice"), "projects", PID), { memberIds: ["alice", "bob", "mallory"] }));
+  });
+  test("만든 사람은 내보낼 사람의 할 일 담당을 풀 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedTask({ assigneeId: "bob" });
+    await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { assigneeId: null, updatedAt: serverTimestamp() }));
+  });
+  test("GitHub 활동 기록은 만든 사람만 지울 수 있다 (프로젝트 삭제용)", async () => {
+    await seedProject({ withBob: true });
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "projects", PID, "githubEvents", "e1"), { type: "push", title: "x" });
+    });
+    await assertFails(deleteDoc(doc(db("bob"), "projects", PID, "githubEvents", "e1")));
+    await assertSucceeds(deleteDoc(doc(db("alice"), "projects", PID, "githubEvents", "e1")));
+  });
+});

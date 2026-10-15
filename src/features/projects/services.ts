@@ -6,10 +6,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
+  updateDoc,
+  where,
   writeBatch,
   type DocumentReference,
 } from "firebase/firestore";
+import { callGithubApi } from "@/features/github/api";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from "./inviteCode";
 import type { JoinResult, Project, ProjectResult } from "./types";
@@ -119,13 +123,19 @@ async function deleteInChunks(refs: DocumentReference[]): Promise<void> {
 
 /**
  * 프로젝트 삭제 (만든 사람만).
- * 1) 할 일 · 변경 기록을 먼저 지우고 2) 참여 기록 · 초대 코드 · 프로젝트를 한 배치로 지운다.
+ * 0) GitHub 레포가 연결돼 있으면 웹훅부터 해제 (안 그러면 지워진 프로젝트로 알림이 계속 온다)
+ * 1) 할 일 · 변경 기록 · 회의록 · 투표(응답 포함) · GitHub 활동 기록을 지우고
+ * 2) 참여 기록 · 초대 코드 · 프로젝트를 한 배치로 지운다.
  * 프로젝트 문서가 마지막에 지워져야 규칙의 멤버 확인(get)이 끝까지 통과한다.
- * TODO(8주차~): 회의록 · 녹음 파일이 생기면 Cloud Functions 재귀 삭제로 옮긴다.
  */
 export async function deleteProject(project: Project): Promise<SimpleResult> {
   const uid = firebaseAuth().currentUser?.uid;
   if (!uid || uid !== project.ownerId) return { ok: false, message: "프로젝트를 만든 사람만 삭제할 수 있어요." };
+
+  if (project.github) {
+    const disconnected = await callGithubApi("disconnect", { projectId: project.id });
+    if (!disconnected.ok) return { ok: false, message: `GitHub 연결을 먼저 해제하지 못했어요. ${disconnected.message}` };
+  }
 
   const db = firestore();
   try {
@@ -136,6 +146,13 @@ export async function deleteProject(project: Project): Promise<SimpleResult> {
     // 회의록에는 회의 내용 전문이 있으니 프로젝트와 함께 지운다
     const meetings = await getDocs(collection(db, "projects", project.id, "meetings"));
     await deleteInChunks(meetings.docs.map((m) => m.ref));
+
+    const polls = await getDocs(collection(db, "projects", project.id, "polls"));
+    const responses = await Promise.all(polls.docs.map((p) => getDocs(collection(p.ref, "responses"))));
+    await deleteInChunks([...responses.flatMap((r) => r.docs.map((d) => d.ref)), ...polls.docs.map((p) => p.ref)]);
+
+    const events = await getDocs(collection(db, "projects", project.id, "githubEvents"));
+    await deleteInChunks(events.docs.map((e) => e.ref));
 
     const joins = await getDocs(collection(db, "projects", project.id, "joins"));
     const batch = writeBatch(db);
@@ -150,7 +167,21 @@ export async function deleteProject(project: Project): Promise<SimpleResult> {
   }
 }
 
-/** 프로젝트 나가기 (만든 사람 제외). 멤버 목록에서 나를 빼고 내 참여 기록을 지운다 */
+/**
+ * 그 사람이 담당인 할 일을 "담당자 없음"으로. 멤버가 아닌 담당자가 남으면 규칙상 그 카드를 수정할 수 없게 된다.
+ * 나가기 · 내보내기 전에 (아직 멤버일 때) 실행한다.
+ */
+async function unassignTasksOf(projectId: string, uid: string): Promise<void> {
+  const db = firestore();
+  const assigned = await getDocs(query(collection(db, "projects", projectId, "tasks"), where("assigneeId", "==", uid)));
+  for (let i = 0; i < assigned.docs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    assigned.docs.slice(i, i + BATCH_LIMIT).forEach((t) => batch.update(t.ref, { assigneeId: null, updatedAt: serverTimestamp() }));
+    await batch.commit();
+  }
+}
+
+/** 프로젝트 나가기 (만든 사람 제외). 내 할 일 담당을 풀고, 멤버 목록에서 나를 빼고 내 참여 기록을 지운다 */
 export async function leaveProject(project: Project): Promise<SimpleResult> {
   const uid = firebaseAuth().currentUser?.uid;
   if (!uid) return { ok: false, message: "로그인한 뒤 나갈 수 있어요." };
@@ -158,6 +189,7 @@ export async function leaveProject(project: Project): Promise<SimpleResult> {
 
   const db = firestore();
   try {
+    await unassignTasksOf(project.id, uid);
     const batch = writeBatch(db);
     batch.update(doc(db, "projects", project.id), { memberIds: arrayRemove(uid) });
     batch.delete(doc(db, "projects", project.id, "joins", uid));
@@ -165,6 +197,62 @@ export async function leaveProject(project: Project): Promise<SimpleResult> {
     return { ok: true };
   } catch (e) {
     if (isPermissionDenied(e)) return { ok: false, message: "나가기 권한이 없어요." };
+    return { ok: false, message: failureMessage(e) };
+  }
+}
+
+export const PROJECT_NAME_MAX = 40;
+
+/** 프로젝트 이름 바꾸기 (만든 사람만) */
+export async function renameProject(project: Project, rawName: string): Promise<SimpleResult> {
+  const name = rawName.trim();
+  if (!name) return { ok: false, message: "이름을 입력해주세요." };
+  if (name.length > PROJECT_NAME_MAX) return { ok: false, message: `이름은 ${PROJECT_NAME_MAX}자까지예요.` };
+  try {
+    await updateDoc(doc(firestore(), "projects", project.id), { name });
+    return { ok: true };
+  } catch (e) {
+    if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 이름을 바꿀 수 있어요." };
+    return { ok: false, message: failureMessage(e) };
+  }
+}
+
+/**
+ * 초대 코드 재발급 (만든 사람만). 새 코드 문서 만들기 · 프로젝트 코드 교체 · 옛 코드 삭제를 한 배치로.
+ * 옛 코드는 바로 못 쓰게 된다. 이미 쓰이는 코드가 나오면 규칙이 거부하므로 새 코드로 다시 시도한다.
+ */
+export async function regenerateInviteCode(project: Project): Promise<SimpleResult> {
+  const db = firestore();
+  for (let attempt = 0; attempt < MAX_CODE_ATTEMPTS; attempt++) {
+    const code = generateInviteCode();
+    if (code === project.inviteCode) continue;
+    const batch = writeBatch(db);
+    batch.set(doc(db, "inviteCodes", code), { projectId: project.id, createdAt: serverTimestamp() });
+    batch.update(doc(db, "projects", project.id), { inviteCode: code });
+    batch.delete(doc(db, "inviteCodes", project.inviteCode));
+    try {
+      await batch.commit();
+      return { ok: true };
+    } catch (e) {
+      if (!isPermissionDenied(e)) return { ok: false, message: failureMessage(e) };
+    }
+  }
+  return { ok: false, message: "새 코드를 만들지 못했어요. 프로젝트를 만든 사람인지 확인하고 다시 시도해주세요." };
+}
+
+/** 멤버 내보내기 (만든 사람만, 만든 사람 자신은 제외). 그 사람 담당 할 일은 담당자 없음으로 */
+export async function removeMember(project: Project, memberId: string): Promise<SimpleResult> {
+  if (memberId === project.ownerId) return { ok: false, message: "만든 사람은 내보낼 수 없어요." };
+  const db = firestore();
+  try {
+    await unassignTasksOf(project.id, memberId);
+    const batch = writeBatch(db);
+    batch.update(doc(db, "projects", project.id), { memberIds: arrayRemove(memberId) });
+    batch.delete(doc(db, "projects", project.id, "joins", memberId));
+    await batch.commit();
+    return { ok: true };
+  } catch (e) {
+    if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 멤버를 내보낼 수 있어요." };
     return { ok: false, message: failureMessage(e) };
   }
 }
