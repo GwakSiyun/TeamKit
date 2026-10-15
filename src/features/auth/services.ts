@@ -3,6 +3,7 @@ import {
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
   linkWithPopup,
+  reauthenticateWithPopup,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -91,6 +92,21 @@ export async function linkGithub(): Promise<AuthResult> {
   if (!user) return { ok: false, message: "로그인한 뒤 연결할 수 있어요." };
   try {
     await saveGithub(await linkWithPopup(user, githubProvider()));
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: authErrorMessage(e) };
+  }
+}
+
+/**
+ * 이미 연결된 GitHub 로 다시 인증해서 새 토큰을 받는다.
+ * GitHub 토큰이 만료 · 취소됐을 때(레포 목록 401) 사용. Firebase 는 토큰을 갱신해주지 않는다.
+ */
+export async function refreshGithubToken(): Promise<AuthResult> {
+  const user = firebaseAuth().currentUser;
+  if (!user) return { ok: false, message: "로그인한 뒤 다시 연결할 수 있어요." };
+  try {
+    await saveGithub(await reauthenticateWithPopup(user, githubProvider()));
     return { ok: true };
   } catch (e) {
     return { ok: false, message: authErrorMessage(e) };
