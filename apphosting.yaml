@@ -40,6 +40,6 @@ env:
 
   # GitHub 웹훅이 보낼 주소 (서버에서 웹훅 만들 때 사용)
   - variable: PUBLIC_APP_URL
-    value: "https://teamkit--teamkit-8c6d5.asia-east1.hosted.app"
+    value: "https://teamkit.site"
     availability:
       - RUNTIME
