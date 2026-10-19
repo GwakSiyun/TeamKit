@@ -195,3 +195,38 @@ export function suggestTask(text: string, members: readonly SuggestMember[], bas
     dueDate: dates.dueDate,
   };
 }
+
+export interface ScheduleSuggestion {
+  date: string;
+  /** 시작 시각 (0~23). 시간을 말하지 않았으면 null */
+  hour: number | null;
+}
+
+const HOUR_RE = /(오전|아침|오후|낮|저녁|밤)?\s*(\d{1,2})\s*시/;
+
+/** "오후 3시" · "저녁 7시" · "10시" → 0~23. 오전/오후 없이 1~8시면 오후로 본다 (회의를 새벽에 하진 않으니까) */
+function findHour(text: string): number | null {
+  const m = HOUR_RE.exec(text);
+  if (!m) return null;
+  let hour = Number(m[2]);
+  if (hour < 0 || hour > 24) return null;
+  const part = m[1];
+  if ((part === "오후" || part === "저녁" || part === "밤") && hour < 12) hour += 12;
+  else if (part === "낮" && hour < 6) hour += 12;
+  else if (!part && hour >= 1 && hour <= 8) hour += 12;
+  return hour === 24 ? 0 : hour;
+}
+
+/**
+ * 결정사항 문장 → 다음 회의 일정. "회의" 와 날짜가 같이 있어야 한다.
+ * "다음주 화요일 10시에 회의 진행할게요" → 회의 날 기준 다음 주 화요일 10시.
+ */
+export function suggestSchedule(text: string, baseISO: string): ScheduleSuggestion | null {
+  if (!text.includes("회의")) return null;
+  const dates = findDates(text, baseISO);
+  let date = dates.startDate ?? dates.dueDate;
+  if (!date) return null;
+  // 목요일 회의에서 "다음 회의는 목요일" → 오늘이 아니라 다음 주 목요일
+  if (date === baseISO && !text.includes("오늘")) date = addDays(baseISO, 7);
+  return { date, hour: findHour(text) };
+}

@@ -1,8 +1,8 @@
 import { FirebaseError } from "firebase/app";
-import { collection, deleteDoc, doc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, deleteDoc, doc, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import type { TaskInput } from "@/features/tasks/types";
-import type { ActionItem, MeetingResult } from "./types";
+import type { ActionItem, MeetingResult, NextMeeting } from "./types";
 
 function failure(e: unknown): MeetingResult {
   if (e instanceof FirebaseError && e.code === "permission-denied") {
@@ -92,6 +92,16 @@ export async function addActionItemToBoard(projectId: string, meetingId: string,
 export async function deleteMeeting(projectId: string, meetingId: string): Promise<MeetingResult> {
   try {
     await deleteDoc(doc(firestore(), "projects", projectId, "meetings", meetingId));
+    return { ok: true };
+  } catch (e) {
+    return failure(e);
+  }
+}
+
+/** 다음 회의 등록 · 변경 (null = 등록 취소). 프로젝트 멤버 누구나 */
+export async function setNextMeeting(projectId: string, meetingId: string, next: NextMeeting | null): Promise<MeetingResult> {
+  try {
+    await updateDoc(doc(firestore(), "projects", projectId, "meetings", meetingId), { nextMeeting: next });
     return { ok: true };
   } catch (e) {
     return failure(e);

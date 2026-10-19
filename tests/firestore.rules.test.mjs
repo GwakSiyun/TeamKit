@@ -455,6 +455,28 @@ describe("회의록", () => {
     await seedMeeting();
     await assertFails(updateDoc(doc(db("bob"), "projects", PID, "meetings", "m1"), { actionItems: [] }));
   });
+  test("멤버는 다음 회의를 등록 · 취소할 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    const ref = doc(db("alice"), "projects", PID, "meetings", "m1");
+    await assertSucceeds(updateDoc(ref, { nextMeeting: { date: "2026-10-20", hour: 10, text: "다음주 화요일 10시에 회의" } }));
+    await assertSucceeds(updateDoc(ref, { nextMeeting: null }));
+  });
+  test("다음 회의 형식이 틀리면 거부 (시각 범위 · 날짜 형식 · 다른 필드)", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    const ref = doc(db("bob"), "projects", PID, "meetings", "m1");
+    await assertFails(updateDoc(ref, { nextMeeting: { date: "2026-10-20", hour: 25, text: "x" } }));
+    await assertFails(updateDoc(ref, { nextMeeting: { date: "10/20", hour: 10, text: "x" } }));
+    await assertFails(updateDoc(ref, { nextMeeting: { date: "2026-10-20", hour: 10, text: "x", by: "bob" } }));
+  });
+  test("멤버가 아니면 다음 회의를 등록할 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedMeeting();
+    await assertFails(
+      updateDoc(doc(db("mallory"), "projects", PID, "meetings", "m1"), { nextMeeting: { date: "2026-10-20", hour: 10, text: "x" } }),
+    );
+  });
   test("만든 사람은 회의록을 지울 수 있다", async () => {
     await seedProject({ withBob: true });
     await seedMeeting();

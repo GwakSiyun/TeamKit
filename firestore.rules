@@ -38,6 +38,16 @@ service cloud.firestore {
         && p.status in ['open', 'confirmed'];
     }
 
+    // 회의록에서 등록한 다음 회의: 없음(null) 또는 날짜 · 시작 시각(0~23) · 근거 문장
+    function validNextMeeting(m) {
+      return m == null
+        || (m is map
+          && m.keys().hasOnly(['date', 'hour', 'text'])
+          && isDateOrNull(m.date) && m.date != null
+          && m.hour is int && m.hour >= 0 && m.hour <= 23
+          && m.text is string && m.text.size() <= 200);
+    }
+
     // 할 일 삭제 권한: 할 일을 만든 사람 · 담당자 · 프로젝트를 만든 사람
     function canDeleteTask(projectId, task) {
       return isMember(projectId)
@@ -206,13 +216,14 @@ service cloud.firestore {
       }
 
       // 회의록: 만들기는 서버(/api/meetings, Admin SDK)만 — 음성 인식 · 후보 추출 결과를 브라우저가 위조하지 못하게.
-      // 멤버는 읽기 + 할 일 후보의 "보드에 추가됨(taskNumber)" 표시만 수정. 삭제는 만든 사람 · 프로젝트를 만든 사람
+      // 멤버는 읽기 + 할 일 후보의 "보드에 추가됨(taskNumber)" 표시 · 다음 회의 등록만 수정. 삭제는 만든 사람 · 프로젝트를 만든 사람
       match /meetings/{meetingId} {
         allow read: if isMember(projectId);
         allow update: if isMember(projectId)
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['actionItems'])
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['actionItems', 'nextMeeting'])
           && request.resource.data.actionItems is list
-          && request.resource.data.actionItems.size() == resource.data.actionItems.size();
+          && request.resource.data.actionItems.size() == resource.data.actionItems.size()
+          && validNextMeeting(request.resource.data.get('nextMeeting', null));
         allow delete: if isMember(projectId)
           && (resource.data.createdBy == request.auth.uid || get(projectPath(projectId)).data.ownerId == request.auth.uid);
       }
