@@ -14,18 +14,18 @@ interface PlainLayoutProps {
 export function PlainLayout({ back, children }: PlainLayoutProps) {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="flex h-[52px] items-center justify-between border-b border-line px-6">
+      <header className="flex h-[52px] items-center justify-between border-b border-line px-4 sm:px-6">
         <Link href="/projects" className="rounded focus-visible:outline-2 focus-visible:outline-accent">
           <BrandMark />
         </Link>
         <UserMenu />
       </header>
       {back && (
-        <nav aria-label="상위 화면" className="px-6 pt-3">
+        <nav aria-label="상위 화면" className="px-4 pt-3 sm:px-6">
           <BackLink href={back.href} label={back.label} />
         </nav>
       )}
-      <main className={`mx-auto flex w-full max-w-[920px] flex-col gap-6 px-6 pb-12 ${back ? "pt-6" : "pt-12"}`}>{children}</main>
+      <main className={`mx-auto flex w-full max-w-[920px] flex-col gap-6 px-4 pb-12 sm:px-6 ${back ? "pt-6" : "pt-12"}`}>{children}</main>
     </div>
   );
 }

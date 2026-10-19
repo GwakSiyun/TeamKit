@@ -30,7 +30,7 @@ function Prop({
   children: ReactNode;
 }) {
   return (
-    <div className="grid min-h-[34px] grid-cols-[130px_minmax(0,1fr)] items-center gap-2">
+    <div className="grid min-h-[34px] grid-cols-[92px_minmax(0,1fr)] sm:grid-cols-[130px_minmax(0,1fr)] items-center gap-2">
       <span className="flex items-center gap-2 text-sm text-muted">
         <Icon name={icon} size={15} />
         {label}

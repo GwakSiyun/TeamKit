@@ -38,7 +38,7 @@ interface HeatmapProps {
  * 처음 누른 칸이 켜져 있었으면 "지우기", 꺼져 있었으면 "칠하기" 로 드래그 내내 같은 동작.
  */
 export function Heatmap({ days, hours, countOf, total, mine, onChange, onCommit }: HeatmapProps) {
-  const drag = useRef<{ mode: "add" | "remove"; next: Set<string> } | null>(null);
+  const drag = useRef<{ mode: "add" | "remove"; next: Set<string>; last: string | null } | null>(null);
   const editable = !!onChange;
 
   useEffect(() => {
@@ -49,12 +49,18 @@ export function Heatmap({ days, hours, countOf, total, mine, onChange, onCommit 
       onCommit?.(next);
     }
     window.addEventListener("pointerup", end);
-    return () => window.removeEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
   }, [onCommit]);
 
   function apply(key: string): void {
     const d = drag.current;
     if (!d || !onChange) return;
+    if (d.last === key) return;
+    d.last = key;
     if (d.mode === "add") d.next.add(key);
     else d.next.delete(key);
     onChange(new Set(d.next));
@@ -64,7 +70,15 @@ export function Heatmap({ days, hours, countOf, total, mine, onChange, onCommit 
 
   return (
     <div className="overflow-x-auto select-none">
-      <div className="flex min-w-max flex-col gap-[3px]">
+      <div
+        className="flex min-w-max flex-col gap-[3px]"
+        onPointerMove={(e) => {
+          if (!drag.current) return;
+          // 손가락 · 마우스 아래 칸을 직접 찾는다 (마우스 · 터치 공통)
+          const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-slot]")?.getAttribute("data-slot");
+          if (slot) apply(slot);
+        }}
+      >
         <div className="grid gap-[3px]" style={cols}>
           <span />
           {days.map((d) => (
@@ -92,11 +106,13 @@ export function Heatmap({ days, hours, countOf, total, mine, onChange, onCommit 
                   onPointerDown={(e) => {
                     if (!editable) return;
                     e.preventDefault();
-                    drag.current = { mode: isMine ? "remove" : "add", next: new Set(mine) };
+                    // 터치는 누른 칸이 포인터를 붙잡아(capture) 다른 칸에 enter 가 안 온다 → 놓아주고 move 로 추적
+                    (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+                    drag.current = { mode: isMine ? "remove" : "add", next: new Set(mine), last: null };
                     apply(key);
                   }}
-                  onPointerEnter={() => apply(key)}
-                  className={`h-6 rounded-[3px] text-[11px] font-bold ${LEVELS[level(count, total)]} ${editable ? "cursor-pointer" : "cursor-default"}`}
+                  data-slot={key}
+                  className={`h-6 rounded-[3px] text-[11px] font-bold ${LEVELS[level(count, total)]} ${editable ? "cursor-pointer touch-none" : "cursor-default"}`}
                 >
                   {isMine ? "✓" : ""}
                 </button>

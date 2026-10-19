@@ -16,7 +16,9 @@ import { useMeetings } from "../hooks";
 import type { Meeting } from "../types";
 import { KeywordGuide } from "./KeywordGuide";
 
-const COLS = "grid grid-cols-[minmax(160px,2fr)_0.9fr_0.9fr_1.2fr_28px] items-center gap-3";
+// 넓은 화면(lg)은 표, 좁은 화면은 제목 한 줄 + 나머지를 줄바꿈으로 (가로 스크롤 없이)
+const GRID = "lg:grid lg:grid-cols-[minmax(160px,2fr)_0.9fr_0.9fr_1.2fr_28px] lg:items-center lg:gap-3";
+const ROW = "flex flex-wrap items-center gap-x-3 gap-y-1.5";
 
 function SourceLabel({ meeting }: { meeting: Meeting }) {
   return meeting.source === "audio" ? (
@@ -63,8 +65,8 @@ export function MeetingsView() {
       )}
       {state.status === "ready" && state.meetings.length > 0 && (
         <div className="overflow-x-auto">
-          <div className="min-w-[620px]">
-            <div className={`${COLS} border-b border-line px-2 py-2 text-[13px] text-muted`}>
+          <div className="lg:min-w-[620px]">
+            <div className={`hidden ${GRID} border-b border-line px-2 py-2 text-[13px] text-muted`}>
               <span>제목</span>
               <span>날짜</span>
               <span>방식</span>
@@ -74,8 +76,8 @@ export function MeetingsView() {
             {state.meetings.map((m) => {
               const added = m.actionItems.filter((a) => a.taskNumber !== null).length;
               return (
-                <Link key={m.id} href={`${base}/${m.id}`} className={`${COLS} rounded border-b border-[#F1F1EF] px-2 py-2.5 text-sm tabular-nums hover:bg-side`}>
-                  <span className="truncate font-semibold">{m.title}</span>
+                <Link key={m.id} href={`${base}/${m.id}`} className={`${ROW} ${GRID} rounded border-b border-[#F1F1EF] px-2 py-2.5 text-sm tabular-nums hover:bg-side`}>
+                  <span className="w-full truncate font-semibold lg:w-auto">{m.title}</span>
                   <span className="text-sub">{m.createdAt ? formatDateTime(m.createdAt.toDate()) : "—"}</span>
                   <SourceLabel meeting={m} />
                   <span className="flex flex-wrap gap-1">

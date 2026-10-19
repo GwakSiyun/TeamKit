@@ -15,7 +15,9 @@ import { usePolls } from "../hooks";
 import { formatSlot } from "../slots";
 import { PollFormModal } from "./PollFormModal";
 
-const COLS = "grid grid-cols-[minmax(160px,2fr)_1.3fr_0.9fr_1.6fr] items-center gap-3";
+// 넓은 화면(lg)은 표, 좁은 화면은 제목 한 줄 + 나머지를 줄바꿈으로 (가로 스크롤 없이)
+const GRID = "lg:grid lg:grid-cols-[minmax(160px,2fr)_1.3fr_0.9fr_1.6fr] lg:items-center lg:gap-3";
+const ROW = "flex flex-wrap items-center gap-x-3 gap-y-1.5";
 
 export function PollsView() {
   const { project } = useCurrentProject();
@@ -44,8 +46,8 @@ export function PollsView() {
       )}
       {state.status === "ready" && state.polls.length > 0 && (
         <div className="overflow-x-auto">
-          <div className="min-w-[620px]">
-            <div className={`${COLS} border-b border-line px-2 py-2 text-[13px] text-muted`}>
+          <div className="lg:min-w-[620px]">
+            <div className={`hidden ${GRID} border-b border-line px-2 py-2 text-[13px] text-muted`}>
               <span>제목</span>
               <span>기간</span>
               <span>상태</span>
@@ -55,9 +57,9 @@ export function PollsView() {
               <Link
                 key={p.id}
                 href={`${projectBase(project.id)}/polls/${p.id}`}
-                className={`${COLS} rounded border-b border-[#F1F1EF] px-2 py-2.5 text-sm tabular-nums hover:bg-side`}
+                className={`${ROW} ${GRID} rounded border-b border-[#F1F1EF] px-2 py-2.5 text-sm tabular-nums hover:bg-side`}
               >
-                <span className="truncate font-semibold">{p.title}</span>
+                <span className="w-full truncate font-semibold lg:w-auto">{p.title}</span>
                 <span className="text-sub">
                   {formatShort(p.startDate)} – {formatShort(p.endDate)}
                 </span>

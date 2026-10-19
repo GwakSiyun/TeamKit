@@ -128,11 +128,11 @@ export function ProjectSettingsView() {
           {members.map((m) => (
             <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-[13px]">
               <Avatar seed={m.id} name={m.name} size={22} />
-              <span className="w-32 truncate font-medium">
+              <span className="min-w-0 flex-1 truncate font-medium sm:w-32 sm:flex-none">
                 {m.name}
                 {m.id === user?.uid && <span className="font-normal text-faint"> (나)</span>}
               </span>
-              <span className="flex-1 truncate text-sub">{m.email}</span>
+              <span className="hidden flex-1 truncate text-sub sm:block">{m.email}</span>
               {m.id === project.ownerId ? (
                 <span className="rounded bg-[#FADEC9] px-1.5 py-0.5 text-[11px] font-medium text-[#49290E]">만든 사람</span>
               ) : (

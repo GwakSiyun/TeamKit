@@ -64,6 +64,8 @@ const PATHS = {
   left: <path d="M14 7l-5 5 5 5" />,
   right: <path d="M10 7l5 5-5 5" />,
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  menu: <path d="M4 6h16M4 12h16M4 18h16" />,
+  close: <path d="M6 6l12 12M18 6L6 18" />,
   upload: <path d="M12 16V4M7 9l5-5 5 5M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />,
   doc: (
     <>
