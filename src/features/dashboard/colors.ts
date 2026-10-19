@@ -6,7 +6,8 @@ const PALETTE = [
   { bg: "#F9CFB0", fg: "#5C2E10" },
   { bg: "#DDD0F0", fg: "#3D2766" },
   { bg: "#F5CFE0", fg: "#5C1F3B" },
-  { bg: "#C8E8E5", fg: "#16443F" },
+  // 청록은 완료 초록과 헷갈려서 회청색으로
+  { bg: "#BFC6D0", fg: "#252D38" },
 ] as const;
 
 export type TaskColor = (typeof PALETTE)[number];
