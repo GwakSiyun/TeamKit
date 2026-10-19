@@ -1,5 +1,6 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { weekdayOf } from "@/lib/dates";
 import { lateDays } from "@/features/tasks/deadline";
@@ -9,6 +10,11 @@ import type { GanttGroup, GanttRange } from "../gantt";
 
 const LABEL_WIDTH = 240;
 const DAY_MIN = 24;
+/** 처음 열 때 오늘 왼쪽으로 보여줄 날 수 (지난 며칠 흐름도 보이게) */
+const DAYS_BEFORE_TODAY = 2;
+
+/** 가로로 스크롤해도 이름 칸이 왼쪽에 붙어 있게 (sticky) */
+const STICKY = "sticky left-0 z-[2] border-r border-[#F1F1EF]";
 
 /** 상태 표시: 완료는 흐리게, 지연은 빨간 테두리 */
 function barState(task: Task, today: string): string {
@@ -59,20 +65,31 @@ interface GanttChartProps {
 export function GanttChart({ range, groups, today, meetings, onOpenTask }: GanttChartProps) {
   const { days } = range;
   const grid = columnStyle(days.length);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // 처음 열 때 오늘 근처로 가로 스크롤 (차트가 화면보다 넓을 때만)
+  useLayoutEffect(() => {
+    const box = scrollRef.current;
+    if (!box || box.scrollWidth <= box.clientWidth) return;
+    const cell = box.querySelector<HTMLElement>(`[data-day="${today}"]`);
+    const label = box.querySelector<HTMLElement>("[data-gantt-label]");
+    if (!cell || !label) return;
+    box.scrollLeft = Math.max(0, cell.offsetLeft - label.offsetWidth - cell.offsetWidth * DAYS_BEFORE_TODAY);
+  }, [today, days.length]);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
+    <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
         <Backdrop days={days} today={today} meetings={meetings} />
-        <div className="flex items-center px-3 text-xs font-medium" style={{ gridRow: 1, gridColumn: 1 }}>
+        <div data-gantt-label className={`${STICKY} flex items-center bg-white px-3 text-xs font-medium`} style={{ gridRow: 1, gridColumn: 1 }}>
           담당자 · 할 일
         </div>
         {days.map((d, i) => {
           const [, m, day] = d.split("-").map(Number);
           const firstOfMonth = i === 0 || day === 1;
           return (
-            <div key={d} className="flex flex-col items-center justify-center gap-px tabular-nums" style={{ gridRow: 1, gridColumn: i + 2 }}>
+            <div key={d} data-day={d} className="flex flex-col items-center justify-center gap-px tabular-nums" style={{ gridRow: 1, gridColumn: i + 2 }}>
               <span className={firstOfMonth ? "text-[10px] text-faint" : ""}>{firstOfMonth ? `${m}월` : weekdayOf(d)}</span>
               {d === today ? (
                 <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-accent font-medium text-white">{day}</span>
@@ -87,7 +104,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
       {groups.map((g) => (
         <div key={g.id || "none"}>
           <div className="grid h-8 border-b border-line bg-side" style={grid}>
-            <div className="flex items-center gap-2 px-3 text-[13px] font-semibold" style={{ gridColumn: "1 / -1" }}>
+            <div className="sticky left-0 z-[2] flex w-fit items-center gap-2 px-3 text-[13px] font-semibold whitespace-nowrap" style={{ gridRow: 1, gridColumn: "1 / -1" }}>
               {g.id ? <Avatar seed={g.id} name={g.name} size={18} /> : null}
               {g.name}
               <span className="text-xs font-normal text-muted">
@@ -101,7 +118,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
-                className="flex min-w-0 cursor-pointer items-center gap-2 pr-3 pl-4 text-left sm:pl-[38px] text-[13px] hover:underline hover:decoration-[#C9C7C2]"
+                className={`${STICKY} flex min-w-0 cursor-pointer items-center gap-2 bg-white pr-3 pl-4 text-left text-[13px] hover:underline hover:decoration-[#C9C7C2] sm:pl-[38px]`}
                 style={{ gridRow: 1, gridColumn: 1 }}
               >
                 <span className="truncate">{b.task.title}</span>
