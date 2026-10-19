@@ -87,7 +87,7 @@ erDiagram
 | `…/meetings/{meetingId}` | `title`, `source`(`audio`/`text`), `durationSec`, `segments[]{start, text}`, `decisions[]{text, segment}`, `actionItems[]{text, segment, taskNumber}`, `nextMeeting{date, hour, text}`, `createdBy`, `createdAt` | ✅ | 만들기는 서버(`/api/meetings`)만. 브라우저는 `actionItems` 의 `taskNumber`(보드에 추가됨) · `nextMeeting`(결정사항에서 등록한 다음 회의 → 대시보드)만 수정 |
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
-| `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |
+| `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `prState`(PR 만: `open`/`merged`/`closed`), `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |
 | `githubRepos/{owner__repo}` | `projectId`, `fullName`, `webhookSecret`, `hookId`, `connectedBy`, `connectedAt` | ✅ | 브라우저 접근 금지, 서버(Admin SDK)만 |
 
 `…` = `projects/{projectId}`

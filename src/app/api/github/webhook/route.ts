@@ -151,6 +151,8 @@ export async function POST(request: Request): Promise<Response> {
       url: change.url,
       author: change.author,
       taskNumbers: change.numbers,
+      // PR 이면 열림 · 머지 · 닫힘 (대시보드 · 활동 목록 표시용)
+      prState: change.pr?.prState ?? null,
       at: FieldValue.serverTimestamp(),
     });
   } catch {

@@ -3,6 +3,7 @@
 import { collection, limit, onSnapshot, orderBy, query, type Timestamp } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { firestore } from "@/lib/firebase";
+import type { PrState } from "./sync";
 
 export interface GithubEvent {
   id: string;
@@ -11,6 +12,8 @@ export interface GithubEvent {
   url: string | null;
   author: string;
   taskNumbers: number[];
+  /** PR 이벤트만. 이 필드가 생기기 전 기록은 없음 */
+  prState?: PrState | null;
   at: Timestamp | null;
 }
 
