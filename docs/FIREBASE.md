@@ -84,7 +84,7 @@ erDiagram
 | `…/joins/{uid}` | `code`, `at` | ✅ | 참여 증명. 규칙이 현재 초대 코드와 비교 ([보안](SECURITY.md#초대-코드-참여-설계-)) |
 | `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}` — 웹훅 서버만 씀) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
 | `…/tasks/{taskId}/history/{id}` | `from`, `to`, `source`(`manual`/`github`), `actor`, `at` | ✅ | 상태 변경 기록. 생성 · 상태 버튼마다 추가 |
-| `…/meetings/{meetingId}` | `title`, `source`(`audio`/`text`), `durationSec`, `segments[]{start, text}`, `decisions[]{text, segment}`, `actionItems[]{text, segment, taskNumber}`, `createdBy`, `createdAt` | ✅ | 만들기는 서버(`/api/meetings`)만. 브라우저는 `actionItems` 의 `taskNumber`(보드에 추가됨)만 수정 |
+| `…/meetings/{meetingId}` | `title`, `source`(`audio`/`text`), `durationSec`, `segments[]{start, text}`, `decisions[]{text, segment}`, `actionItems[]{text, segment, taskNumber}`, `nextMeeting{date, hour, text}`, `createdBy`, `createdAt` | ✅ | 만들기는 서버(`/api/meetings`)만. 브라우저는 `actionItems` 의 `taskNumber`(보드에 추가됨) · `nextMeeting`(결정사항에서 등록한 다음 회의 → 대시보드)만 수정 |
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
 | `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |

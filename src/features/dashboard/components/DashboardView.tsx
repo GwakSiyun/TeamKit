@@ -13,6 +13,7 @@ import { projectBase } from "@/features/projects/navigation";
 import { lateDays } from "@/features/tasks/deadline";
 import { useTasks } from "@/features/tasks/hooks";
 import { usePolls } from "@/features/polls/hooks";
+import { useMeetings } from "@/features/meetings/hooks";
 import { TaskDetailModal } from "@/features/tasks/components/TaskDetailModal";
 import { TaskFormModal } from "@/features/tasks/components/TaskFormModal";
 import { useTransientState } from "@/hooks/useTransientState";
@@ -54,6 +55,7 @@ export function DashboardView() {
   const { project, members } = useCurrentProject();
   const state = useTasks(project.id);
   const pollsState = usePolls(project.id);
+  const meetingsState = useMeetings(project.id);
   const [modal, setModal] = useTransientState<OpenModal>(null);
   const today = todayISO();
   const [, month, day] = today.split("-").map(Number);
@@ -107,10 +109,16 @@ export function DashboardView() {
   const recent = [...tasks].sort((a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0)).slice(0, LIST_SIZE);
 
   const range = ganttRange(tasks, today);
-  // 확정된 회의: 오늘 이후 가장 가까운 것 → "다음 회의" 카드, 전부 → 간트 점선
-  const confirmed = (pollsState.status === "ready" ? pollsState.polls : []).flatMap((p) =>
-    p.status === "confirmed" && p.confirmedSlot ? [{ title: p.title, date: p.confirmedSlot.date, hour: p.confirmedSlot.hour, duration: p.durationHours }] : [],
-  );
+  // 정해진 회의 = 확정된 투표 + 회의록에서 등록한 다음 회의(1시간).
+  // 오늘 이후 가장 가까운 것 → "다음 회의" 카드, 전부 → 간트 점선
+  const confirmed = [
+    ...(pollsState.status === "ready" ? pollsState.polls : []).flatMap((p) =>
+      p.status === "confirmed" && p.confirmedSlot ? [{ title: p.title, date: p.confirmedSlot.date, hour: p.confirmedSlot.hour, duration: p.durationHours }] : [],
+    ),
+    ...(meetingsState.status === "ready" ? meetingsState.meetings : []).flatMap((m) =>
+      m.nextMeeting ? [{ title: `「${m.title}」에서 정함`, date: m.nextMeeting.date, hour: m.nextMeeting.hour, duration: 1 }] : [],
+    ),
+  ];
   const nextMeeting = confirmed.filter((m) => m.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour)[0] ?? null;
   const meetingDates = new Set(confirmed.map((m) => m.date));
   const groups = ganttGroups(tasks, members, range);
@@ -140,7 +148,7 @@ export function DashboardView() {
             sub={`${hhmm(nextMeeting.hour)}–${hhmm(nextMeeting.hour + nextMeeting.duration)} · ${nextMeeting.title}`}
           />
         ) : (
-          <StatCard label="다음 회의" value="—" tone="muted" sub="일정 맞추기에서 확정하면 표시돼요" />
+          <StatCard label="다음 회의" value="—" tone="muted" sub="일정 맞추기 확정 · 회의록에서 등록하면 표시돼요" />
         )}
       </div>
 

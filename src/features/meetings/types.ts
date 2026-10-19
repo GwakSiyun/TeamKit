@@ -21,6 +21,16 @@ export interface ActionItem {
   taskNumber: number | null;
 }
 
+/** 이 회의에서 정한 다음 회의 (결정사항에서 등록). 대시보드 "다음 회의" · 간트 점선에 쓴다 */
+export interface NextMeeting {
+  /** "YYYY-MM-DD" */
+  date: string;
+  /** 시작 시각 0~23 */
+  hour: number;
+  /** 근거가 된 결정사항 문장 */
+  text: string;
+}
+
 /** projects/{projectId}/meetings/{meetingId} — 만들기는 서버(/api/meetings)만, 브라우저는 actionItems 만 수정 */
 export interface MeetingDoc {
   title: string;
@@ -30,6 +40,7 @@ export interface MeetingDoc {
   segments: MeetingSegment[];
   decisions: MeetingDecision[];
   actionItems: ActionItem[];
+  nextMeeting?: NextMeeting | null;
   createdBy: string;
   createdAt: Timestamp | null;
 }

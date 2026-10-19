@@ -16,12 +16,13 @@ import { projectBase } from "@/features/projects/navigation";
 import { TaskFormModal } from "@/features/tasks/components/TaskFormModal";
 import { TASK_KEY_PREFIX } from "@/features/tasks/constants";
 import { useTransientState } from "@/hooks/useTransientState";
-import { formatDateTime, formatShort, todayISO } from "@/lib/dates";
+import { formatDateTime, formatShort, todayISO, weekdayOf } from "@/lib/dates";
 import { formatClock } from "../extract";
 import { useMeeting } from "../hooks";
-import { addActionItemToBoard, deleteMeeting } from "../services";
-import { suggestTask, type TaskSuggestion } from "../suggest";
+import { addActionItemToBoard, deleteMeeting, setNextMeeting } from "../services";
+import { suggestSchedule, suggestTask, type TaskSuggestion } from "../suggest";
 import { KeywordGuide } from "./KeywordGuide";
+import { NextMeetingModal } from "./NextMeetingModal";
 
 function Prop({ icon, label, children }: { icon: IconName; label: string; children: ReactNode }) {
   return (
@@ -54,6 +55,16 @@ function periodLabel(s: Pick<TaskSuggestion, "startDate" | "dueDate">): string |
   return null;
 }
 
+/** "10/20(화) 10:00" */
+function scheduleLabel(date: string, hour: number): string {
+  return `${formatShort(date)}(${weekdayOf(date)}) ${String(hour).padStart(2, "0")}:00`;
+}
+
+/** 시각을 말하지 않았으면 등록 창에서 이 시각으로 시작 */
+const DEFAULT_MEETING_HOUR = 10;
+
+type Scheduling = { text: string; date: string; hour: number } | null;
+
 /** 후보를 누르면 본문의 해당 줄로 이동 */
 function segmentId(index: number): string {
   return `seg-${index}`;
@@ -68,6 +79,8 @@ export function MeetingDetailView() {
   const [confirmingDelete, setConfirmingDelete] = useTransientState(false);
   // 보드에 추가 중인 후보 번호 (폼이 열림)
   const [adding, setAdding] = useTransientState<number | null>(null);
+  // 다음 회의로 등록 중인 결정사항 (등록 창이 열림)
+  const [scheduling, setScheduling] = useTransientState<Scheduling>(null);
 
   const base = `${projectBase(project.id)}/meetings`;
 
@@ -145,14 +158,53 @@ export function MeetingDetailView() {
               <p className="px-2 py-3 text-[13px] text-muted">찾은 결정사항이 없어요</p>
             ) : (
               <ul className="flex flex-col">
-                {meeting.decisions.map((d, i) => (
-                  <li key={i}>
-                    <a href={`#${segmentId(d.segment)}`} className="flex gap-2 rounded border-b border-[#F1F1EF] px-2 py-2 text-sm leading-relaxed hover:bg-side">
-                      <span className="mt-[7px] size-2 shrink-0 rounded-full bg-[#4DAB6F]" aria-hidden="true" />
-                      <span className="break-keep">{d.text}</span>
-                    </a>
-                  </li>
-                ))}
+                {meeting.decisions.map((d, i) => {
+                  const schedule = suggestSchedule(d.text, meetingDay);
+                  const registered = meeting.nextMeeting?.text === d.text ? meeting.nextMeeting : null;
+                  return (
+                    <li key={i} className="flex flex-col gap-1.5 border-b border-[#F1F1EF] px-2 py-2">
+                      <a href={`#${segmentId(d.segment)}`} className="flex gap-2 rounded text-sm leading-relaxed hover:underline">
+                        <span className="mt-[7px] size-2 shrink-0 rounded-full bg-[#4DAB6F]" aria-hidden="true" />
+                        <span className="break-keep">{d.text}</span>
+                      </a>
+                      {registered ? (
+                        <span className="flex flex-wrap items-center gap-1.5 pl-4">
+                          <Tag tone="purple">
+                            <Icon name="calendar" size={11} />
+                            다음 회의 · {scheduleLabel(registered.date, registered.hour)}
+                          </Tag>
+                          <button
+                            type="button"
+                            onClick={() => setScheduling({ text: d.text, date: registered.date, hour: registered.hour })}
+                            className={buttonClass("ghost", "h-6 px-1.5 text-xs")}
+                          >
+                            변경
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => void setNextMeeting(project.id, meeting.id, null)}
+                            className={buttonClass("ghost", "h-6 px-1.5 text-xs")}
+                          >
+                            등록 취소
+                          </button>
+                        </span>
+                      ) : (
+                        schedule && (
+                          <span className="pl-4">
+                            <button
+                              type="button"
+                              onClick={() => setScheduling({ text: d.text, date: schedule.date, hour: schedule.hour ?? DEFAULT_MEETING_HOUR })}
+                              className={buttonClass("secondary", "h-6 px-2 text-xs")}
+                            >
+                              <Icon name="calendar" size={12} />
+                              다음 회의로 등록 · {scheduleLabel(schedule.date, schedule.hour ?? DEFAULT_MEETING_HOUR)}
+                            </button>
+                          </span>
+                        )
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </Section>
@@ -219,6 +271,17 @@ export function MeetingDetailView() {
           }}
           onCreate={(input) => addActionItemToBoard(project.id, meeting.id, adding, input)}
           onClose={() => setAdding(null)}
+        />
+      )}
+
+      {scheduling && (
+        <NextMeetingModal
+          projectId={project.id}
+          meetingId={meeting.id}
+          text={scheduling.text}
+          initialDate={scheduling.date}
+          initialHour={scheduling.hour}
+          onClose={() => setScheduling(null)}
         />
       )}
 
