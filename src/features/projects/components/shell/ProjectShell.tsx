@@ -36,7 +36,7 @@ export function ProjectShell({ children }: { children: ReactNode }) {
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar />
-          <main className="flex flex-1 flex-col gap-6 px-6 pt-5 pb-14 md:px-12">{children}</main>
+          <main className="flex min-w-0 flex-1 flex-col gap-6 px-4 pt-5 pb-14 sm:px-6 md:px-12">{children}</main>
         </div>
       </div>
     </ProjectProvider>

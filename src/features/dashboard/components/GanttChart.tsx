@@ -18,7 +18,11 @@ function barState(task: Task, today: string): string {
 }
 
 function columnStyle(count: number): React.CSSProperties {
-  return { gridTemplateColumns: `${LABEL_WIDTH}px repeat(${count}, minmax(${DAY_MIN}px, 1fr))`, minWidth: LABEL_WIDTH + count * DAY_MIN };
+  // 이름 칸 너비는 컨테이너의 --gantt-label (좁은 화면 140px · 넓은 화면 240px)
+  return {
+    gridTemplateColumns: `var(--gantt-label, ${LABEL_WIDTH}px) repeat(${count}, minmax(${DAY_MIN}px, 1fr))`,
+    minWidth: `calc(var(--gantt-label, ${LABEL_WIDTH}px) + ${count * DAY_MIN}px)`,
+  };
 }
 
 /** 주말 · 오늘 배경 칸 + 확정된 회의 날 세로 점선 (행마다 같은 그리드에 깔린다) */
@@ -57,7 +61,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
   const grid = columnStyle(days.length);
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-line">
+    <div className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
         <Backdrop days={days} today={today} meetings={meetings} />
@@ -97,7 +101,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
-                className="flex min-w-0 cursor-pointer items-center gap-2 pr-3 pl-[38px] text-left text-[13px] hover:underline hover:decoration-[#C9C7C2]"
+                className="flex min-w-0 cursor-pointer items-center gap-2 pr-3 pl-4 text-left sm:pl-[38px] text-[13px] hover:underline hover:decoration-[#C9C7C2]"
                 style={{ gridRow: 1, gridColumn: 1 }}
               >
                 <span className="truncate">{b.task.title}</span>
