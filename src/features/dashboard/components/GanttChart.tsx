@@ -5,7 +5,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { weekdayOf } from "@/lib/dates";
 import { lateDays } from "@/features/tasks/deadline";
 import type { Task } from "@/features/tasks/types";
-import { taskColor } from "../colors";
+import { DONE_COLOR, taskColor } from "../colors";
 import type { GanttGroup, GanttRange } from "../gantt";
 
 const LABEL_WIDTH = 240;
@@ -16,12 +16,18 @@ const DAYS_BEFORE_TODAY = 2;
 /** 가로로 스크롤해도 이름 칸이 왼쪽에 붙어 있게 (sticky) */
 const STICKY = "sticky left-0 z-[2] border-r border-[#F1F1EF]";
 
-/** 상태 표시: 완료는 흐리게, 지연은 빨간 테두리 */
+/** 상태 표시: 완료는 초록 막대(색은 barColor), 지연은 빨간 테두리 */
 function barState(task: Task, today: string): string {
-  if (task.status === "done") return "opacity-50";
-  if (lateDays(task, today) > 0) return "ring-2 ring-danger ring-inset";
+  if (task.status !== "done" && lateDays(task, today) > 0) return "ring-2 ring-danger ring-inset";
   return "";
 }
+
+function barColor(task: Task): { bg: string; fg: string } {
+  return task.status === "done" ? DONE_COLOR : taskColor(task.id);
+}
+
+/** 이 날 수보다 짧은 막대는 제목을 막대 밖(오른쪽, 끝이면 왼쪽)에 쓴다 — 좁은 화면에서 잘려 안 보이던 문제 */
+const MIN_INNER_LABEL_DAYS = 3;
 
 function columnStyle(count: number): React.CSSProperties {
   // 이름 칸 너비는 컨테이너의 --gantt-label (좁은 화면 140px · 넓은 화면 240px)
@@ -123,23 +129,37 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
               >
                 <span className="truncate">{b.task.title}</span>
               </button>
-              <button
-                type="button"
-                onClick={() => onOpenTask(b.task.id)}
-                title={b.task.title}
-                className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center justify-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barState(b.task, today)} ${
-                  b.clippedStart ? "rounded-l-none" : "rounded-l"
-                } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
-                style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}`, background: taskColor(b.task.id).bg, color: taskColor(b.task.id).fg }}
-              >
-                {/* 이틀 이상인 막대에만 제목 (넘치면 잘림) */}
-                {b.to - b.from >= 1 ? (
-                  <span className="truncate">
-                    {b.task.status === "done" ? "✓ " : ""}
-                    {b.task.title}
-                  </span>
-                ) : null}
-              </button>
+              {(() => {
+                const color = barColor(b.task);
+                const label = `${b.task.status === "done" ? "✓ " : ""}${b.task.title}`;
+                const inside = b.to - b.from + 1 >= MIN_INNER_LABEL_DAYS;
+                const roomRight = b.to < days.length - 1;
+                return (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => onOpenTask(b.task.id)}
+                      title={b.task.title}
+                      aria-label={b.task.title}
+                      className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center justify-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barState(b.task, today)} ${
+                        b.clippedStart ? "rounded-l-none" : "rounded-l"
+                      } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
+                      style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}`, background: color.bg, color: color.fg }}
+                    >
+                      {inside ? <span className="truncate">{label}</span> : b.task.status === "done" ? "✓" : null}
+                    </button>
+                    {!inside && (
+                      <span
+                        aria-hidden
+                        className={`pointer-events-none relative z-[1] self-center truncate px-1 text-[11px] font-medium text-sub ${roomRight ? "text-left" : "text-right"}`}
+                        style={{ gridRow: 1, gridColumn: roomRight ? `${b.to + 3} / -1` : `2 / ${b.from + 2}` }}
+                      >
+                        {b.task.title}
+                      </span>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -150,7 +170,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
 
 export function GanttLegend() {
   const items: { cls: string; label: string }[] = [
-    { cls: "bg-[#C6DCF5] opacity-50", label: "완료" },
+    { cls: "bg-[#4DAB6F]", label: "완료" },
     { cls: "bg-[#FBE3A6] shadow-[inset_0_0_0_2px_var(--color-danger)]", label: "지연" },
     { cls: "bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]", label: "오늘" },
     { cls: "w-0 rounded-none border-l-2 border-dashed border-[#9A6DD7]", label: "확정 회의" },
