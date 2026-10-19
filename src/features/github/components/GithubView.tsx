@@ -5,21 +5,16 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClass } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Icon } from "@/components/ui/Icon";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
 import { taskKey } from "@/features/tasks/constants";
 import { useTransientState } from "@/hooks/useTransientState";
 import { formatDateTime } from "@/lib/dates";
 import { callGithubApi } from "../api";
-import { useGithubEvents, type GithubEvent } from "../hooks";
+import { eventMeta } from "../events";
+import { useGithubEvents } from "../hooks";
 import { RepoPickerModal } from "./RepoPickerModal";
-
-const EVENT_META: Record<GithubEvent["type"], { icon: IconName; label: string }> = {
-  create: { icon: "github", label: "브랜치 생성" },
-  push: { icon: "github", label: "커밋" },
-  pull_request: { icon: "github", label: "PR" },
-};
 
 function Section({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
@@ -121,7 +116,7 @@ export function GithubView() {
               <li key={e.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-[#F1F1EF] px-2 py-2.5">
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-[13px]">
-                    <b className="font-semibold">{e.author}</b> <span className="text-muted">{EVENT_META[e.type]?.label ?? e.type}</span> ·{" "}
+                    <b className="font-semibold">{e.author}</b> <span className="text-muted">{eventMeta(e).label}</span> ·{" "}
                     {e.url ? (
                       <a href={e.url} target="_blank" rel="noreferrer" className="font-mono text-xs hover:underline">
                         {e.title}

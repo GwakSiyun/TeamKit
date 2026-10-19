@@ -42,3 +42,14 @@ export function formatDateTime(date: Date): string {
   const mm = String(date.getMinutes()).padStart(2, "0");
   return `${date.getMonth() + 1}/${date.getDate()} ${hh}:${mm}`;
 }
+
+/** "방금" · "12분 전" · "3시간 전" · "어제" · "10/14" */
+export function formatRelative(date: Date, now: Date = new Date()): string {
+  const minutes = Math.floor((now.getTime() - date.getTime()) / 60000);
+  if (minutes < 1) return "방금";
+  if (minutes < 60) return `${minutes}분 전`;
+  if (minutes < 60 * 24 && date.getDate() === now.getDate()) return `${Math.floor(minutes / 60)}시간 전`;
+  const days = daysBetween(todayISO(date), todayISO(now));
+  if (days === 1) return "어제";
+  return `${date.getMonth() + 1}/${date.getDate()}`;
+}

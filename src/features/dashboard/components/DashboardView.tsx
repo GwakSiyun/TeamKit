@@ -14,12 +14,14 @@ import { lateDays } from "@/features/tasks/deadline";
 import { useTasks } from "@/features/tasks/hooks";
 import { usePolls } from "@/features/polls/hooks";
 import { useMeetings } from "@/features/meetings/hooks";
+import { useGithubEvents } from "@/features/github/hooks";
 import { TaskDetailModal } from "@/features/tasks/components/TaskDetailModal";
 import { TaskFormModal } from "@/features/tasks/components/TaskFormModal";
 import { useTransientState } from "@/hooks/useTransientState";
 import { daysBetween, formatShort, todayISO, weekdayOf } from "@/lib/dates";
 import { ganttGroups, ganttRange, taskSpan } from "../gantt";
 import { GanttChart, GanttLegend } from "./GanttChart";
+import { GithubActivity } from "./GithubActivity";
 import { StatCard } from "./StatCard";
 import { TaskList } from "./TaskList";
 
@@ -36,6 +38,7 @@ function urgencyTone(daysLeft: number): "red" | "orange" | "green" {
   return "green";
 }
 const LIST_SIZE = 5;
+const GITHUB_EVENTS = 5;
 
 type OpenModal = { kind: "detail"; taskId: string } | { kind: "edit"; taskId: string } | null;
 
@@ -56,6 +59,7 @@ export function DashboardView() {
   const state = useTasks(project.id);
   const pollsState = usePolls(project.id);
   const meetingsState = useMeetings(project.id);
+  const githubEvents = useGithubEvents(project.id, GITHUB_EVENTS);
   const [modal, setModal] = useTransientState<OpenModal>(null);
   const today = todayISO();
   const [, month, day] = today.split("-").map(Number);
@@ -208,6 +212,23 @@ export function DashboardView() {
           />
         </Section>
       </div>
+
+      <Section
+        title="최근 GitHub 활동"
+        right={
+          <Link href={`${projectBase(project.id)}/github`} className="text-[13px] text-accent hover:text-accent-strong">
+            GitHub 연동
+          </Link>
+        }
+      >
+        <GithubActivity
+          events={githubEvents}
+          tasks={tasks}
+          connected={!!project.github}
+          githubHref={`${projectBase(project.id)}/github`}
+          onOpenTask={(id) => setModal({ kind: "detail", taskId: id })}
+        />
+      </Section>
 
       {modal?.kind === "detail" && selected && (
         <TaskDetailModal task={selected} today={today} onClose={() => setModal(null)} onEdit={() => setModal({ kind: "edit", taskId: selected.id })} />
