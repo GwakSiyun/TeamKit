@@ -8,8 +8,16 @@ export interface ProjectDoc {
   memberIds: string[];
   taskCounter: number;
   createdAt: Timestamp | null;
+  /** 마일스톤 (예: 1차 배포 10/30). 대시보드 D-day · 간트 표시. 만든 사람이 설정 */
+  milestone?: Milestone | null;
   /** 연결된 GitHub 레포 (서버가 씀) */
   github?: { owner: string; repo: string; connectedBy: string; connectedAt: Timestamp | null } | null;
+}
+
+export interface Milestone {
+  name: string;
+  /** "YYYY-MM-DD" */
+  date: string;
 }
 
 export interface Project extends ProjectDoc {

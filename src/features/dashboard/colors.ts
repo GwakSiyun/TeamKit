@@ -1,23 +1,21 @@
-/** 할 일마다 고정된 파스텔 색 (간트 막대 · 목록 밑줄 공통). 빨강은 지연 · 긴박, 초록은 완료 표시용이라 뺀다 */
-const PALETTE = [
-  { bg: "#C6DCF5", fg: "#183A5E" },
-  { bg: "#E6DCC8", fg: "#4A3B1A" },
-  { bg: "#FBE3A6", fg: "#5A4110" },
-  { bg: "#F9CFB0", fg: "#5C2E10" },
-  { bg: "#DDD0F0", fg: "#3D2766" },
-  { bg: "#F5CFE0", fg: "#5C1F3B" },
-  // 청록은 완료 초록과 헷갈려서 회청색으로
-  { bg: "#BFC6D0", fg: "#252D38" },
-] as const;
+import { lateDays } from "@/features/tasks/deadline";
+import type { Task } from "@/features/tasks/types";
 
-export type TaskColor = (typeof PALETTE)[number];
+/** 간트 막대 색 = 상태별 (디자인 캔버스 범례와 같음). 지연은 상태보다 우선 */
+export const BAR_COLORS = {
+  todo: { bg: "#D3D1CB", fg: "#37352F", label: "할 일" },
+  doing: { bg: "#2383E2", fg: "#FFFFFF", label: "진행 중" },
+  done: { bg: "#4DAB9A", fg: "#FFFFFF", label: "완료" },
+  late: { bg: "#E03E3E", fg: "#FFFFFF", label: "지연" },
+} as const;
 
-/** task id 해시 → 항상 같은 색 */
-export function taskColor(taskId: string): TaskColor {
-  let hash = 0;
-  for (const ch of taskId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return PALETTE[hash % PALETTE.length];
+export type BarKind = keyof typeof BAR_COLORS;
+
+export function barKind(task: Task, today: string): BarKind {
+  if (task.status === "done") return "done";
+  if (lateDays(task, today) > 0) return "late";
+  return task.status;
 }
 
-/** 완료된 할 일 막대: 진한 초록 + 흰 글자 (진행 중 파스텔과 한눈에 구분) */
-export const DONE_COLOR = { bg: "#4DAB6F", fg: "#FFFFFF" } as const;
+/** 마일스톤(1차 배포 등) 날짜 칸 */
+export const MILESTONE_COLOR = { bg: "#FDF0EF", line: "#E03E3E" } as const;

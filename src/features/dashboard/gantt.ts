@@ -44,9 +44,12 @@ function mondayOf(iso: string): string {
   return addDays(iso, dow === 0 ? -6 : 1 - dow);
 }
 
-/** 할 일 날짜들과 오늘을 모두 담는 범위. 월요일에서 시작, 최소 3주 · 최대 8주 */
-export function ganttRange(tasks: Task[], today: string): GanttRange {
-  const spans = tasks.map(taskSpan).filter((s): s is { start: string; end: string } => s !== null);
+/** 할 일 날짜들 · 오늘 · 추가 날짜(회의 · 마일스톤)를 모두 담는 범위. 월요일에서 시작, 최소 3주 · 최대 8주 */
+export function ganttRange(tasks: Task[], today: string, extraDates: readonly string[] = []): GanttRange {
+  const spans = [
+    ...tasks.map(taskSpan).filter((s): s is { start: string; end: string } => s !== null),
+    ...extraDates.map((d) => ({ start: d, end: d })),
+  ];
   let first = addDays(today, -LEAD_DAYS);
   let last = addDays(today, TAIL_DAYS);
   for (const s of spans) {
