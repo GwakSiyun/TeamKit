@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { weekdayOf } from "@/lib/dates";
 import { lateDays } from "@/features/tasks/deadline";
@@ -37,19 +37,20 @@ function columnStyle(count: number): React.CSSProperties {
   };
 }
 
-/** 주말 · 오늘 배경 칸 + 확정된 회의 날 세로 점선 (행마다 같은 그리드에 깔린다) */
-function Backdrop({ days, today, meetings }: { days: string[]; today: string; meetings: Set<string> }) {
+/** 주말 · 오늘 배경 칸 + 회의 날 세로 점선(마우스를 올리면 회의 이름) (행마다 같은 그리드에 깔린다) */
+function Backdrop({ days, today, meetings }: { days: string[]; today: string; meetings: MeetingsByDate }) {
   return (
     <>
       {days.map((d, i) => {
         const weekend = weekdayOf(d) === "토" || weekdayOf(d) === "일";
-        const meeting = meetings.has(d);
+        const meeting = meetings.get(d);
         if (d !== today && !weekend && !meeting) return null;
         const bg = d === today ? "bg-[#EAF3FB]" : weekend ? "bg-[#FAFAF9]" : "";
         return (
           <div
             key={d}
             aria-hidden
+            title={meeting ? meeting.map((m) => `회의 ${m}`).join("\n") : undefined}
             className={`${bg} ${meeting ? "border-l-2 border-dashed border-[#9A6DD7]" : ""}`}
             style={{ gridRow: 1, gridColumn: i + 2 }}
           />
@@ -59,12 +60,45 @@ function Backdrop({ days, today, meetings }: { days: string[]; today: string; me
   );
 }
 
+/** 회의 날짜("YYYY-MM-DD") → 그날 회의 이름들 ("10:00 「1주차 회의」에서 정함") */
+export type MeetingsByDate = ReadonlyMap<string, string[]>;
+
+/**
+ * 막대 안 제목: 글자가 막대에 다 들어가면 제목, 안 들어가면 완료는 ✓ 만 (제목은 마우스를 올리면 title 로).
+ * 보이지 않는 측정용 글자의 실제 너비를 막대 너비와 비교한다 (화면 너비가 바뀌어도 다시 잼).
+ */
+function InsideLabel({ title, done }: { title: string; done: boolean }) {
+  const boxRef = useRef<HTMLSpanElement>(null);
+  const textRef = useRef<HTMLSpanElement>(null);
+  const [fits, setFits] = useState(true);
+
+  useLayoutEffect(() => {
+    const box = boxRef.current;
+    const text = textRef.current;
+    if (!box || !text) return;
+    // ResizeObserver 는 observe 직후에도 한 번 불린다 → 처음 측정도 여기서
+    const observer = new ResizeObserver(() => setFits(text.offsetWidth <= box.clientWidth));
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [title, done]);
+
+  const label = `${done ? "✓ " : ""}${title}`;
+  return (
+    <span ref={boxRef} className="relative flex min-w-0 flex-1 justify-center">
+      <span ref={textRef} aria-hidden className="invisible absolute whitespace-nowrap">
+        {label}
+      </span>
+      {fits ? label : done ? "✓" : null}
+    </span>
+  );
+}
+
 interface GanttChartProps {
   range: GanttRange;
   groups: GanttGroup[];
   today: string;
-  /** 확정된 회의 날짜 ("YYYY-MM-DD") */
-  meetings: Set<string>;
+  /** 회의가 있는 날 (확정된 투표 · 회의록에서 등록) */
+  meetings: MeetingsByDate;
   onOpenTask: (taskId: string) => void;
 }
 
@@ -95,7 +129,13 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
           const [, m, day] = d.split("-").map(Number);
           const firstOfMonth = i === 0 || day === 1;
           return (
-            <div key={d} data-day={d} className="flex flex-col items-center justify-center gap-px tabular-nums" style={{ gridRow: 1, gridColumn: i + 2 }}>
+            <div
+              key={d}
+              data-day={d}
+              title={meetings.get(d)?.map((m) => `회의 ${m}`).join("\n")}
+              className="flex flex-col items-center justify-center gap-px tabular-nums"
+              style={{ gridRow: 1, gridColumn: i + 2 }}
+            >
               <span className={firstOfMonth ? "text-[10px] text-faint" : ""}>{firstOfMonth ? `${m}월` : weekdayOf(d)}</span>
               {d === today ? (
                 <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-accent font-medium text-white">{day}</span>
@@ -131,7 +171,6 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
               </button>
               {(() => {
                 const color = barColor(b.task);
-                const label = `${b.task.status === "done" ? "✓ " : ""}${b.task.title}`;
                 const inside = b.to - b.from + 1 >= MIN_INNER_LABEL_DAYS;
                 const roomRight = b.to < days.length - 1;
                 return (
@@ -146,7 +185,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
                       } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
                       style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}`, background: color.bg, color: color.fg }}
                     >
-                      {inside ? <span className="truncate">{label}</span> : b.task.status === "done" ? "✓" : null}
+                      {inside ? <InsideLabel title={b.task.title} done={b.task.status === "done"} /> : b.task.status === "done" ? "✓" : null}
                     </button>
                     {!inside && (
                       <span
@@ -173,7 +212,7 @@ export function GanttLegend() {
     { cls: "bg-[#4DAB6F]", label: "완료" },
     { cls: "bg-[#FBE3A6] shadow-[inset_0_0_0_2px_var(--color-danger)]", label: "지연" },
     { cls: "bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]", label: "오늘" },
-    { cls: "w-0 rounded-none border-l-2 border-dashed border-[#9A6DD7]", label: "확정 회의" },
+    { cls: "w-0 rounded-none border-l-2 border-dashed border-[#9A6DD7]", label: "회의" },
   ];
   return (
     <div className="flex flex-wrap gap-3 text-xs text-muted">
