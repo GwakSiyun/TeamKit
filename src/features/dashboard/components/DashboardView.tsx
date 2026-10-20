@@ -124,7 +124,10 @@ export function DashboardView() {
     ),
   ];
   const nextMeeting = confirmed.filter((m) => m.date >= today).sort((a, b) => a.date.localeCompare(b.date) || a.hour - b.hour)[0] ?? null;
-  const meetingDates = new Set(confirmed.map((m) => m.date));
+  const meetingDates = confirmed.reduce<Map<string, string[]>>((acc, m) => {
+    acc.set(m.date, [...(acc.get(m.date) ?? []), `${hhmm(m.hour)} ${m.title}`]);
+    return acc;
+  }, new Map());
   const groups = ganttGroups(tasks, members, range);
   const selected = modal ? (tasks.find((t) => t.id === modal.taskId) ?? null) : null;
 
