@@ -153,6 +153,19 @@ service cloud.firestore {
         && request.resource.data.inviteCode.matches('^[A-HJ-NP-Z2-9]{6}$')
         && getAfter(/databases/$(database)/documents/inviteCodes/$(request.resource.data.inviteCode)).data.projectId == projectId;
 
+      // 마일스톤 설정 · 삭제: 만든 사람만. 없음(null) 또는 이름(1~20자) · 날짜
+      allow update: if signedIn()
+        && request.auth.uid == resource.data.ownerId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['milestone'])
+        && (request.resource.data.milestone == null
+          || (request.resource.data.milestone is map
+            && request.resource.data.milestone.keys().hasOnly(['name', 'date'])
+            && request.resource.data.milestone.name is string
+            && request.resource.data.milestone.name.size() >= 1
+            && request.resource.data.milestone.name.size() <= 20
+            && isDateOrNull(request.resource.data.milestone.date)
+            && request.resource.data.milestone.date != null));
+
       // 멤버 내보내기: 만든 사람만, 한 번에 한 명 빼기만 (추가 · 자기 자신 빼기 불가)
       allow update: if signedIn()
         && request.auth.uid == resource.data.ownerId

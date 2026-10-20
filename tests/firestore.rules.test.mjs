@@ -510,6 +510,23 @@ describe("프로젝트 설정 (만든 사람)", () => {
     await seedProject({ withBob: true });
     await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID), { name: "쇼핑몰 v2" }));
   });
+  test("만든 사람은 마일스톤을 정하고 지울 수 있다", async () => {
+    await seedProject({ withBob: true });
+    const ref = doc(db("alice"), "projects", PID);
+    await assertSucceeds(updateDoc(ref, { milestone: { name: "1차 배포", date: "2026-10-30" } }));
+    await assertSucceeds(updateDoc(ref, { milestone: null }));
+  });
+  test("멤버는 마일스톤을 정할 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { milestone: { name: "1차 배포", date: "2026-10-30" } }));
+  });
+  test("마일스톤 형식이 틀리면 거부 (이름 길이 · 날짜 형식 · 다른 필드)", async () => {
+    await seedProject();
+    const ref = doc(db("alice"), "projects", PID);
+    await assertFails(updateDoc(ref, { milestone: { name: "가".repeat(21), date: "2026-10-30" } }));
+    await assertFails(updateDoc(ref, { milestone: { name: "1차 배포", date: "10/30" } }));
+    await assertFails(updateDoc(ref, { milestone: { name: "1차 배포", date: "2026-10-30", by: "alice" } }));
+  });
   test("멤버는 이름을 바꿀 수 없다", async () => {
     await seedProject({ withBob: true });
     await assertFails(updateDoc(doc(db("bob"), "projects", PID), { name: "내 마음대로" }));

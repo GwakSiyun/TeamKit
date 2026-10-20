@@ -16,7 +16,7 @@ import {
 import { callGithubApi } from "@/features/github/api";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from "./inviteCode";
-import type { JoinResult, Project, ProjectResult } from "./types";
+import type { JoinResult, Milestone, Project, ProjectResult } from "./types";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -253,6 +253,26 @@ export async function removeMember(project: Project, memberId: string): Promise<
     return { ok: true };
   } catch (e) {
     if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 멤버를 내보낼 수 있어요." };
+    return { ok: false, message: failureMessage(e) };
+  }
+}
+
+export const MILESTONE_NAME_MAX = 20;
+
+/** 마일스톤 설정 · 삭제(null) (만든 사람만) */
+export async function setMilestone(project: Project, milestone: Milestone | null): Promise<SimpleResult> {
+  if (milestone) {
+    const name = milestone.name.trim();
+    if (!name) return { ok: false, message: "이름을 입력해주세요. 예) 1차 배포" };
+    if (name.length > MILESTONE_NAME_MAX) return { ok: false, message: `이름은 ${MILESTONE_NAME_MAX}자까지예요.` };
+    if (!milestone.date) return { ok: false, message: "날짜를 정해주세요." };
+    milestone = { name, date: milestone.date };
+  }
+  try {
+    await updateDoc(doc(firestore(), "projects", project.id), { milestone });
+    return { ok: true };
+  } catch (e) {
+    if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 마일스톤을 정할 수 있어요." };
     return { ok: false, message: failureMessage(e) };
   }
 }

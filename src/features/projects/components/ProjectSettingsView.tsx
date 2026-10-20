@@ -6,12 +6,13 @@ import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { controlClass } from "@/components/ui/Field";
+import { formatShort, weekdayOf } from "@/lib/dates";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTransientState } from "@/hooks/useTransientState";
 import { useCurrentProject } from "../ProjectContext";
-import { PROJECT_NAME_MAX, regenerateInviteCode, removeMember, renameProject } from "../services";
+import { MILESTONE_NAME_MAX, PROJECT_NAME_MAX, regenerateInviteCode, removeMember, renameProject, setMilestone } from "../services";
 import type { Member } from "../types";
 import { DangerZone } from "./DangerZone";
 
@@ -79,6 +80,94 @@ function NameSection({ isOwner }: { isOwner: boolean }) {
   );
 }
 
+/** 마일스톤 (예: 1차 배포 10/30): 대시보드 제목 옆 D-day · 간트 날짜 칸 표시. 만든 사람만 설정 */
+function MilestoneSection({ isOwner }: { isOwner: boolean }) {
+  const { project } = useCurrentProject();
+  const current = project.milestone ?? null;
+  const [name, setName] = useState(current?.name ?? "");
+  const [date, setDate] = useState(current?.date ?? "");
+  const [pending, setPending] = useState(false);
+  const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+
+  async function save(next: { name: string; date: string } | null): Promise<void> {
+    setPending(true);
+    setMessage(null);
+    const result = await setMilestone(project, next);
+    setPending(false);
+    if (!result.ok) {
+      setMessage({ tone: "error", text: result.message });
+      return;
+    }
+    if (!next) {
+      setName("");
+      setDate("");
+    }
+    setMessage({ tone: "success", text: next ? "마일스톤을 저장했어요. 대시보드에 표시돼요." : "마일스톤을 지웠어요." });
+  }
+
+  const summary = current ? `${current.name} · ${formatShort(current.date)}(${weekdayOf(current.date)})` : "정하지 않음";
+  if (!isOwner) {
+    return (
+      <Section title="마일스톤">
+        <p className="text-sm">{summary}</p>
+        <p className="text-xs text-muted">마일스톤은 프로젝트를 만든 사람이 정해요.</p>
+      </Section>
+    );
+  }
+
+  const unchanged = name.trim() === (current?.name ?? "") && date === (current?.date ?? "");
+  return (
+    <Section title="마일스톤">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void save({ name, date });
+        }}
+        noValidate
+        className="flex max-w-xl flex-wrap items-center gap-2"
+      >
+        <label htmlFor="milestone-name" className="sr-only">
+          마일스톤 이름
+        </label>
+        <input
+          id="milestone-name"
+          value={name}
+          placeholder="예) 1차 배포"
+          maxLength={MILESTONE_NAME_MAX}
+          onChange={(e) => {
+            setName(e.target.value);
+            setMessage(null);
+          }}
+          className={controlClass(null, "h-9 min-w-0 flex-1")}
+        />
+        <label htmlFor="milestone-date" className="sr-only">
+          마일스톤 날짜
+        </label>
+        <input
+          id="milestone-date"
+          type="date"
+          value={date}
+          onChange={(e) => {
+            setDate(e.target.value);
+            setMessage(null);
+          }}
+          className={controlClass(null, "h-9 w-auto")}
+        />
+        <button type="submit" disabled={pending || unchanged} className={buttonClass("secondary", "h-9")}>
+          {pending ? "저장 중…" : "저장"}
+        </button>
+        {current && (
+          <button type="button" onClick={() => void save(null)} disabled={pending} className={buttonClass("ghost", "h-9")}>
+            지우기
+          </button>
+        )}
+      </form>
+      <p className="text-xs text-muted">대시보드 제목 옆에 &lsquo;1차 배포(10/30)까지 10일&rsquo;처럼 남은 날이 보이고, 일정 차트에 그 날이 표시돼요.</p>
+      {message && <Notice tone={message.tone}>{message.text}</Notice>}
+    </Section>
+  );
+}
+
 export function ProjectSettingsView() {
   const { project, members } = useCurrentProject();
   const { user } = useAuth();
@@ -97,6 +186,8 @@ export function ProjectSettingsView() {
       <PageHeader title="프로젝트 설정" />
 
       <NameSection isOwner={isOwner} />
+
+      <MilestoneSection isOwner={isOwner} />
 
       <Section title="초대 코드">
         <div className="flex flex-wrap items-center gap-3">

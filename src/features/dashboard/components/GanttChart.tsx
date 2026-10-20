@@ -1,12 +1,14 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/Avatar";
-import { weekdayOf } from "@/lib/dates";
+import { useHoverTip } from "@/components/ui/HoverTip";
+import type { Milestone } from "@/features/projects/types";
 import { lateDays } from "@/features/tasks/deadline";
 import type { Task } from "@/features/tasks/types";
-import { DONE_COLOR, taskColor } from "../colors";
-import type { GanttGroup, GanttRange } from "../gantt";
+import { formatShort, weekdayOf } from "@/lib/dates";
+import { BAR_COLORS, barKind, MILESTONE_COLOR } from "../colors";
+import { taskSpan, type GanttGroup, type GanttRange } from "../gantt";
 
 const LABEL_WIDTH = 240;
 const DAY_MIN = 24;
@@ -16,19 +18,6 @@ const DAYS_BEFORE_TODAY = 2;
 /** 가로로 스크롤해도 이름 칸이 왼쪽에 붙어 있게 (sticky) */
 const STICKY = "sticky left-0 z-[2] border-r border-[#F1F1EF]";
 
-/** 상태 표시: 완료는 초록 막대(색은 barColor), 지연은 빨간 테두리 */
-function barState(task: Task, today: string): string {
-  if (task.status !== "done" && lateDays(task, today) > 0) return "ring-2 ring-danger ring-inset";
-  return "";
-}
-
-function barColor(task: Task): { bg: string; fg: string } {
-  return task.status === "done" ? DONE_COLOR : taskColor(task.id);
-}
-
-/** 이 날 수보다 짧은 막대는 제목을 막대 밖(오른쪽, 끝이면 왼쪽)에 쓴다 — 좁은 화면에서 잘려 안 보이던 문제 */
-const MIN_INNER_LABEL_DAYS = 3;
-
 function columnStyle(count: number): React.CSSProperties {
   // 이름 칸 너비는 컨테이너의 --gantt-label (좁은 화면 140px · 넓은 화면 240px)
   return {
@@ -37,22 +26,36 @@ function columnStyle(count: number): React.CSSProperties {
   };
 }
 
-/** 주말 · 오늘 배경 칸 + 회의 날 세로 점선(마우스를 올리면 회의 이름) (행마다 같은 그리드에 깔린다) */
-function Backdrop({ days, today, meetings }: { days: string[]; today: string; meetings: MeetingsByDate }) {
+type Bind = ReturnType<typeof useHoverTip>["bind"];
+
+/** 그날의 회의 · 마일스톤 설명 (툴팁). 없으면 null */
+function dayNote(d: string, meetings: MeetingsByDate, milestone: Milestone | null): ReactNode {
+  const lines = [
+    ...(milestone?.date === d ? [`${milestone.name} · ${formatShort(d)}`] : []),
+    ...(meetings.get(d) ?? []).map((m) => `회의 · ${m}`),
+  ];
+  if (lines.length === 0) return null;
+  return lines.map((l) => <div key={l}>{l}</div>);
+}
+
+/** 주말 · 오늘 · 마일스톤 배경 칸 + 회의 날 세로 점선 (행마다 같은 그리드에 깔린다). 회의 · 마일스톤 칸은 마우스를 올리면 설명 */
+function Backdrop({ days, today, meetings, milestone, bind }: { days: string[]; today: string; meetings: MeetingsByDate; milestone: Milestone | null; bind: Bind }) {
   return (
     <>
       {days.map((d, i) => {
         const weekend = weekdayOf(d) === "토" || weekdayOf(d) === "일";
-        const meeting = meetings.get(d);
-        if (d !== today && !weekend && !meeting) return null;
-        const bg = d === today ? "bg-[#EAF3FB]" : weekend ? "bg-[#FAFAF9]" : "";
+        const meeting = meetings.has(d);
+        const isMilestone = milestone?.date === d;
+        if (d !== today && !weekend && !meeting && !isMilestone) return null;
+        const bg = d === today ? "bg-[#EAF3FB]" : isMilestone ? "" : weekend ? "bg-[#FAFAF9]" : "";
+        const note = dayNote(d, meetings, milestone);
         return (
           <div
             key={d}
             aria-hidden
-            title={meeting ? meeting.map((m) => `회의 ${m}`).join("\n") : undefined}
+            {...(note ? bind(note) : {})}
             className={`${bg} ${meeting ? "border-l-2 border-dashed border-[#9A6DD7]" : ""}`}
-            style={{ gridRow: 1, gridColumn: i + 2 }}
+            style={{ gridRow: 1, gridColumn: i + 2, ...(isMilestone && d !== today ? { background: MILESTONE_COLOR.bg } : {}) }}
           />
         );
       })}
@@ -64,7 +67,7 @@ function Backdrop({ days, today, meetings }: { days: string[]; today: string; me
 export type MeetingsByDate = ReadonlyMap<string, string[]>;
 
 /**
- * 막대 안 제목: 글자가 막대에 다 들어가면 제목, 안 들어가면 완료는 ✓ 만 (제목은 마우스를 올리면 title 로).
+ * 막대 안 제목: 글자가 막대에 다 들어가면 제목, 안 들어가면 완료는 ✓ 만 · 나머지는 색만 (제목은 마우스를 올리면 툴팁).
  * 보이지 않는 측정용 글자의 실제 너비를 막대 너비와 비교한다 (화면 너비가 바뀌어도 다시 잼).
  */
 function InsideLabel({ title, done }: { title: string; done: boolean }) {
@@ -99,11 +102,34 @@ interface GanttChartProps {
   today: string;
   /** 회의가 있는 날 (확정된 투표 · 회의록에서 등록) */
   meetings: MeetingsByDate;
+  milestone: Milestone | null;
   onOpenTask: (taskId: string) => void;
 }
 
-export function GanttChart({ range, groups, today, meetings, onOpenTask }: GanttChartProps) {
+function spanLabel(task: Task): string {
+  const span = taskSpan(task);
+  if (!span) return "";
+  return span.start === span.end ? formatShort(span.start) : `${formatShort(span.start)} – ${formatShort(span.end)}`;
+}
+
+/** 막대 툴팁: 제목 + 상태(지연 일수) · 기간 · 담당 */
+function barTip(task: Task, today: string, owner: string): ReactNode {
+  const kind = barKind(task, today);
+  const status = kind === "late" ? `${lateDays(task, today)}일 지연` : BAR_COLORS[kind].label;
+  return (
+    <>
+      <div className="font-semibold">{task.title}</div>
+      <div className="flex items-center gap-1.5 text-[#D3D1CB]">
+        <span className="size-2 rounded-sm" style={{ background: BAR_COLORS[kind].bg }} />
+        {status} · {spanLabel(task)} · {owner}
+      </div>
+    </>
+  );
+}
+
+export function GanttChart({ range, groups, today, meetings, milestone, onOpenTask }: GanttChartProps) {
   const { days } = range;
+  const tip = useHoverTip();
   const grid = columnStyle(days.length);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -121,7 +147,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
     <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
-        <Backdrop days={days} today={today} meetings={meetings} />
+        <Backdrop days={days} today={today} meetings={meetings} milestone={milestone} bind={tip.bind} />
         <div data-gantt-label className={`${STICKY} flex items-center bg-white px-3 text-xs font-medium`} style={{ gridRow: 1, gridColumn: 1 }}>
           담당자 · 할 일
         </div>
@@ -132,15 +158,15 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
             <div
               key={d}
               data-day={d}
-              title={meetings.get(d)?.map((m) => `회의 ${m}`).join("\n")}
-              className="flex flex-col items-center justify-center gap-px tabular-nums"
+              {...(dayNote(d, meetings, milestone) ? tip.bind(dayNote(d, meetings, milestone)) : {})}
+              className={`flex flex-col items-center justify-center gap-px tabular-nums ${milestone?.date === d ? "font-semibold text-danger" : ""}`}
               style={{ gridRow: 1, gridColumn: i + 2 }}
             >
               <span className={firstOfMonth ? "text-[10px] text-faint" : ""}>{firstOfMonth ? `${m}월` : weekdayOf(d)}</span>
               {d === today ? (
                 <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-accent font-medium text-white">{day}</span>
               ) : (
-                <span className="font-medium text-ink">{day}</span>
+                <span className={`font-medium ${milestone?.date === d ? "text-danger" : "text-ink"}`}>{day}</span>
               )}
             </div>
           );
@@ -160,7 +186,7 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
           </div>
           {g.bars.map((b) => (
             <div key={b.task.id} className="grid h-[34px] border-b border-[#F1F1EF] hover:bg-side/60" style={grid}>
-              <Backdrop days={days} today={today} meetings={meetings} />
+              <Backdrop days={days} today={today} meetings={meetings} milestone={milestone} bind={tip.bind} />
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
@@ -170,55 +196,54 @@ export function GanttChart({ range, groups, today, meetings, onOpenTask }: Gantt
                 <span className="truncate">{b.task.title}</span>
               </button>
               {(() => {
-                const color = barColor(b.task);
-                const inside = b.to - b.from + 1 >= MIN_INNER_LABEL_DAYS;
-                const roomRight = b.to < days.length - 1;
+                const kind = barKind(b.task, today);
+                const color = BAR_COLORS[kind];
                 return (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => onOpenTask(b.task.id)}
-                      title={b.task.title}
-                      aria-label={b.task.title}
-                      className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center justify-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap ${barState(b.task, today)} ${
-                        b.clippedStart ? "rounded-l-none" : "rounded-l"
-                      } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
-                      style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}`, background: color.bg, color: color.fg }}
-                    >
-                      {inside ? <InsideLabel title={b.task.title} done={b.task.status === "done"} /> : b.task.status === "done" ? "✓" : null}
-                    </button>
-                    {!inside && (
-                      <span
-                        aria-hidden
-                        className={`pointer-events-none relative z-[1] self-center truncate px-1 text-[11px] font-medium text-sub ${roomRight ? "text-left" : "text-right"}`}
-                        style={{ gridRow: 1, gridColumn: roomRight ? `${b.to + 3} / -1` : `2 / ${b.from + 2}` }}
-                      >
-                        {b.task.title}
-                      </span>
-                    )}
-                  </>
+                  <button
+                    type="button"
+                    onClick={() => onOpenTask(b.task.id)}
+                    aria-label={b.task.title}
+                    {...tip.bind(barTip(b.task, today, g.name))}
+                    className={`relative z-[1] mx-0.5 flex h-5 cursor-pointer items-center justify-center self-center overflow-hidden px-1.5 text-[11px] font-medium whitespace-nowrap transition-[filter] hover:brightness-95 ${
+                      b.clippedStart ? "rounded-l-none" : "rounded-l"
+                    } ${b.clippedEnd ? "rounded-r-none" : "rounded-r"}`}
+                    style={{ gridRow: 1, gridColumn: `${b.from + 2} / ${b.to + 3}`, background: color.bg, color: color.fg }}
+                  >
+                    <InsideLabel title={b.task.title} done={kind === "done"} />
+                  </button>
                 );
               })()}
             </div>
           ))}
         </div>
       ))}
+      {tip.node}
     </div>
   );
 }
 
-export function GanttLegend() {
-  const items: { cls: string; label: string }[] = [
-    { cls: "bg-[#4DAB6F]", label: "완료" },
-    { cls: "bg-[#FBE3A6] shadow-[inset_0_0_0_2px_var(--color-danger)]", label: "지연" },
-    { cls: "bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]", label: "오늘" },
-    { cls: "w-0 rounded-none border-l-2 border-dashed border-[#9A6DD7]", label: "회의" },
+export function GanttLegend({ milestone }: { milestone: Milestone | null }) {
+  const items: { label: string; swatch: ReactNode }[] = [
+    ...(["todo", "doing", "done", "late"] as const).map((k) => ({
+      label: BAR_COLORS[k].label,
+      swatch: <span className="size-2.5 rounded-sm" style={{ background: BAR_COLORS[k].bg }} />,
+    })),
+    { label: "오늘", swatch: <span className="size-2.5 rounded-sm bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]" /> },
+    { label: "회의", swatch: <span className="h-3 w-0 border-l-2 border-dashed border-[#9A6DD7]" /> },
+    ...(milestone
+      ? [
+          {
+            label: milestone.name,
+            swatch: <span className="size-2.5 rounded-sm" style={{ background: MILESTONE_COLOR.bg, boxShadow: `inset 0 0 0 1px ${MILESTONE_COLOR.line}` }} />,
+          },
+        ]
+      : []),
   ];
   return (
     <div className="flex flex-wrap gap-3 text-xs text-muted">
       {items.map((i) => (
         <span key={i.label} className="inline-flex items-center gap-1.5">
-          <span className={`size-2.5 rounded-sm ${i.cls}`} />
+          {i.swatch}
           {i.label}
         </span>
       ))}
