@@ -259,8 +259,12 @@ export async function removeMember(project: Project, memberId: string): Promise<
 
 export const MILESTONE_NAME_MAX = 20;
 
-/** 마일스톤 설정 · 삭제(null) (만든 사람만) */
-export async function setMilestone(project: Project, milestone: Milestone | null): Promise<SimpleResult> {
+export type MilestoneResult =
+  | { ok: true; github: "none" | "synced" | "failed"; githubUrl?: string | null; githubMessage?: string }
+  | { ok: false; message: string };
+
+/** 마일스톤 설정 · 삭제(null) (만든 사람만). 레포가 연결돼 있으면 GitHub Milestone 도 만들기 · 고치기 · 닫기 */
+export async function setMilestone(project: Project, milestone: Milestone | null): Promise<MilestoneResult> {
   if (milestone) {
     const name = milestone.name.trim();
     if (!name) return { ok: false, message: "이름을 입력해주세요. 예) 1차 배포" };
@@ -270,9 +274,12 @@ export async function setMilestone(project: Project, milestone: Milestone | null
   }
   try {
     await updateDoc(doc(firestore(), "projects", project.id), { milestone });
-    return { ok: true };
   } catch (e) {
     if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 마일스톤을 정할 수 있어요." };
     return { ok: false, message: failureMessage(e) };
   }
+  // 레포가 연결돼 있으면 GitHub 마일스톤도 맞춘다. TeamKit 저장은 이미 끝났으니 실패는 따로 알린다
+  if (!project.github) return { ok: true, github: "none" };
+  const synced = await callGithubApi<{ url?: string | null }>("milestone", { projectId: project.id });
+  return synced.ok ? { ok: true, github: "synced", githubUrl: synced.url ?? null } : { ok: true, github: "failed", githubMessage: synced.message };
 }

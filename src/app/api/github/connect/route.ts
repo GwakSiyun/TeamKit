@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { FieldValue } from "firebase-admin/firestore";
 import { repoDocId } from "@/features/github/sync";
 import { githubFetch, githubTokenOf } from "@/features/github/server/http";
+import { syncMilestone, type MilestoneInput } from "@/features/github/server/milestone";
 import { fail, json, readBody, requireUser } from "@/lib/server/http";
 import { adminDb } from "@/lib/server/firebaseAdmin";
 
@@ -57,6 +58,13 @@ export async function POST(request: Request): Promise<Response> {
   batch.set(repoRef, { projectId, fullName, webhookSecret: secret, hookId, connectedBy: uid, connectedAt: FieldValue.serverTimestamp() });
   batch.update(projectRef, { github: { owner, repo, connectedBy: uid, connectedAt: FieldValue.serverTimestamp() } });
   await batch.commit();
+
+  // 마일스톤을 먼저 정해 뒀으면 연결하면서 GitHub 에도 만든다 (실패해도 연결은 성공)
+  const milestone = (project.get("milestone") ?? null) as MilestoneInput | null;
+  if (milestone) {
+    const synced = await syncMilestone(token, fullName, milestone, null);
+    if (synced.ok && synced.number) await repoRef.update({ githubMilestone: synced.number });
+  }
 
   return json(200, { ok: true });
 }
