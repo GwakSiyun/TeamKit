@@ -46,9 +46,12 @@
   --tk-weekend: #fafaf9;
 }
 
-/* 어두운 화면 값 (노션 다크 톤). 시스템 설정을 따르고, data-theme 으로 직접 고를 수도 있다 */
+/*
+ * 어두운 화면 값 (노션 다크 톤). 기본은 라이트, 계정 설정에서 직접 고른 경우에만:
+ * data-theme="dark" → 항상 다크, data-theme="system" → 기기 설정이 다크일 때만
+ */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root[data-theme="system"] {
     color-scheme: dark;
     --tk-page: #191919;
     --tk-surface: #232323;
