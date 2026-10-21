@@ -62,7 +62,7 @@ export function TaskFormModal({ open, onClose, task, initial, onCreate, heading 
 
     setPending(true);
     setServerError(null);
-    const result = task ? await updateTask(project.id, task.id, input) : onCreate ? await onCreate(input) : await createTask(project.id, input);
+    const result = task ? await updateTask(project, task, input) : onCreate ? await onCreate(input) : await createTask(project.id, input);
     setPending(false);
     if (!result.ok) {
       setServerError(result.message);

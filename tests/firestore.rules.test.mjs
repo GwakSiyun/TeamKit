@@ -601,3 +601,70 @@ describe("프로젝트 설정 (만든 사람)", () => {
     await assertSucceeds(deleteDoc(doc(db("alice"), "projects", PID, "githubEvents", "e1")));
   });
 });
+
+describe("알림", () => {
+  const NOTE = (actorId = "bob") => ({
+    type: "status",
+    projectId: PID,
+    projectName: "쇼핑몰 클론",
+    taskId: "t1",
+    taskNumber: 1,
+    taskTitle: "로그인 화면",
+    actorId,
+    actorName: "밥",
+    text: "상태를 '진행 중'으로 바꿨어요",
+    read: false,
+    createdAt: serverTimestamp(),
+  });
+
+  async function seedNote() {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), "users", "alice", "notifications", "n1"), { ...NOTE(), createdAt: new Date() });
+    });
+  }
+
+  test("같은 프로젝트 팀원은 내게 알림을 남길 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await assertSucceeds(setDoc(doc(db("bob"), "users", "alice", "notifications", "n1"), NOTE()));
+  });
+  test("다른 사람 이름으로 알림을 만들 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(setDoc(doc(db("bob"), "users", "alice", "notifications", "n1"), NOTE("carol")));
+  });
+  test("같은 프로젝트가 아니면 알림을 남길 수 없다", async () => {
+    await seedProject();
+    await assertFails(setDoc(doc(db("mallory"), "users", "alice", "notifications", "n1"), NOTE("mallory")));
+  });
+  test("프로젝트 멤버가 아닌 사람에게는 알림을 남길 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(setDoc(doc(db("bob"), "users", "mallory", "notifications", "n1"), NOTE()));
+  });
+  test("처음부터 읽음이거나 다른 필드가 있으면 거부", async () => {
+    await seedProject({ withBob: true });
+    await assertFails(setDoc(doc(db("bob"), "users", "alice", "notifications", "n1"), { ...NOTE(), read: true }));
+    await assertFails(setDoc(doc(db("bob"), "users", "alice", "notifications", "n2"), { ...NOTE(), link: "https://evil" }));
+  });
+  test("알림은 본인만 읽고, 읽음 표시 · 삭제할 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedNote();
+    await assertSucceeds(getDoc(doc(db("alice"), "users", "alice", "notifications", "n1")));
+    await assertFails(getDoc(doc(db("bob"), "users", "alice", "notifications", "n1")));
+    await assertSucceeds(updateDoc(doc(db("alice"), "users", "alice", "notifications", "n1"), { read: true }));
+    await assertSucceeds(deleteDoc(doc(db("alice"), "users", "alice", "notifications", "n1")));
+  });
+  test("읽음 말고 다른 내용은 고칠 수 없다", async () => {
+    await seedProject({ withBob: true });
+    await seedNote();
+    await assertFails(updateDoc(doc(db("alice"), "users", "alice", "notifications", "n1"), { text: "조작" }));
+  });
+  test("할 일 상태 변경과 알림을 한 배치로 쓸 수 있다", async () => {
+    await seedProject({ withBob: true });
+    await seedTask({ assigneeId: "alice" });
+    const d = db("bob");
+    const b = writeBatch(d);
+    b.update(doc(d, "projects", PID, "tasks", "t1"), { status: "doing", statusSource: "manual", updatedAt: serverTimestamp() });
+    b.set(doc(d, "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "doing", source: "manual", actor: "bob", at: serverTimestamp() });
+    b.set(doc(d, "users", "alice", "notifications", "n9"), NOTE());
+    await assertSucceeds(b.commit());
+  });
+});

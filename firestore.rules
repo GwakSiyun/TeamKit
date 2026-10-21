@@ -98,6 +98,27 @@ service cloud.firestore {
       match /private/{docId} {
         allow read, write: if signedIn() && request.auth.uid == uid;
       }
+
+      // 알림: 같은 프로젝트 팀원이 내 할 일을 바꿀 때 그 사람이 만들어 넣는다 (본인 이름으로만, 처음엔 안 읽음).
+      // 읽기 · 삭제 · 읽음 표시는 본인만
+      match /notifications/{notificationId} {
+        allow read, delete: if signedIn() && request.auth.uid == uid;
+        allow update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read'])
+          && request.resource.data.read is bool;
+        allow create: if signedIn() && request.auth.uid != uid
+          && request.resource.data.keys().hasOnly(['type', 'projectId', 'projectName', 'taskId', 'taskNumber', 'taskTitle',
+                                                   'actorId', 'actorName', 'text', 'read', 'createdAt'])
+          && request.resource.data.type in ['status', 'edit', 'assign']
+          && request.resource.data.actorId == request.auth.uid
+          && request.resource.data.read == false
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.text is string && request.resource.data.text.size() <= 100
+          && request.resource.data.taskTitle is string && request.resource.data.taskTitle.size() <= 100
+          && request.resource.data.projectId is string
+          && isMember(request.resource.data.projectId)
+          && uid in get(projectPath(request.resource.data.projectId)).data.memberIds;
+      }
     }
 
     // 레포 → 프로젝트 · 웹훅 secret: 서버(Admin SDK) 전용. 규칙이 없으므로 브라우저는 읽기 · 쓰기 모두 거부
