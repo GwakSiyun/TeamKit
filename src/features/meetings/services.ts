@@ -1,6 +1,7 @@
 import { FirebaseError } from "firebase/app";
 import { collection, deleteDoc, doc, runTransaction, serverTimestamp, updateDoc } from "firebase/firestore";
 import { firebaseAuth, firestore } from "@/lib/firebase";
+import { addTaskNotification } from "@/features/notifications/services";
 import type { TaskInput } from "@/features/tasks/types";
 import type { ActionItem, MeetingResult, NextMeeting } from "./types";
 
@@ -79,6 +80,14 @@ export async function addActionItemToBoard(projectId: string, meetingId: string,
       });
       tx.set(doc(collection(taskRef, "history")), { from: null, to: "todo", source: "manual", actor: uid, at: serverTimestamp() });
       tx.update(meetingRef, { actionItems: items.map((it, i) => (i === index ? { ...it, taskNumber: number } : it)) });
+      addTaskNotification(
+        tx,
+        { id: projectId, name: String(project.data()?.name ?? "") },
+        { id: taskRef.id, number, title: input.title, assigneeId: input.assigneeId, createdBy: uid },
+        "assign",
+        "회의록에서 할 일을 맡겼어요",
+        input.assigneeId,
+      );
       return number;
     });
     return { ok: true, taskNumber };

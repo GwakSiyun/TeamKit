@@ -80,6 +80,7 @@ erDiagram
 | `users/{uid}` | `name`, `email`, `githubLogin`, `createdAt` | ✅ | 가입·첫 GitHub 로그인 때 생성 |
 | `users/{uid}/private/github` | `accessToken`, `login`, `updatedAt` | ✅ | 본인만 접근 ([보안](SECURITY.md)) |
 | `projects/{projectId}` | `name`, `inviteCode`, `ownerId`, `memberIds[]`, `taskCounter`, `createdAt` (+ `github{owner, repo}` 11주차, `milestones[]{id, name, date}` 최대 5개 — 대시보드 D-day 칩 · 간트 깃발) | ✅ | `memberIds` 배열 → `array-contains` 로 "내 프로젝트" 조회 |
+| `users/{uid}/notifications/{id}` | `type`(`status`/`edit`/`assign`), `projectId`, `projectName`, `taskId`, `taskNumber`, `taskTitle`, `actorId`, `actorName`, `text`, `read`, `createdAt` | ✅ | 남의 할 일을 바꾼 팀원이 할 일 변경과 같은 배치로 남김. 본인만 읽기 · 읽음 표시 |
 | `inviteCodes/{code}` | `projectId`, `createdAt` | ✅ | 코드 → 프로젝트 찾기. 단건 조회만 허용 |
 | `…/joins/{uid}` | `code`, `at` | ✅ | 참여 증명. 규칙이 현재 초대 코드와 비교 ([보안](SECURITY.md#초대-코드-참여-설계-)) |
 | `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}` — 웹훅 서버만 씀) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
