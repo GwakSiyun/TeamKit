@@ -64,6 +64,12 @@ const PATHS = {
   left: <path d="M14 7l-5 5 5 5" />,
   right: <path d="M10 7l5 5-5 5" />,
   arrowLeft: <path d="M19 12H5M11 6l-6 6 6 6" />,
+  share: (
+    <>
+      <path d="M12 15V3M7 8l5-5 5 5" />
+      <path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" />
+    </>
+  ),
   flag: <path d="M5 21V4M5 4h11l-2 4 2 4H5" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,
   close: <path d="M6 6l12 12M18 6L6 18" />,
