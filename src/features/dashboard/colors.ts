@@ -18,4 +18,4 @@ export function barKind(task: Task, today: string): BarKind {
 }
 
 /** 마일스톤(1차 배포 등) 날짜 칸 */
-export const MILESTONE_COLOR = { bg: "#FDF0EF", line: "#E03E3E" } as const;
+export const MILESTONE_COLOR = { bg: "var(--tk-danger-soft)", line: "var(--tk-danger)" } as const;

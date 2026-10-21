@@ -38,7 +38,7 @@ export function GithubLinkRow() {
         <div className="flex flex-col gap-0.5">
           <span className="flex items-center gap-2 font-semibold">
             GitHub
-            {linked && <span className="rounded bg-[#DBEDDB] px-1.5 py-0.5 text-xs font-medium text-[#1C3829]">연결됨</span>}
+            {linked && <span className="rounded bg-tint-green px-1.5 py-0.5 text-xs font-medium text-tint-green-fg">연결됨</span>}
           </span>
           <span className="text-xs text-muted">
             {linked

@@ -8,7 +8,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
   secondary: "bg-surface text-ink shadow-[inset_0_0_0_1px_var(--color-field)] hover:bg-side",
   ghost: "bg-transparent text-sub hover:bg-hover hover:text-ink",
   danger: "bg-danger text-white hover:bg-danger-strong",
-  dangerOutline: "bg-surface text-danger shadow-[inset_0_0_0_1px_#F3C4C0] hover:bg-[#FFF5F4] hover:text-danger-strong",
+  dangerOutline: "bg-surface text-danger shadow-[inset_0_0_0_1px_var(--color-danger-line)] hover:bg-danger-soft hover:text-danger-strong",
 };
 
 /** <button>·<Link> 모두에 같은 모양을 주기 위한 클래스 헬퍼 */
