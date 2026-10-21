@@ -3,6 +3,9 @@
 import { FirebaseError } from "firebase/app";
 import { collection, doc, documentId, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
+import { lateDays } from "@/features/tasks/deadline";
+import type { TaskDoc } from "@/features/tasks/types";
+import { todayISO } from "@/lib/dates";
 import { firestore } from "@/lib/firebase";
 import type { Member, Project, ProjectDoc } from "./types";
 
@@ -78,4 +81,36 @@ export function useMembers(memberIds: string[]): Member[] {
   }, [key]);
 
   return members;
+}
+
+export interface ProjectStats {
+  total: number;
+  done: number;
+  late: number;
+}
+
+/**
+ * 프로젝트 목록 카드용 할 일 통계 (전체 · 완료 · 지연, 실시간). 팀원이 할 일을 끝내면 목록에서도 바로 바뀐다.
+ * 못 읽으면 null (카드에서 통계만 빼고 보여줌)
+ */
+export function useProjectStats(projectId: string): ProjectStats | null | "loading" {
+  const [stats, setStats] = useState<ProjectStats | null | "loading">("loading");
+
+  useEffect(() => {
+    return onSnapshot(
+      collection(firestore(), "projects", projectId, "tasks"),
+      (snap) => {
+        const today = todayISO();
+        const tasks = snap.docs.map((d) => d.data() as Pick<TaskDoc, "status" | "dueDate">);
+        setStats({
+          total: tasks.length,
+          done: tasks.filter((t) => t.status === "done").length,
+          late: tasks.filter((t) => lateDays(t, today) > 0).length,
+        });
+      },
+      () => setStats(null),
+    );
+  }, [projectId]);
+
+  return stats;
 }
