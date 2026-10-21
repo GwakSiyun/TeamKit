@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { BackLink } from "@/components/common/BackLink";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/button";
@@ -78,7 +79,12 @@ export function PollDetailView() {
 
   if (state.status === "loading") return <p className="py-12 text-center text-sm text-muted">불러오는 중…</p>;
   if (state.status === "missing") {
-    return <Notice tone="error">투표를 찾을 수 없어요. 삭제됐을 수 있어요.</Notice>;
+    return (
+      <>
+        <BackLink href={`${projectBase(project.id)}/polls`} label="투표 목록으로" />
+        <Notice tone="error">투표를 찾을 수 없어요. 삭제됐을 수 있어요.</Notice>
+      </>
+    );
   }
 
   const poll = state.poll;
@@ -98,6 +104,7 @@ export function PollDetailView() {
 
   return (
     <>
+      <BackLink href={`${projectBase(project.id)}/polls`} label="투표 목록으로" />
       <PageHeader
         title={poll.title}
         actions={

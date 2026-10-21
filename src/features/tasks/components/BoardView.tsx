@@ -66,8 +66,8 @@ export function BoardView() {
       {state.status === "error" && <Notice tone="error">할 일을 불러오지 못했어요. 새로고침해주세요.</Notice>}
       {state.status === "ready" && tasks.length === 0 && (
         <Notice tone="info">
-          첫 할 일을 만들어 보세요. 카드 번호는 <b className="font-mono">TM-1</b>부터 붙어요. 브랜치 이름이나 커밋 메시지에 카드 번호를 넣으면 GitHub 활동이
-          카드에 자동으로 반영돼요 (11~12주차).
+          첫 할 일을 만들어 보세요. 카드 번호는 <b className="font-mono">TM-1</b>부터 붙어요. GitHub 레포를 연결하고 브랜치 이름이나 커밋 메시지에 카드 번호를
+          넣으면 카드가 자동으로 진행 중 · 완료로 움직여요.
         </Notice>
       )}
 

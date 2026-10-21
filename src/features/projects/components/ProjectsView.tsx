@@ -51,9 +51,9 @@ export function ProjectsView() {
           title="아직 참여한 프로젝트가 없어요"
           description={
             <>
-              프로젝트를 만들고 팀원에게 초대 코드를 공유하거나,
+              프로젝트를 만들어 팀원에게 초대 링크를 보내거나,
               <br />
-              팀원에게 받은 초대 코드로 참여하세요.
+              팀원에게 받은 초대 링크 · 코드로 참여하세요.
             </>
           }
           actions={actions}
