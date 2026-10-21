@@ -79,7 +79,7 @@ erDiagram
 |---|---|---|---|
 | `users/{uid}` | `name`, `email`, `githubLogin`, `createdAt` | ✅ | 가입·첫 GitHub 로그인 때 생성 |
 | `users/{uid}/private/github` | `accessToken`, `login`, `updatedAt` | ✅ | 본인만 접근 ([보안](SECURITY.md)) |
-| `projects/{projectId}` | `name`, `inviteCode`, `ownerId`, `memberIds[]`, `taskCounter`, `createdAt` (+ `github{owner, repo}` 11주차, `milestone{name, date}` 대시보드 D-day · 간트) | ✅ | `memberIds` 배열 → `array-contains` 로 "내 프로젝트" 조회 |
+| `projects/{projectId}` | `name`, `inviteCode`, `ownerId`, `memberIds[]`, `taskCounter`, `createdAt` (+ `github{owner, repo}` 11주차, `milestones[]{id, name, date}` 최대 5개 — 대시보드 D-day 칩 · 간트 깃발) | ✅ | `memberIds` 배열 → `array-contains` 로 "내 프로젝트" 조회 |
 | `inviteCodes/{code}` | `projectId`, `createdAt` | ✅ | 코드 → 프로젝트 찾기. 단건 조회만 허용 |
 | `…/joins/{uid}` | `code`, `at` | ✅ | 참여 증명. 규칙이 현재 초대 코드와 비교 ([보안](SECURITY.md#초대-코드-참여-설계-)) |
 | `…/tasks/{taskId}` | `number`, `title`, `description`, `status`, `statusSource`, `assigneeId`, `startDate`, `dueDate`, `createdBy`, `createdAt`, `updatedAt` (+ `branch`, `github{…}` — 웹훅 서버만 씀) | ✅ | `status`: `todo` · `doing` · `done`. 날짜는 `"YYYY-MM-DD"` 문자열(시간대 문제 회피). `startDate`~`dueDate` 로 간트 막대 |
@@ -88,7 +88,7 @@ erDiagram
 | `…/polls/{pollId}` | `title`, `startDate`, `endDate`, `startHour`, `endHour`(미포함), `durationHours`(1·2), `status`(`open`/`confirmed`), `confirmedSlot{date, hour}`, `createdBy`, `createdAt` | ✅ | 기간 최대 14일(규칙에서 검사) |
 | `…/polls/{pollId}/responses/{uid}` | `slots[]` (`"2026-10-20T19"` = 19시부터 1시간), `updatedAt` | ✅ | 사람마다 문서 1개 → 동시 입력 충돌 없음 |
 | `…/githubEvents/{deliveryId}` | `type`(`create`/`push`/`pull_request`), `title`, `author`, `url`, `taskNumbers[]`, `prState`(PR 만: `open`/`merged`/`closed`), `at` | ✅ | 문서 ID = GitHub Delivery ID → 같은 웹훅 중복 처리 방지. 웹훅 서버만 씀 |
-| `githubRepos/{owner__repo}` | `projectId`, `fullName`, `webhookSecret`, `hookId`, `connectedBy`, `connectedAt`, `githubMilestone`(연결된 GitHub 마일스톤 번호) | ✅ | 브라우저 접근 금지, 서버(Admin SDK)만 |
+| `githubRepos/{owner__repo}` | `projectId`, `fullName`, `webhookSecret`, `hookId`, `connectedBy`, `connectedAt`, `githubMilestones{마일스톤 id: GitHub 번호}` | ✅ | 브라우저 접근 금지, 서버(Admin SDK)만 |
 
 `…` = `projects/{projectId}`
 
@@ -107,7 +107,7 @@ erDiagram
 |---|---|---|
 | `POST /api/meetings` | 브라우저 (Firebase ID 토큰) | 멤버 확인 → 음성이면 Groq Whisper(`whisper-large-v3-turbo`, 한국어) 호출 · 메모면 줄 단위로 나눔 → 규칙 기반 결정사항 · 할 일 후보 추출 → `meetings` 저장 |
 | `POST /api/github/repos` · `connect` · `disconnect` | 브라우저 (Firebase ID 토큰) | 레포 목록 · 웹훅 등록 · 해제 (연결 시 마일스톤이 있으면 GitHub 마일스톤도 생성) |
-| `POST /api/github/milestone` | 브라우저 (만든 사람) | 프로젝트 마일스톤 → GitHub Milestone 만들기 · 고치기 · 닫기 (한 방향) |
-| `POST /api/github/webhook` | GitHub | 서명 검증 → 카드 번호 추출 → 카드 상태 · PR 정보 갱신, 카드 번호가 있는 새 PR 은 마일스톤에 자동 추가 |
+| `POST /api/github/milestone` | 브라우저 (만든 사람) | 프로젝트 마일스톤 목록 → GitHub Milestone 들 만들기 · 고치기 · 빠진 것 닫기 (한 방향) |
+| `POST /api/github/webhook` | GitHub | 서명 검증 → 카드 번호 추출 → 카드 상태 · PR 정보 갱신, 카드 번호가 있는 새 PR 은 가장 가까운 다가오는 마일스톤에 자동 추가 |
 
 리전은 App Hosting 백엔드 `asia-east1`, Firestore 는 `asia-northeast3`. Storage · Cloud Functions 는 쓰지 않는다.

@@ -6,14 +6,16 @@ import { Avatar } from "@/components/ui/Avatar";
 import { buttonClass } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ui/ConfirmModal";
 import { controlClass } from "@/components/ui/Field";
-import { formatShort, weekdayOf } from "@/lib/dates";
+import { formatShort, todayISO, weekdayOf } from "@/lib/dates";
+import { eulReul } from "@/lib/josa";
 import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { useTransientState } from "@/hooks/useTransientState";
 import { useCurrentProject } from "../ProjectContext";
-import { MILESTONE_NAME_MAX, PROJECT_NAME_MAX, regenerateInviteCode, removeMember, renameProject, setMilestone } from "../services";
-import type { Member } from "../types";
+import { dDay, MAX_MILESTONES, MILESTONE_NAME_MAX, milestonesOf, newMilestoneId } from "../milestones";
+import { PROJECT_NAME_MAX, regenerateInviteCode, removeMember, renameProject, saveMilestones } from "../services";
+import type { Member, Milestone } from "../types";
 import { DangerZone } from "./DangerZone";
 
 const COPIED_MS = 1500;
@@ -80,96 +82,122 @@ function NameSection({ isOwner }: { isOwner: boolean }) {
   );
 }
 
-/** 마일스톤 (예: 1차 배포 10/30): 대시보드 제목 옆 D-day · 간트 날짜 칸 표시. 만든 사람만 설정 */
+/** 마일스톤 목록 (예: 1차 배포 10/30, 최종 발표 11/13): 대시보드 D-day 칩 · 간트 깃발. 만든 사람만 추가 · 삭제 */
 function MilestoneSection({ isOwner }: { isOwner: boolean }) {
   const { project } = useCurrentProject();
-  const current = project.milestone ?? null;
-  const [name, setName] = useState(current?.name ?? "");
-  const [date, setDate] = useState(current?.date ?? "");
+  const list = milestonesOf(project);
+  const [name, setName] = useState("");
+  const [date, setDate] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<{ tone: "success" | "error"; text: string } | null>(null);
+  const today = todayISO();
 
-  async function save(next: { name: string; date: string } | null): Promise<void> {
+  async function save(next: Milestone[], done: string): Promise<boolean> {
     setPending(true);
     setMessage(null);
-    const result = await setMilestone(project, next);
+    const result = await saveMilestones(project, next);
     setPending(false);
     if (!result.ok) {
       setMessage({ tone: "error", text: result.message });
-      return;
-    }
-    if (!next) {
-      setName("");
-      setDate("");
+      return false;
     }
     if (result.github === "failed") {
       setMessage({ tone: "error", text: `TeamKit 에는 저장했지만 GitHub 에는 반영하지 못했어요. ${result.githubMessage ?? ""}` });
+      return true;
+    }
+    setMessage({ tone: "success", text: done + (result.github === "synced" ? " GitHub 레포의 마일스톤에도 반영했어요." : "") });
+    return true;
+  }
+
+  async function handleAdd(e: FormEvent<HTMLFormElement>): Promise<void> {
+    e.preventDefault();
+    if (!name.trim() || !date) {
+      setMessage({ tone: "error", text: "이름과 날짜를 모두 넣어주세요." });
       return;
     }
-    const where = result.github === "synced" ? (next ? " GitHub 레포의 마일스톤에도 반영했어요." : " GitHub 마일스톤은 닫았어요.") : "";
-    setMessage({ tone: "success", text: (next ? "마일스톤을 저장했어요. 대시보드에 표시돼요." : "마일스톤을 지웠어요.") + where });
+    const ok = await save([...list, { id: newMilestoneId(), name, date }], `「${name.trim()}」${eulReul(name.trim())} 추가했어요.`);
+    if (ok) {
+      setName("");
+      setDate("");
+    }
   }
 
-  const summary = current ? `${current.name} · ${formatShort(current.date)}(${weekdayOf(current.date)})` : "정하지 않음";
-  if (!isOwner) {
-    return (
-      <Section title="마일스톤">
-        <p className="text-sm">{summary}</p>
-        <p className="text-xs text-muted">마일스톤은 프로젝트를 만든 사람이 정해요.</p>
-      </Section>
-    );
-  }
-
-  const unchanged = name.trim() === (current?.name ?? "") && date === (current?.date ?? "");
   return (
-    <Section title="마일스톤">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          void save({ name, date });
-        }}
-        noValidate
-        className="flex max-w-xl flex-wrap items-center gap-2"
-      >
-        <label htmlFor="milestone-name" className="sr-only">
-          마일스톤 이름
-        </label>
-        <input
-          id="milestone-name"
-          value={name}
-          placeholder="예) 1차 배포"
-          maxLength={MILESTONE_NAME_MAX}
-          onChange={(e) => {
-            setName(e.target.value);
-            setMessage(null);
-          }}
-          className={controlClass(null, "h-9 min-w-0 flex-1")}
-        />
-        <label htmlFor="milestone-date" className="sr-only">
-          마일스톤 날짜
-        </label>
-        <input
-          id="milestone-date"
-          type="date"
-          value={date}
-          onChange={(e) => {
-            setDate(e.target.value);
-            setMessage(null);
-          }}
-          className={controlClass(null, "h-9 w-auto")}
-        />
-        <button type="submit" disabled={pending || unchanged} className={buttonClass("secondary", "h-9")}>
-          {pending ? "저장 중…" : "저장"}
-        </button>
-        {current && (
-          <button type="button" onClick={() => void save(null)} disabled={pending} className={buttonClass("ghost", "h-9")}>
-            지우기
+    <Section
+      title={
+        <>
+          마일스톤 <span className="font-normal text-muted">{list.length}</span>
+        </>
+      }
+    >
+      {list.length === 0 ? (
+        <p className="text-sm text-muted">아직 없어요.{isOwner && " 1차 배포 · 최종 발표처럼 중요한 날을 추가해 보세요."}</p>
+      ) : (
+        <ul className="-mt-1 flex max-w-xl flex-col">
+          {list.map((m) => (
+            <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-sm">
+              <span className={m.date < today ? "text-faint" : "text-danger"}>
+                <Icon name="flag" size={14} />
+              </span>
+              <span className="min-w-0 flex-1 truncate font-medium">{m.name}</span>
+              <span className="text-sub tabular-nums">
+                {formatShort(m.date)}({weekdayOf(m.date)})
+              </span>
+              <span className="w-12 text-right text-xs font-semibold text-muted tabular-nums">{dDay(m.date, today)}</span>
+              {isOwner && (
+                <button
+                  type="button"
+                  disabled={pending}
+                  onClick={() => void save(list.filter((x) => x.id !== m.id), `「${m.name}」${eulReul(m.name)} 지웠어요.`)}
+                  className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-[#FFF5F4] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  삭제
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {isOwner && list.length < MAX_MILESTONES && (
+        <form onSubmit={handleAdd} noValidate className="flex max-w-xl flex-wrap items-center gap-2">
+          <label htmlFor="milestone-name" className="sr-only">
+            마일스톤 이름
+          </label>
+          <input
+            id="milestone-name"
+            value={name}
+            placeholder="예) 1차 배포"
+            maxLength={MILESTONE_NAME_MAX}
+            onChange={(e) => {
+              setName(e.target.value);
+              setMessage(null);
+            }}
+            className={controlClass(null, "h-9 min-w-0 flex-1")}
+          />
+          <label htmlFor="milestone-date" className="sr-only">
+            마일스톤 날짜
+          </label>
+          <input
+            id="milestone-date"
+            type="date"
+            value={date}
+            onChange={(e) => {
+              setDate(e.target.value);
+              setMessage(null);
+            }}
+            className={controlClass(null, "h-9 w-auto")}
+          />
+          <button type="submit" disabled={pending} className={buttonClass("secondary", "h-9")}>
+            <Icon name="plus" size={14} />
+            {pending ? "저장 중…" : "추가"}
           </button>
-        )}
-      </form>
+        </form>
+      )}
       <p className="text-xs text-muted">
-        대시보드 제목 옆에 &lsquo;1차 배포(10/30)까지 10일&rsquo;처럼 남은 날이 보이고, 일정 차트에 그 날이 표시돼요.
-        {project.github && " 연결된 GitHub 레포에도 같은 마일스톤이 생기고, 카드 번호가 있는 PR 은 자동으로 들어가요."}
+        {isOwner ? `최대 ${MAX_MILESTONES}개. ` : "마일스톤은 프로젝트를 만든 사람이 정해요. "}
+        대시보드 제목 아래 D-day 로 보이고, 일정 차트 위에 깃발로 표시돼요.
+        {project.github && " 연결된 GitHub 레포에도 같은 마일스톤이 생기고, 카드 번호가 있는 새 PR 은 가장 가까운 마일스톤에 자동으로 들어가요."}
       </p>
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
     </Section>

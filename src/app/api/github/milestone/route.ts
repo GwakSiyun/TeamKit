@@ -1,14 +1,13 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { githubTokenOf } from "@/features/github/server/http";
-import { syncMilestone, type MilestoneInput } from "@/features/github/server/milestone";
+import { listedMilestones, numbersOf, syncMilestones } from "@/features/github/server/milestone";
 import { repoDocId } from "@/features/github/sync";
 import { fail, json, readBody, requireUser } from "@/lib/server/http";
 import { adminDb } from "@/lib/server/firebaseAdmin";
 
 /**
- * 프로젝트 마일스톤 → 연결된 레포의 GitHub Milestone 반영 (프로젝트를 만든 사람만).
- * 마일스톤 값은 브라우저가 Firestore 에 먼저 저장하고(규칙 검사), 이 API 는 저장된 값을 읽어 GitHub 에 맞춘다.
- * 레포가 연결 안 돼 있으면 할 일 없음.
+ * 프로젝트 마일스톤 목록 → 연결된 레포의 GitHub Milestone 들 (프로젝트를 만든 사람만, 한 방향).
+ * 목록은 브라우저가 Firestore 에 먼저 저장하고(규칙 검사), 이 API 는 저장된 값을 읽어 GitHub 에 맞춘다.
  */
 export async function POST(request: Request): Promise<Response> {
   const uid = await requireUser(request);
@@ -31,11 +30,11 @@ export async function POST(request: Request): Promise<Response> {
 
   const fullName = `${github.owner}/${github.repo}`;
   const repoRef = db.doc(`githubRepos/${repoDocId(fullName)}`);
-  const current = Number((await repoRef.get()).get("githubMilestone") ?? 0) || null;
-  const milestone = (project.get("milestone") ?? null) as MilestoneInput | null;
+  const repo = await repoRef.get();
+  const list = listedMilestones(project.get("milestones"), project.get("milestone"));
+  const result = await syncMilestones(token, fullName, list, numbersOf(repo.get("githubMilestones"), repo.get("githubMilestone")));
 
-  const result = await syncMilestone(token, fullName, milestone, current);
+  await repoRef.update({ githubMilestones: result.numbers, githubMilestone: FieldValue.delete() });
   if (!result.ok) return fail(502, result.message);
-  await repoRef.update({ githubMilestone: result.number ?? FieldValue.delete() });
-  return json(200, { ok: true, synced: true, url: result.url });
+  return json(200, { ok: true, synced: true });
 }

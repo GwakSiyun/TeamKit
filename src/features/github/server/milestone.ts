@@ -73,3 +73,63 @@ export async function attachToMilestone(token: string, fullName: string, prNumbe
   const res = await githubFetch(token, `/repos/${fullName}/issues/${prNumber}`, { method: "PATCH", body: JSON.stringify({ milestone }) });
   return res.ok;
 }
+
+export interface ListedMilestone extends MilestoneInput {
+  id: string;
+}
+
+/** TeamKit 마일스톤 id → GitHub 마일스톤 번호 */
+export type MilestoneNumbers = Record<string, number>;
+
+/**
+ * 목록 전체 맞추기: 목록에 있는 건 만들기 · 고치기, 목록에서 빠진 건 GitHub 에서 닫기.
+ * 하나라도 실패하면 거기서 멈추고 그때까지 맞춘 번호를 돌려준다 (다음 저장 때 이어서).
+ */
+export async function syncMilestones(
+  token: string,
+  fullName: string,
+  list: readonly ListedMilestone[],
+  current: MilestoneNumbers,
+): Promise<{ ok: true; numbers: MilestoneNumbers } | { ok: false; message: string; numbers: MilestoneNumbers }> {
+  const numbers: MilestoneNumbers = {};
+  for (const m of list) {
+    const result = await syncMilestone(token, fullName, m, current[m.id] ?? null);
+    if (!result.ok) return { ok: false, message: result.message, numbers: { ...current, ...numbers } };
+    if (result.number) numbers[m.id] = result.number;
+  }
+  for (const [id, number] of Object.entries(current)) {
+    if (list.some((m) => m.id === id)) continue;
+    const closed = await syncMilestone(token, fullName, null, number);
+    if (!closed.ok) return { ok: false, message: closed.message, numbers: { ...numbers, [id]: number } };
+  }
+  return { ok: true, numbers };
+}
+
+/** 저장된 값(예전 형식 포함) → 목록 */
+export function listedMilestones(milestones: unknown, legacy: unknown): ListedMilestone[] {
+  if (Array.isArray(milestones)) {
+    return milestones.flatMap((m): ListedMilestone[] => {
+      if (!m || typeof m !== "object") return [];
+      const { id, name, date } = m as Record<string, unknown>;
+      return typeof id === "string" && typeof name === "string" && typeof date === "string" ? [{ id, name, date }] : [];
+    });
+  }
+  if (legacy && typeof legacy === "object") {
+    const { name, date } = legacy as Record<string, unknown>;
+    if (typeof name === "string" && typeof date === "string") return [{ id: "legacy", name, date }];
+  }
+  return [];
+}
+
+/** 예전 저장 형식(githubMilestone 숫자 하나) → 번호 표 */
+export function numbersOf(repoNumbers: unknown, legacyNumber: unknown): MilestoneNumbers {
+  if (repoNumbers && typeof repoNumbers === "object") {
+    return Object.fromEntries(Object.entries(repoNumbers as Record<string, unknown>).filter((e): e is [string, number] => typeof e[1] === "number"));
+  }
+  return typeof legacyNumber === "number" && legacyNumber > 0 ? { legacy: legacyNumber } : {};
+}
+
+/** 한국 기준 오늘 "YYYY-MM-DD" (서버는 UTC) */
+export function todayKST(now: Date = new Date()): string {
+  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}

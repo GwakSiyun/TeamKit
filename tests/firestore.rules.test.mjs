@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { arrayRemove, arrayUnion, collection, deleteDoc, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { arrayRemove, arrayUnion, collection, deleteDoc, deleteField, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 
 const TASK = { title: "로그인 화면", description: "", status: "todo", statusSource: "manual", assigneeId: null, startDate: null, dueDate: null };
 
@@ -510,22 +510,33 @@ describe("프로젝트 설정 (만든 사람)", () => {
     await seedProject({ withBob: true });
     await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID), { name: "쇼핑몰 v2" }));
   });
-  test("만든 사람은 마일스톤을 정하고 지울 수 있다", async () => {
+  test("만든 사람은 마일스톤 목록을 저장 · 비울 수 있다", async () => {
     await seedProject({ withBob: true });
     const ref = doc(db("alice"), "projects", PID);
-    await assertSucceeds(updateDoc(ref, { milestone: { name: "1차 배포", date: "2026-10-30" } }));
-    await assertSucceeds(updateDoc(ref, { milestone: null }));
+    await assertSucceeds(updateDoc(ref, { milestones: [{ id: "a1", name: "1차 배포", date: "2026-10-30" }, { id: "b2", name: "최종 발표", date: "2026-11-13" }] }));
+    await assertSucceeds(updateDoc(ref, { milestones: [] }));
+  });
+  test("예전 형식(milestone 하나)은 지우면서 목록으로 옮길 수 있다", async () => {
+    await seedProject();
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await updateDoc(doc(ctx.firestore(), "projects", PID), { milestone: { name: "1차 배포", date: "2026-10-30" } });
+    });
+    const ref = doc(db("alice"), "projects", PID);
+    await assertSucceeds(updateDoc(ref, { milestones: [{ id: "legacy", name: "1차 배포", date: "2026-10-30" }], milestone: deleteField() }));
   });
   test("멤버는 마일스톤을 정할 수 없다", async () => {
     await seedProject({ withBob: true });
-    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { milestone: { name: "1차 배포", date: "2026-10-30" } }));
+    await assertFails(updateDoc(doc(db("bob"), "projects", PID), { milestones: [{ id: "a1", name: "1차 배포", date: "2026-10-30" }] }));
   });
-  test("마일스톤 형식이 틀리면 거부 (이름 길이 · 날짜 형식 · 다른 필드)", async () => {
+  test("마일스톤 형식이 틀리면 거부 (6개 이상 · 이름 길이 · 날짜 형식 · 다른 필드 · 예전 형식 쓰기)", async () => {
     await seedProject();
     const ref = doc(db("alice"), "projects", PID);
-    await assertFails(updateDoc(ref, { milestone: { name: "가".repeat(21), date: "2026-10-30" } }));
-    await assertFails(updateDoc(ref, { milestone: { name: "1차 배포", date: "10/30" } }));
-    await assertFails(updateDoc(ref, { milestone: { name: "1차 배포", date: "2026-10-30", by: "alice" } }));
+    const ok = (i) => ({ id: `m${i}`, name: `마일스톤 ${i}`, date: "2026-10-30" });
+    await assertFails(updateDoc(ref, { milestones: [ok(1), ok(2), ok(3), ok(4), ok(5), ok(6)] }));
+    await assertFails(updateDoc(ref, { milestones: [{ id: "a", name: "가".repeat(21), date: "2026-10-30" }] }));
+    await assertFails(updateDoc(ref, { milestones: [ok(1), { id: "b", name: "x", date: "10/30" }] }));
+    await assertFails(updateDoc(ref, { milestones: [{ ...ok(1), by: "alice" }] }));
+    await assertFails(updateDoc(ref, { milestone: { name: "1차 배포", date: "2026-10-30" } }));
   });
   test("멤버는 이름을 바꿀 수 없다", async () => {
     await seedProject({ withBob: true });
