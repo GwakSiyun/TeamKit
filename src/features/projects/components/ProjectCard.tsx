@@ -18,7 +18,7 @@ export function ProjectCard({ project, isOwner }: { project: Project; isOwner: b
   return (
     <Link
       href={`/p/${project.id}`}
-      className="flex flex-col gap-3.5 rounded-lg border border-line bg-white p-4 text-ink transition-shadow hover:shadow-[0_2px_6px_rgba(15,15,15,0.08)] focus-visible:outline-2 focus-visible:outline-accent"
+      className="flex flex-col gap-3.5 rounded-lg border border-line bg-surface p-4 text-ink transition-shadow hover:shadow-[0_2px_6px_rgba(15,15,15,0.08)] focus-visible:outline-2 focus-visible:outline-accent"
     >
       <div className="flex items-center gap-2.5">
         <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-[7px] border border-line bg-side font-bold">

@@ -57,7 +57,7 @@ export function PollsView() {
               <Link
                 key={p.id}
                 href={`${projectBase(project.id)}/polls/${p.id}`}
-                className={`${ROW} ${GRID} rounded border-b border-[#F1F1EF] px-2 py-2.5 text-sm tabular-nums hover:bg-side`}
+                className={`${ROW} ${GRID} rounded border-b border-divider px-2 py-2.5 text-sm tabular-nums hover:bg-side`}
               >
                 <span className="w-full truncate font-semibold lg:w-auto">{p.title}</span>
                 <span className="text-sub">

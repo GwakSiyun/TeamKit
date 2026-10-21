@@ -162,7 +162,7 @@ export function MeetingDetailView() {
                   const schedule = suggestSchedule(d.text, meetingDay);
                   const registered = meeting.nextMeeting?.text === d.text ? meeting.nextMeeting : null;
                   return (
-                    <li key={i} className="flex flex-col gap-1.5 border-b border-[#F1F1EF] px-2 py-2">
+                    <li key={i} className="flex flex-col gap-1.5 border-b border-divider px-2 py-2">
                       <a href={`#${segmentId(d.segment)}`} className="flex gap-2 rounded text-sm leading-relaxed hover:underline">
                         <span className="mt-[7px] size-2 shrink-0 rounded-full bg-[#4DAB6F]" aria-hidden="true" />
                         <span className="break-keep">{d.text}</span>
@@ -218,7 +218,7 @@ export function MeetingDetailView() {
                   const s = suggestions[i];
                   const period = periodLabel(s);
                   return (
-                    <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-[#F1F1EF] px-2 py-2.5">
+                    <li key={i} className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-divider px-2 py-2.5">
                       <div className="flex min-w-0 flex-col gap-1">
                         <span className="text-sm font-semibold break-keep">{s.title}</span>
                         {(s.assigneeId || period) && (

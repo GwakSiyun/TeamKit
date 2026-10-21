@@ -25,7 +25,7 @@ export function TaskList({ tasks, nameOf, trailing, empty, onOpenTask }: TaskLis
             <button
               type="button"
               onClick={() => onOpenTask(t.id)}
-              className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-[#F1F1EF] px-2 py-2 text-left text-sm hover:bg-side"
+              className="grid w-full cursor-pointer grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2.5 rounded border-b border-divider px-2 py-2 text-left text-sm hover:bg-side"
             >
               <span className="truncate">{t.title}</span>
               {t.assigneeId && name ? <Avatar seed={t.assigneeId} name={name} size={20} /> : <span />}

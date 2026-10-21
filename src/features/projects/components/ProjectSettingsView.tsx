@@ -153,7 +153,7 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
         <ul className="-mt-1 flex max-w-xl flex-col">
           {list.map((m) =>
             editing?.id === m.id ? (
-              <li key={m.id} className="border-b border-[#F1F1EF] px-2 py-2">
+              <li key={m.id} className="border-b border-divider px-2 py-2">
                 <form
                   onSubmit={(e) => {
                     e.preventDefault();
@@ -192,7 +192,7 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
                 </form>
               </li>
             ) : (
-              <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-sm">
+              <li key={m.id} className="flex items-center gap-3 border-b border-divider px-2 py-2 text-sm">
                 <span className={m.date < today ? "text-faint" : "text-danger"}>
                   <Icon name="flag" size={14} />
                 </span>
@@ -325,7 +325,7 @@ export function ProjectSettingsView() {
       >
         <ul className="-mt-3 flex flex-col">
           {members.map((m) => (
-            <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-[13px]">
+            <li key={m.id} className="flex items-center gap-3 border-b border-divider px-2 py-2 text-[13px]">
               <Avatar seed={m.id} name={m.name} size={22} />
               <span className="min-w-0 flex-1 truncate font-medium sm:w-32 sm:flex-none">
                 {m.name}

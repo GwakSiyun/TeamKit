@@ -2,7 +2,7 @@ import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTML
 
 /** 입력 · 여러 줄 입력 · 선택 상자가 같이 쓰는 모양 */
 export function controlClass(error?: string | null, extra = ""): string {
-  return `w-full rounded-md border bg-white px-2.5 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 ${
+  return `w-full rounded-md border bg-surface px-2.5 text-sm text-ink placeholder:text-faint focus:border-accent focus:outline-none focus:ring-3 focus:ring-accent/20 ${
     error ? "border-danger" : "border-field"
   } ${extra}`;
 }

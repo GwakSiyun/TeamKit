@@ -179,7 +179,7 @@ export function PollDetailView() {
             ) : (
               <ul className="flex flex-col">
                 {recs.map((r, i) => (
-                  <li key={`${r.date}-${r.hour}`} className="grid grid-cols-[18px_minmax(0,1fr)_auto] items-center gap-2 border-b border-[#F1F1EF] px-2 py-2.5">
+                  <li key={`${r.date}-${r.hour}`} className="grid grid-cols-[18px_minmax(0,1fr)_auto] items-center gap-2 border-b border-divider px-2 py-2.5">
                     <span className="text-xs font-bold text-accent">{i + 1}</span>
                     <span className="flex min-w-0 flex-col gap-0.5">
                       <span className="text-sm font-semibold tabular-nums">{formatSlot(r.date, r.hour, poll.durationHours)}</span>

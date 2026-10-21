@@ -6,7 +6,7 @@ import { slotKey } from "../slots";
 
 // 가능 인원 비율 → 칸 색 (0명 · 일부 · 절반 이상 · 대부분 · 전원)
 const LEVELS = [
-  "bg-white text-ink shadow-[inset_0_0_0_1px_#ECEBE8]",
+  "bg-surface text-ink shadow-[inset_0_0_0_1px_#ECEBE8]",
   "bg-[#D3E5EF] text-[#183347]",
   "bg-[#9CC3E4] text-[#0F2A40]",
   "bg-[#5A9BD8] text-white",

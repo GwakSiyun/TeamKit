@@ -61,7 +61,7 @@ export function Modal({
         if (e.target === e.currentTarget) onClose();
       }}
       style={{ maxWidth: width }}
-      className="mx-auto mt-[88px] w-[calc(100%-32px)] rounded-[10px] bg-white p-0 text-sm text-ink shadow-[0_16px_48px_rgba(15,15,15,0.2),0_0_0_1px_rgba(15,15,15,0.05)] backdrop:bg-[rgba(15,15,15,0.42)]"
+      className="mx-auto mt-[88px] w-[calc(100%-32px)] rounded-[10px] bg-surface p-0 text-sm text-ink shadow-[0_16px_48px_rgba(15,15,15,0.2),0_0_0_1px_rgba(15,15,15,0.05)] backdrop:bg-[rgba(15,15,15,0.42)]"
     >
       {open && (
         <div className="flex flex-col">

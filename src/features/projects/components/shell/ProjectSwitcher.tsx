@@ -13,7 +13,7 @@ import { NewProjectModal } from "../NewProjectModal";
 function ProjectMark({ name, size = 22 }: { name: string; size?: number }) {
   return (
     <span
-      className="inline-flex shrink-0 items-center justify-center rounded-[5px] bg-ink text-xs font-bold text-white"
+      className="inline-flex shrink-0 items-center justify-center rounded-[5px] bg-ink text-xs font-bold text-page"
       style={{ width: size, height: size }}
     >
       {name.slice(0, 1)}

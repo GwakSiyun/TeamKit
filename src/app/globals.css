@@ -1,26 +1,95 @@
 @import "tailwindcss";
 
-/* 디자인 토큰 — 디자인 캔버스 왼쪽 "디자인 규칙" 메모와 동일 */
+/*
+ * 디자인 토큰 — 디자인 캔버스 왼쪽 "디자인 규칙" 메모와 동일.
+ * 실제 값은 --tk-* 변수에 두고, 다크 모드에서 그 값만 바꾼다 (클래스는 그대로: text-ink, bg-surface …)
+ */
+:root {
+  color-scheme: light;
+  --tk-page: #ffffff;
+  --tk-surface: #ffffff;
+  --tk-ink: #37352f;
+  --tk-sub: #5f5e5b;
+  --tk-muted: #787774;
+  --tk-faint: #9b9a97;
+  --tk-line: #e9e9e7;
+  --tk-divider: #f1f1ef;
+  --tk-dashed: #d9d8d4;
+  --tk-field: #e0dfdc;
+  --tk-side: #f7f7f5;
+  --tk-hover: #efefed;
+  --tk-accent: #2383e2;
+  --tk-accent-strong: #0b6ec5;
+  --tk-danger: #e03e3e;
+  --tk-danger-strong: #c4302b;
+}
+
+/* 어두운 화면 값 (노션 다크 톤). 시스템 설정을 따르고, data-theme 으로 직접 고를 수도 있다 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --tk-page: #191919;
+    --tk-surface: #232323;
+    --tk-ink: #e3e2e0;
+    --tk-sub: #b4b3af;
+    --tk-muted: #8f8e8a;
+    --tk-faint: #6b6a67;
+    --tk-line: #2f2f2f;
+    --tk-divider: #2a2a2a;
+    --tk-dashed: #3f3f3f;
+    --tk-field: #3a3a3a;
+    --tk-side: #202020;
+    --tk-hover: #2c2c2c;
+    --tk-accent: #3b8fe0;
+    --tk-accent-strong: #5aa2e8;
+    --tk-danger: #eb5757;
+    --tk-danger-strong: #f07272;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --tk-page: #191919;
+  --tk-surface: #232323;
+  --tk-ink: #e3e2e0;
+  --tk-sub: #b4b3af;
+  --tk-muted: #8f8e8a;
+  --tk-faint: #6b6a67;
+  --tk-line: #2f2f2f;
+  --tk-divider: #2a2a2a;
+  --tk-dashed: #3f3f3f;
+  --tk-field: #3a3a3a;
+  --tk-side: #202020;
+  --tk-hover: #2c2c2c;
+  --tk-accent: #3b8fe0;
+  --tk-accent-strong: #5aa2e8;
+  --tk-danger: #eb5757;
+  --tk-danger-strong: #f07272;
+}
+
 @theme inline {
-  --color-ink: #37352f;
-  --color-sub: #5f5e5b;
-  --color-muted: #787774;
-  --color-faint: #9b9a97;
-  --color-line: #e9e9e7;
-  --color-field: #e0dfdc;
-  --color-side: #f7f7f5;
-  --color-hover: #efefed;
-  --color-accent: #2383e2;
-  --color-accent-strong: #0b6ec5;
-  --color-danger: #e03e3e;
-  --color-danger-strong: #c4302b;
+  --color-page: var(--tk-page);
+  --color-surface: var(--tk-surface);
+  --color-ink: var(--tk-ink);
+  --color-sub: var(--tk-sub);
+  --color-muted: var(--tk-muted);
+  --color-faint: var(--tk-faint);
+  --color-line: var(--tk-line);
+  --color-divider: var(--tk-divider);
+  --color-dashed: var(--tk-dashed);
+  --color-field: var(--tk-field);
+  --color-side: var(--tk-side);
+  --color-hover: var(--tk-hover);
+  --color-accent: var(--tk-accent);
+  --color-accent-strong: var(--tk-accent-strong);
+  --color-danger: var(--tk-danger);
+  --color-danger-strong: var(--tk-danger-strong);
 
   --font-sans: var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;
 }
 
 body {
-  background: #ffffff;
+  background: var(--tk-page);
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 14px;
