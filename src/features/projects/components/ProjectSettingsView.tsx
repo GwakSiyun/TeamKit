@@ -218,7 +218,7 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
                       type="button"
                       disabled={pending}
                       onClick={() => void save(list.filter((x) => x.id !== m.id), `「${m.name}」${eulReul(m.name)} 지웠어요.`)}
-                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-[#FFF5F4] disabled:cursor-not-allowed disabled:opacity-50"
+                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       삭제
                     </button>
@@ -333,15 +333,15 @@ export function ProjectSettingsView() {
               </span>
               <span className="hidden flex-1 truncate text-sub sm:block">{m.email}</span>
               {m.id === project.ownerId ? (
-                <span className="rounded bg-[#FADEC9] px-1.5 py-0.5 text-[11px] font-medium text-[#49290E]">만든 사람</span>
+                <span className="rounded bg-tint-orange px-1.5 py-0.5 text-[11px] font-medium text-tint-orange-fg">만든 사람</span>
               ) : (
                 <>
-                  <span className="rounded bg-[#E3E2E0] px-1.5 py-0.5 text-[11px] font-medium text-[#32302C]">멤버</span>
+                  <span className="rounded bg-tint-gray px-1.5 py-0.5 text-[11px] font-medium text-tint-gray-fg">멤버</span>
                   {isOwner && (
                     <button
                       type="button"
                       onClick={() => setConfirming({ kind: "remove", member: m })}
-                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-[#FFF5F4]"
+                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-danger-soft"
                     >
                       내보내기
                     </button>

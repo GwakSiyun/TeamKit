@@ -105,7 +105,7 @@ export function PollDetailView() {
             <button
               type="button"
               onClick={() => setConfirming({ kind: "delete" })}
-              className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-[#FFF5F4]"
+              className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-danger-soft"
             >
               삭제
             </button>
@@ -131,7 +131,7 @@ export function PollDetailView() {
       </div>
 
       {confirmed && poll.confirmedSlot && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#EEF6F1] px-4 py-3 text-[#2B6747]">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-success-soft px-4 py-3 text-success-fg">
           <span className="flex items-center gap-2 text-sm">
             <Icon name="check" size={16} />
             <b className="font-semibold">{formatSlot(poll.confirmedSlot.date, poll.confirmedSlot.hour, poll.durationHours)}</b>로 확정됐어요. 대시보드에 다음 회의로

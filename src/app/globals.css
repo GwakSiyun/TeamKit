@@ -22,6 +22,28 @@
   --tk-accent-strong: #0b6ec5;
   --tk-danger: #e03e3e;
   --tk-danger-strong: #c4302b;
+  /* 색깔 요소 (태그 · 알림 상자 · 칩) — 바탕 / 글자 짝 */
+  --tk-tint-gray: #e3e2e0;
+  --tk-tint-gray-fg: #32302c;
+  --tk-tint-blue: #d3e5ef;
+  --tk-tint-blue-fg: #183347;
+  --tk-tint-green: #dbeddb;
+  --tk-tint-green-fg: #1c3829;
+  --tk-tint-yellow: #fdecc8;
+  --tk-tint-yellow-fg: #402c1b;
+  --tk-tint-red: #ffe2dd;
+  --tk-tint-red-fg: #5d1715;
+  --tk-tint-purple: #e8deee;
+  --tk-tint-purple-fg: #412454;
+  --tk-tint-orange: #fadec9;
+  --tk-tint-orange-fg: #49290e;
+  --tk-danger-soft: #fdf0ef;
+  --tk-danger-line: #f3c4c0;
+  --tk-danger-fg: #b42318;
+  --tk-success-soft: #eef6f1;
+  --tk-success-fg: #2b6747;
+  --tk-accent-soft: #eaf3fb;
+  --tk-weekend: #fafaf9;
 }
 
 /* 어두운 화면 값 (노션 다크 톤). 시스템 설정을 따르고, data-theme 으로 직접 고를 수도 있다 */
@@ -44,6 +66,27 @@
     --tk-accent-strong: #5aa2e8;
     --tk-danger: #eb5757;
     --tk-danger-strong: #f07272;
+    --tk-tint-gray: #373737;
+    --tk-tint-gray-fg: #d4d4d4;
+    --tk-tint-blue: #1f3a52;
+    --tk-tint-blue-fg: #a7cbf0;
+    --tk-tint-green: #233d2f;
+    --tk-tint-green-fg: #a8d5b5;
+    --tk-tint-yellow: #4a3c1f;
+    --tk-tint-yellow-fg: #f5e0a9;
+    --tk-tint-red: #4a2723;
+    --tk-tint-red-fg: #f4b6ae;
+    --tk-tint-purple: #3a2c4d;
+    --tk-tint-purple-fg: #d6bff2;
+    --tk-tint-orange: #4d3220;
+    --tk-tint-orange-fg: #f7c9a0;
+    --tk-danger-soft: #3a2422;
+    --tk-danger-line: #6e3630;
+    --tk-danger-fg: #f4b6ae;
+    --tk-success-soft: #1e3328;
+    --tk-success-fg: #8fd0a5;
+    --tk-accent-soft: #1d3042;
+    --tk-weekend: #1e1e1e;
   }
 }
 :root[data-theme="dark"] {
@@ -64,6 +107,27 @@
   --tk-accent-strong: #5aa2e8;
   --tk-danger: #eb5757;
   --tk-danger-strong: #f07272;
+  --tk-tint-gray: #373737;
+  --tk-tint-gray-fg: #d4d4d4;
+  --tk-tint-blue: #1f3a52;
+  --tk-tint-blue-fg: #a7cbf0;
+  --tk-tint-green: #233d2f;
+  --tk-tint-green-fg: #a8d5b5;
+  --tk-tint-yellow: #4a3c1f;
+  --tk-tint-yellow-fg: #f5e0a9;
+  --tk-tint-red: #4a2723;
+  --tk-tint-red-fg: #f4b6ae;
+  --tk-tint-purple: #3a2c4d;
+  --tk-tint-purple-fg: #d6bff2;
+  --tk-tint-orange: #4d3220;
+  --tk-tint-orange-fg: #f7c9a0;
+  --tk-danger-soft: #3a2422;
+  --tk-danger-line: #6e3630;
+  --tk-danger-fg: #f4b6ae;
+  --tk-success-soft: #1e3328;
+  --tk-success-fg: #8fd0a5;
+  --tk-accent-soft: #1d3042;
+  --tk-weekend: #1e1e1e;
 }
 
 @theme inline {
@@ -83,6 +147,27 @@
   --color-accent-strong: var(--tk-accent-strong);
   --color-danger: var(--tk-danger);
   --color-danger-strong: var(--tk-danger-strong);
+  --color-tint-gray: var(--tk-tint-gray);
+  --color-tint-gray-fg: var(--tk-tint-gray-fg);
+  --color-tint-blue: var(--tk-tint-blue);
+  --color-tint-blue-fg: var(--tk-tint-blue-fg);
+  --color-tint-green: var(--tk-tint-green);
+  --color-tint-green-fg: var(--tk-tint-green-fg);
+  --color-tint-yellow: var(--tk-tint-yellow);
+  --color-tint-yellow-fg: var(--tk-tint-yellow-fg);
+  --color-tint-red: var(--tk-tint-red);
+  --color-tint-red-fg: var(--tk-tint-red-fg);
+  --color-tint-purple: var(--tk-tint-purple);
+  --color-tint-purple-fg: var(--tk-tint-purple-fg);
+  --color-tint-orange: var(--tk-tint-orange);
+  --color-tint-orange-fg: var(--tk-tint-orange-fg);
+  --color-danger-soft: var(--tk-danger-soft);
+  --color-danger-line: var(--tk-danger-line);
+  --color-danger-fg: var(--tk-danger-fg);
+  --color-success-soft: var(--tk-success-soft);
+  --color-success-fg: var(--tk-success-fg);
+  --color-accent-soft: var(--tk-accent-soft);
+  --color-weekend: var(--tk-weekend);
 
   --font-sans: var(--font-noto-sans-kr), -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, Menlo, monospace;

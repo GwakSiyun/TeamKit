@@ -51,7 +51,7 @@ export function ProjectCard({ project, isOwner }: { project: Project; isOwner: b
           {next && (
             <span
               className={`inline-flex h-6 items-center gap-1 rounded-full px-2 ${
-                daysBetween(today, next.date) <= URGENT_DAYS ? "bg-danger text-white" : "bg-[#FDF0EF] text-[#B42318]"
+                daysBetween(today, next.date) <= URGENT_DAYS ? "bg-danger text-white" : "bg-danger-soft text-danger-fg"
               }`}
             >
               <Icon name="flag" size={12} />
@@ -60,7 +60,7 @@ export function ProjectCard({ project, isOwner }: { project: Project; isOwner: b
             </span>
           )}
           {stats && stats !== "loading" && stats.late > 0 && (
-            <span className="inline-flex h-6 items-center rounded-full bg-[#FFE2DD] px-2 font-medium text-[#5D1715]">지연 {stats.late}개</span>
+            <span className="inline-flex h-6 items-center rounded-full bg-tint-red px-2 font-medium text-tint-red-fg">지연 {stats.late}개</span>
           )}
         </div>
       )}

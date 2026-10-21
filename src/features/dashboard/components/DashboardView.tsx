@@ -163,7 +163,7 @@ export function DashboardView() {
         {nextMeeting ? (
           <StatCard
             label="다음 회의"
-            value={<span className="text-[#6940A5]">{`${formatShort(nextMeeting.date)}(${weekdayOf(nextMeeting.date)})`}</span>}
+            value={<span className="text-tint-purple-fg">{`${formatShort(nextMeeting.date)}(${weekdayOf(nextMeeting.date)})`}</span>}
             sub={`${hhmm(nextMeeting.hour)}–${hhmm(nextMeeting.hour + nextMeeting.duration)} · ${nextMeeting.title}`}
           />
         ) : (

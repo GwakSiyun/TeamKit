@@ -19,7 +19,7 @@ export function DangerZone() {
       <h2 className="border-b border-line pb-1.5 text-base font-bold text-danger">
         프로젝트 관리
       </h2>
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-[#F3C4C0] px-4 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-danger-line px-4 py-3.5">
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold">
             {isOwner ? '프로젝트 삭제' : '프로젝트 나가기'}
