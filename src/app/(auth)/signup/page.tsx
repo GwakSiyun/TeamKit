@@ -15,8 +15,7 @@ export default function SignupPage() {
       <OrDivider label="또는 이메일로" />
       <SignupForm />
       <p className="mt-6 border-t border-line pt-4 text-center text-[13px] text-muted">
-        이미 계정이 있나요?{" "}
-        <AuthSwitchLink href="/login">로그인</AuthSwitchLink>
+        이미 계정이 있나요? <AuthSwitchLink href="/login">로그인</AuthSwitchLink>
       </p>
     </>
   );

@@ -1,6 +1,6 @@
-import Link from 'next/link';
-import { buttonClass } from '@/components/ui/button';
-import { Icon } from '@/components/ui/Icon';
+import Link from "next/link";
+import { buttonClass } from "@/components/ui/button";
+import { Icon } from "@/components/ui/Icon";
 
 /**
  * 상위 화면으로 돌아가는 "← 뒤로가기". 브라우저 기록(history.back) 대신 정해진 주소로 보낸다
@@ -8,12 +8,7 @@ import { Icon } from '@/components/ui/Icon';
  */
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
-    <Link
-      href={href}
-      aria-label={label}
-      title={label}
-      className={buttonClass('ghost', '-ml-2 w-fit gap-1 px-2 text-sub')}
-    >
+    <Link href={href} aria-label={label} title={label} className={buttonClass("ghost", "-ml-2 w-fit gap-1 px-2 text-sub")}>
       <Icon name="arrowLeft" size={16} />
       뒤로가기
     </Link>

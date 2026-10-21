@@ -41,9 +41,7 @@ export function GithubLinkRow() {
             {linked && <span className="rounded bg-tint-green px-1.5 py-0.5 text-xs font-medium text-tint-green-fg">연결됨</span>}
           </span>
           <span className="text-xs text-muted">
-            {linked
-              ? "레포 연동에 사용해요. 레포 목록이 안 뜨면 '다시 연결'로 권한을 새로 받으세요."
-              : "연결하면 레포·PR을 할 일에 반영할 수 있어요"}
+            {linked ? "레포 연동에 사용해요. 레포 목록이 안 뜨면 '다시 연결'로 권한을 새로 받으세요." : "연결하면 레포·PR을 할 일에 반영할 수 있어요"}
           </span>
         </div>
         <button type="button" onClick={handleClick} disabled={pending} className={buttonClass("secondary")}>

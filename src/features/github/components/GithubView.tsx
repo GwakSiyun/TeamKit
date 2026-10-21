@@ -74,7 +74,12 @@ export function GithubView() {
               <Icon name="github" size={22} />
             </span>
             <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
-              <a href={`https://github.com/${gh.owner}/${gh.repo}`} target="_blank" rel="noreferrer" className="font-mono text-[15px] font-bold text-ink hover:underline">
+              <a
+                href={`https://github.com/${gh.owner}/${gh.repo}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-mono text-[15px] font-bold text-ink hover:underline"
+              >
                 {gh.owner}/{gh.repo}
               </a>
               <span className="text-xs text-muted">
@@ -82,11 +87,7 @@ export function GithubView() {
               </span>
             </div>
             {isOwner && (
-              <button
-                type="button"
-                onClick={() => setModal("disconnect")}
-                className={buttonClass("dangerOutline")}
-              >
+              <button type="button" onClick={() => setModal("disconnect")} className={buttonClass("dangerOutline")}>
                 연결 해제
               </button>
             )}
@@ -109,7 +110,9 @@ export function GithubView() {
 
       <Section title="최근 활동">
         {events.length === 0 ? (
-          <p className="px-2 py-3 text-[13px] text-muted">{gh ? "아직 받은 GitHub 활동이 없어요. 카드 번호를 넣어 브랜치를 만들어 보세요." : "레포를 연결하면 여기에 쌓여요."}</p>
+          <p className="px-2 py-3 text-[13px] text-muted">
+            {gh ? "아직 받은 GitHub 활동이 없어요. 카드 번호를 넣어 브랜치를 만들어 보세요." : "레포를 연결하면 여기에 쌓여요."}
+          </p>
         ) : (
           <ul className="flex flex-col">
             {events.map((e) => (

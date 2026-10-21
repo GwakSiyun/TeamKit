@@ -70,7 +70,8 @@ export function Dropdown({ button, label, buttonClassName, children, width = 240
   );
 }
 
-const ITEM = "flex h-8 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none";
+const ITEM =
+  "flex h-8 w-full cursor-pointer items-center gap-2 rounded-md px-2 text-left text-sm hover:bg-hover focus-visible:bg-hover focus-visible:outline-none";
 
 export function DropdownLink({ href, onSelect, children, current }: { href: string; onSelect: () => void; children: ReactNode; current?: boolean }) {
   return (

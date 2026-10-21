@@ -104,7 +104,8 @@ export function BoardView() {
                 {column.length === 0 && <div className="h-16 rounded-md border border-dashed border-dashed" />}
                 {status === "todo" && (
                   <button type="button" onClick={() => setModal({ kind: "create" })} className={buttonClass("ghost", "justify-start text-muted")}>
-                    <Icon name="plus" size={14} />새로 만들기
+                    <Icon name="plus" size={14} />
+                    새로 만들기
                   </button>
                 )}
               </section>
@@ -114,9 +115,7 @@ export function BoardView() {
       )}
 
       {current?.kind === "create" && <TaskFormModal open onClose={closeModal} />}
-      {current?.kind === "edit" && selected && (
-        <TaskFormModal open task={selected} onClose={() => setModal({ kind: "detail", taskId: selected.id })} />
-      )}
+      {current?.kind === "edit" && selected && <TaskFormModal open task={selected} onClose={() => setModal({ kind: "detail", taskId: selected.id })} />}
       {current?.kind === "detail" && selected && (
         <TaskDetailModal task={selected} today={today} onClose={closeModal} onEdit={() => setModal({ kind: "edit", taskId: selected.id })} />
       )}

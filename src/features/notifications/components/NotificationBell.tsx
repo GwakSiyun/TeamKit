@@ -71,7 +71,12 @@ export function NotificationBell() {
             {unread.length > 0 && (
               <button
                 type="button"
-                onClick={() => void markAllRead(uid, unread.map((n) => n.id))}
+                onClick={() =>
+                  void markAllRead(
+                    uid,
+                    unread.map((n) => n.id),
+                  )
+                }
                 className="cursor-pointer rounded px-1.5 py-0.5 text-xs text-accent hover:bg-hover"
               >
                 모두 읽음
@@ -92,7 +97,11 @@ export function NotificationBell() {
                     <Avatar seed={n.actorId} name={n.actorName} size={26} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                       <span className="text-[13px] leading-snug break-keep text-ink">
-                        <b className="font-semibold">{n.actorName}</b>님이 <b className="font-semibold">{taskKey(n.taskNumber)} {n.taskTitle}</b> {n.text}
+                        <b className="font-semibold">{n.actorName}</b>님이{" "}
+                        <b className="font-semibold">
+                          {taskKey(n.taskNumber)} {n.taskTitle}
+                        </b>{" "}
+                        {n.text}
                       </span>
                       <span className="text-xs text-muted">
                         {n.projectName}

@@ -38,6 +38,4 @@ export interface Member {
 export type ProjectResult = { ok: true; projectId: string } | { ok: false; message: string };
 
 export type JoinResult =
-  | { status: "joined"; projectId: string }
-  | { status: "already-member"; projectId: string; projectName: string }
-  | { status: "error"; message: string };
+  { status: "joined"; projectId: string } | { status: "already-member"; projectId: string; projectName: string } | { status: "error"; message: string };

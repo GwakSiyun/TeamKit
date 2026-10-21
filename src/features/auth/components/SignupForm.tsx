@@ -59,8 +59,25 @@ export function SignupForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       {serverError && <Notice tone="error">{serverError}</Notice>}
-      <Field id="signup-name" label="이름" autoComplete="name" placeholder="팀원에게 보일 이름" value={values.name} error={errors.name} onChange={(e) => update("name", e.target.value)} />
-      <Field id="signup-email" label="이메일" type="email" autoComplete="email" placeholder="you@example.com" value={values.email} error={errors.email} onChange={(e) => update("email", e.target.value)} />
+      <Field
+        id="signup-name"
+        label="이름"
+        autoComplete="name"
+        placeholder="팀원에게 보일 이름"
+        value={values.name}
+        error={errors.name}
+        onChange={(e) => update("name", e.target.value)}
+      />
+      <Field
+        id="signup-email"
+        label="이메일"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        value={values.email}
+        error={errors.email}
+        onChange={(e) => update("email", e.target.value)}
+      />
       <Field
         id="signup-password"
         label="비밀번호"
@@ -71,7 +88,15 @@ export function SignupForm() {
         error={errors.password}
         onChange={(e) => update("password", e.target.value)}
       />
-      <Field id="signup-confirm" label="비밀번호 확인" type="password" autoComplete="new-password" value={values.confirm} error={errors.confirm} onChange={(e) => update("confirm", e.target.value)} />
+      <Field
+        id="signup-confirm"
+        label="비밀번호 확인"
+        type="password"
+        autoComplete="new-password"
+        value={values.confirm}
+        error={errors.confirm}
+        onChange={(e) => update("confirm", e.target.value)}
+      />
       <button type="submit" disabled={pending} className={buttonClass("primary", "h-10 w-full")}>
         {pending ? "가입 중…" : "가입하기"}
       </button>

@@ -36,9 +36,7 @@ export function ProjectsView() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="flex flex-col gap-1.5">
           <h1 className="text-[30px] font-bold">내 프로젝트</h1>
-          {list.status === "ready" && list.projects.length > 0 && (
-            <p className="text-sm text-muted">참여 중인 프로젝트 {list.projects.length}개</p>
-          )}
+          {list.status === "ready" && list.projects.length > 0 && <p className="text-sm text-muted">참여 중인 프로젝트 {list.projects.length}개</p>}
         </div>
         {list.status === "ready" && list.projects.length > 0 && <div className="flex gap-2">{actions}</div>}
       </div>

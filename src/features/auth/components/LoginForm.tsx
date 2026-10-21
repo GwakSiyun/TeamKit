@@ -35,8 +35,24 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
       {error && <Notice tone="error">{error}</Notice>}
-      <Field id="login-email" label="이메일" type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
-      <Field id="login-password" label="비밀번호" type="password" autoComplete="current-password" placeholder="비밀번호 입력" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Field
+        id="login-email"
+        label="이메일"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <Field
+        id="login-password"
+        label="비밀번호"
+        type="password"
+        autoComplete="current-password"
+        placeholder="비밀번호 입력"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
       <button type="submit" disabled={pending} className={buttonClass("primary", "h-10 w-full")}>
         {pending ? "로그인 중…" : "이메일로 로그인"}
       </button>

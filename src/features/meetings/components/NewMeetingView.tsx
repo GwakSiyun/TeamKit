@@ -126,9 +126,7 @@ export function NewMeetingView() {
             ))}
           </div>
 
-          {mode === "record" && (
-            <Recorder state={recorder.state} onStart={recorder.start} onStop={recorder.stop} onReset={recorder.reset} disabled={pending} />
-          )}
+          {mode === "record" && <Recorder state={recorder.state} onStart={recorder.start} onStop={recorder.stop} onReset={recorder.reset} disabled={pending} />}
 
           {mode === "file" && (
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-dashed px-6 py-8 text-center hover:bg-side">
@@ -142,16 +140,8 @@ export function NewMeetingView() {
               ) : (
                 <span className="text-sm font-medium">음성 파일 고르기</span>
               )}
-              <span className="text-xs text-muted">
-                {AUDIO_EXTENSIONS.join(" · ")} · 25MB 이하 · 휴대폰 녹음 앱 파일(m4a)도 돼요
-              </span>
-              <input
-                type="file"
-                accept={AUDIO_EXTENSIONS.map((ext) => `.${ext}`).join(",")}
-                onChange={handleFile}
-                disabled={pending}
-                className="sr-only"
-              />
+              <span className="text-xs text-muted">{AUDIO_EXTENSIONS.join(" · ")} · 25MB 이하 · 휴대폰 녹음 앱 파일(m4a)도 돼요</span>
+              <input type="file" accept={AUDIO_EXTENSIONS.map((ext) => `.${ext}`).join(",")} onChange={handleFile} disabled={pending} className="sr-only" />
             </label>
           )}
 

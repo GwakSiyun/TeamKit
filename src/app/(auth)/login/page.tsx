@@ -14,8 +14,7 @@ export default function LoginPage() {
       <OrDivider label="또는 이메일로" />
       <LoginForm />
       <p className="mt-6 border-t border-line pt-4 text-center text-[13px] text-muted">
-        계정이 없나요?{" "}
-        <AuthSwitchLink href="/signup">회원가입</AuthSwitchLink>
+        계정이 없나요? <AuthSwitchLink href="/signup">회원가입</AuthSwitchLink>
       </p>
     </>
   );

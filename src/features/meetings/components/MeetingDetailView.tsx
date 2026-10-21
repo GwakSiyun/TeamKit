@@ -143,7 +143,11 @@ export function MeetingDetailView() {
             {meeting.segments.map((seg, i) => {
               const tone = decisionSegs.has(i) ? "border-[#4DAB6F] bg-success-soft" : actionSegs.has(i) ? "border-accent bg-accent-soft" : "border-transparent";
               return (
-                <li key={i} id={segmentId(i)} className={`grid scroll-mt-20 grid-cols-[52px_minmax(0,1fr)] gap-2 border-l-2 px-2 py-1.5 text-sm leading-relaxed ${tone}`}>
+                <li
+                  key={i}
+                  id={segmentId(i)}
+                  className={`grid scroll-mt-20 grid-cols-[52px_minmax(0,1fr)] gap-2 border-l-2 px-2 py-1.5 text-sm leading-relaxed ${tone}`}
+                >
                   <span className="pt-px font-mono text-xs text-faint tabular-nums">{seg.start !== null ? formatClock(seg.start) : i + 1}</span>
                   <span className="break-keep">{seg.text}</span>
                 </li>
@@ -251,7 +255,9 @@ export function MeetingDetailView() {
                 })}
               </ul>
             )}
-            {meeting.actionItems.length > 0 && <p className="text-xs text-muted">담당자 · 기간은 문장 속 이름과 “금요일까지” 같은 말로 채워요. 추가 전에 고칠 수 있어요.</p>}
+            {meeting.actionItems.length > 0 && (
+              <p className="text-xs text-muted">담당자 · 기간은 문장 속 이름과 “금요일까지” 같은 말로 채워요. 추가 전에 고칠 수 있어요.</p>
+            )}
           </Section>
 
           {meeting.decisions.length + meeting.actionItems.length === 0 && <KeywordGuide />}
