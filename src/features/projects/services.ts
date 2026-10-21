@@ -67,6 +67,35 @@ export async function createProject(rawName: string): Promise<ProjectResult> {
   return { ok: false, message: "초대 코드를 만들지 못했어요. 다시 시도해주세요." };
 }
 
+export type InviteCheck =
+  | { status: "invalid"; message: string }
+  | { status: "member"; projectId: string }
+  | { status: "joinable" };
+
+/**
+ * 초대 링크 열었을 때 미리 확인 (참여는 하지 않음): 코드가 맞는지, 이미 멤버인지.
+ * 프로젝트 이름은 멤버만 읽을 수 있어서 참여 전에는 알 수 없다.
+ */
+export async function checkInvite(rawCode: string): Promise<InviteCheck> {
+  const code = normalizeInviteCode(rawCode);
+  if (!isValidInviteCode(code)) return { status: "invalid", message: "초대 링크가 올바르지 않아요. 링크를 다시 확인해주세요." };
+  const db = firestore();
+  try {
+    const codeSnap = await getDoc(doc(db, "inviteCodes", code));
+    if (!codeSnap.exists()) return { status: "invalid", message: "만료됐거나 없는 초대 링크예요. 팀원에게 새 링크를 받아주세요." };
+    const projectId = String(codeSnap.data().projectId);
+    try {
+      const projectSnap = await getDoc(doc(db, "projects", projectId));
+      if (projectSnap.exists()) return { status: "member", projectId };
+    } catch (e) {
+      if (!isPermissionDenied(e)) throw e;
+    }
+    return { status: "joinable" };
+  } catch (e) {
+    return { status: "invalid", message: failureMessage(e) };
+  }
+}
+
 /** 초대 코드 → 프로젝트 찾기 → 참여 증명(joins/{uid}) + memberIds 추가를 한 배치로 */
 export async function joinProject(rawCode: string): Promise<JoinResult> {
   const uid = firebaseAuth().currentUser?.uid;

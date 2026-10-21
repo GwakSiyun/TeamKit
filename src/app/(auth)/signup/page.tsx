@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AuthSwitchLink } from "@/features/auth/components/AuthSwitchLink";
 import { GithubButton } from "@/features/auth/components/GithubButton";
 import { OrDivider } from "@/features/auth/components/OrDivider";
 import { SignupForm } from "@/features/auth/components/SignupForm";
@@ -16,9 +16,7 @@ export default function SignupPage() {
       <SignupForm />
       <p className="mt-6 border-t border-line pt-4 text-center text-[13px] text-muted">
         이미 계정이 있나요?{" "}
-        <Link href="/login" className="text-accent hover:text-accent-strong">
-          로그인
-        </Link>
+        <AuthSwitchLink href="/login">로그인</AuthSwitchLink>
       </p>
     </>
   );
