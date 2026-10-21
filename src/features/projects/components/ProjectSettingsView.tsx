@@ -17,6 +17,7 @@ import { dDay, MAX_MILESTONES, MILESTONE_NAME_MAX, milestonesOf, newMilestoneId 
 import { PROJECT_NAME_MAX, regenerateInviteCode, removeMember, renameProject, saveMilestones } from "../services";
 import type { Member, Milestone } from "../types";
 import { DangerZone } from "./DangerZone";
+import { ShareInviteButton } from "./ShareInviteButton";
 
 const COPIED_MS = 1500;
 
@@ -277,15 +278,14 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
 export function ProjectSettingsView() {
   const { project, members } = useCurrentProject();
   const { user } = useAuth();
-  const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [copied, setCopied] = useState(false);
   const [confirming, setConfirming] = useTransientState<Confirming>(null);
   const isOwner = user?.uid === project.ownerId;
 
-  async function copy(kind: "code" | "link"): Promise<void> {
-    // 링크: 누르면 참여 확인 화면 (로그인 안 했으면 로그인 뒤 돌아옴)
-    await navigator.clipboard.writeText(kind === "code" ? project.inviteCode : `${window.location.origin}/join/${project.inviteCode}`);
-    setCopied(kind);
-    setTimeout(() => setCopied(null), COPIED_MS);
+  async function copyCode(): Promise<void> {
+    await navigator.clipboard.writeText(project.inviteCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), COPIED_MS);
   }
 
   return (
@@ -299,13 +299,10 @@ export function ProjectSettingsView() {
       <Section title="초대 코드">
         <div className="flex flex-wrap items-center gap-3">
           <span className="rounded-md bg-side px-3.5 py-1.5 font-mono text-2xl tracking-[0.2em]">{project.inviteCode}</span>
-          <button type="button" onClick={() => void copy("link")} className={buttonClass("primary")}>
-            <Icon name={copied === "link" ? "check" : "copy"} size={15} />
-            {copied === "link" ? "링크 복사됨" : "초대 링크 복사"}
-          </button>
-          <button type="button" onClick={() => void copy("code")} className={buttonClass("secondary")}>
-            <Icon name={copied === "code" ? "check" : "copy"} size={15} />
-            {copied === "code" ? "복사됨" : "코드 복사"}
+          <ShareInviteButton project={project} />
+          <button type="button" onClick={() => void copyCode()} className={buttonClass("secondary")}>
+            <Icon name={copied ? "check" : "copy"} size={15} />
+            {copied ? "복사됨" : "코드 복사"}
           </button>
           {isOwner && (
             <button type="button" onClick={() => setConfirming({ kind: "reissue" })} className={buttonClass("ghost")}>
@@ -314,7 +311,7 @@ export function ProjectSettingsView() {
           )}
         </div>
         <p className="text-xs text-muted">
-          초대 링크를 카톡 등으로 보내면 누르고 &lsquo;참여하기&rsquo;만 하면 들어와요. 코드는 &lsquo;초대 코드로 참여&rsquo;에 입력해도 돼요.
+          &lsquo;초대 링크 공유&rsquo;를 누르면 카카오톡 · 메시지 등으로 바로 보낼 수 있어요 (PC 에선 링크 복사). 받은 사람은 링크를 누르고 &lsquo;참여하기&rsquo;만 하면 들어와요. 코드는 &lsquo;초대 코드로 참여&rsquo;에 입력해도 돼요.
           {isOwner && " 코드가 퍼졌다면 재발급하세요. 예전 코드 · 링크는 바로 못 쓰게 되고, 이미 들어온 멤버는 그대로예요."}
         </p>
       </Section>

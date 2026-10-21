@@ -1,12 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { BackLink } from "@/components/common/BackLink";
 import { AvatarStack } from "@/components/ui/Avatar";
-import { buttonClass } from "@/components/ui/button";
-import { Icon } from "@/components/ui/Icon";
-import { projectBase } from "../../navigation";
 import { useCurrentProject } from "../../ProjectContext";
+import { ShareInviteButton } from "../ShareInviteButton";
 import { MobileNav } from "./MobileNav";
 
 export function Topbar() {
@@ -22,10 +19,7 @@ export function Topbar() {
         <span className="hidden sm:inline-flex">
           <AvatarStack people={members} />
         </span>
-        <Link href={`${projectBase(project.id)}/settings`} className={buttonClass("ghost", "h-7")}>
-          <Icon name="users" size={15} />
-          초대
-        </Link>
+        <ShareInviteButton project={project} label="초대" variant="ghost" extra="h-7" />
       </div>
     </header>
   );

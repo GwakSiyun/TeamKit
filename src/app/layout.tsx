@@ -18,8 +18,17 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  // 카카오톡 등 링크 미리보기의 이미지 주소를 절대 경로로 만들 때 쓰는 기준 주소
+  metadataBase: new URL("https://teamkit.site"),
   title: APP_NAME,
   description: "개발팀의 할 일 · 회의록 · 일정을 한곳에서",
+  openGraph: {
+    siteName: APP_NAME,
+    title: APP_NAME,
+    description: "개발팀의 할 일 · 회의록 · 일정을 한곳에서. GitHub 커밋 · PR 로 진행상황이 자동 반영돼요.",
+    locale: "ko_KR",
+    type: "website",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
