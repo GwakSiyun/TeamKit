@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Icon } from "@/components/ui/Icon";
 import { useHoverTip } from "@/components/ui/HoverTip";
 import type { Milestone } from "@/features/projects/types";
 import { lateDays } from "@/features/tasks/deadline";
@@ -29,9 +30,9 @@ function columnStyle(count: number): React.CSSProperties {
 type Bind = ReturnType<typeof useHoverTip>["bind"];
 
 /** 그날의 회의 · 마일스톤 설명 (툴팁). 없으면 null */
-function dayNote(d: string, meetings: MeetingsByDate, milestone: Milestone | null): ReactNode {
+function dayNote(d: string, meetings: MeetingsByDate, milestones: readonly Milestone[]): ReactNode {
   const lines = [
-    ...(milestone?.date === d ? [`${milestone.name} · ${formatShort(d)}`] : []),
+    ...milestones.filter((m) => m.date === d).map((m) => `${m.name} · ${formatShort(d)}`),
     ...(meetings.get(d) ?? []).map((m) => `회의 · ${m}`),
   ];
   if (lines.length === 0) return null;
@@ -39,16 +40,16 @@ function dayNote(d: string, meetings: MeetingsByDate, milestone: Milestone | nul
 }
 
 /** 주말 · 오늘 · 마일스톤 배경 칸 + 회의 날 세로 점선 (행마다 같은 그리드에 깔린다). 회의 · 마일스톤 칸은 마우스를 올리면 설명 */
-function Backdrop({ days, today, meetings, milestone, bind }: { days: string[]; today: string; meetings: MeetingsByDate; milestone: Milestone | null; bind: Bind }) {
+function Backdrop({ days, today, meetings, milestones, bind }: { days: string[]; today: string; meetings: MeetingsByDate; milestones: readonly Milestone[]; bind: Bind }) {
   return (
     <>
       {days.map((d, i) => {
         const weekend = weekdayOf(d) === "토" || weekdayOf(d) === "일";
         const meeting = meetings.has(d);
-        const isMilestone = milestone?.date === d;
+        const isMilestone = milestones.some((m) => m.date === d);
         if (d !== today && !weekend && !meeting && !isMilestone) return null;
         const bg = d === today ? "bg-[#EAF3FB]" : isMilestone ? "" : weekend ? "bg-[#FAFAF9]" : "";
-        const note = dayNote(d, meetings, milestone);
+        const note = dayNote(d, meetings, milestones);
         return (
           <div
             key={d}
@@ -102,7 +103,8 @@ interface GanttChartProps {
   today: string;
   /** 회의가 있는 날 (확정된 투표 · 회의록에서 등록) */
   meetings: MeetingsByDate;
-  milestone: Milestone | null;
+  /** 마일스톤 (날짜 위 깃발 줄 · 날짜 칸 강조) */
+  milestones: readonly Milestone[];
   onOpenTask: (taskId: string) => void;
 }
 
@@ -127,9 +129,11 @@ function barTip(task: Task, today: string, owner: string): ReactNode {
   );
 }
 
-export function GanttChart({ range, groups, today, meetings, milestone, onOpenTask }: GanttChartProps) {
+export function GanttChart({ range, groups, today, meetings, milestones, onOpenTask }: GanttChartProps) {
   const { days } = range;
   const tip = useHoverTip();
+  const milestoneDays = new Set(milestones.map((m) => m.date));
+  const visibleMilestones = milestones.filter((m) => days.includes(m.date));
   const grid = columnStyle(days.length);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -145,9 +149,32 @@ export function GanttChart({ range, groups, today, meetings, milestone, onOpenTa
 
   return (
     <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
+      {/* 마일스톤 깃발 줄: 그 날짜 칸에 깃발 + 이름 (범위 안에 있을 때만) */}
+      {visibleMilestones.length > 0 && (
+        <div className="grid h-7 border-b border-[#F1F1EF]" style={grid}>
+          <div className={`${STICKY} flex items-center bg-white px-3 text-[11px] font-medium text-faint`} style={{ gridRow: 1, gridColumn: 1 }}>
+            마일스톤
+          </div>
+          {visibleMilestones.map((m) => {
+            const i = days.indexOf(m.date);
+            return (
+              <div
+                key={m.id}
+                {...tip.bind(dayNote(m.date, meetings, milestones))}
+                className="relative z-[1] flex min-w-0 items-center gap-1 self-center pl-1 text-[11px] font-semibold whitespace-nowrap text-danger"
+                style={{ gridRow: 1, gridColumn: `${i + 2} / span 1` }}
+              >
+                <Icon name="flag" size={13} />
+                <span className="overflow-visible">{m.name}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
-        <Backdrop days={days} today={today} meetings={meetings} milestone={milestone} bind={tip.bind} />
+        <Backdrop days={days} today={today} meetings={meetings} milestones={milestones} bind={tip.bind} />
         <div data-gantt-label className={`${STICKY} flex items-center bg-white px-3 text-xs font-medium`} style={{ gridRow: 1, gridColumn: 1 }}>
           담당자 · 할 일
         </div>
@@ -158,15 +185,15 @@ export function GanttChart({ range, groups, today, meetings, milestone, onOpenTa
             <div
               key={d}
               data-day={d}
-              {...(dayNote(d, meetings, milestone) ? tip.bind(dayNote(d, meetings, milestone)) : {})}
-              className={`flex flex-col items-center justify-center gap-px tabular-nums ${milestone?.date === d ? "font-semibold text-danger" : ""}`}
+              {...(dayNote(d, meetings, milestones) ? tip.bind(dayNote(d, meetings, milestones)) : {})}
+              className={`flex flex-col items-center justify-center gap-px tabular-nums ${milestoneDays.has(d) ? "font-semibold text-danger" : ""}`}
               style={{ gridRow: 1, gridColumn: i + 2 }}
             >
               <span className={firstOfMonth ? "text-[10px] text-faint" : ""}>{firstOfMonth ? `${m}월` : weekdayOf(d)}</span>
               {d === today ? (
                 <span className="inline-flex size-[18px] items-center justify-center rounded-full bg-accent font-medium text-white">{day}</span>
               ) : (
-                <span className={`font-medium ${milestone?.date === d ? "text-danger" : "text-ink"}`}>{day}</span>
+                <span className={`font-medium ${milestoneDays.has(d) ? "text-danger" : "text-ink"}`}>{day}</span>
               )}
             </div>
           );
@@ -186,7 +213,7 @@ export function GanttChart({ range, groups, today, meetings, milestone, onOpenTa
           </div>
           {g.bars.map((b) => (
             <div key={b.task.id} className="grid h-[34px] border-b border-[#F1F1EF] hover:bg-side/60" style={grid}>
-              <Backdrop days={days} today={today} meetings={meetings} milestone={milestone} bind={tip.bind} />
+              <Backdrop days={days} today={today} meetings={meetings} milestones={milestones} bind={tip.bind} />
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
@@ -222,7 +249,7 @@ export function GanttChart({ range, groups, today, meetings, milestone, onOpenTa
   );
 }
 
-export function GanttLegend({ milestone }: { milestone: Milestone | null }) {
+export function GanttLegend() {
   const items: { label: string; swatch: ReactNode }[] = [
     ...(["todo", "doing", "done", "late"] as const).map((k) => ({
       label: BAR_COLORS[k].label,
@@ -230,14 +257,6 @@ export function GanttLegend({ milestone }: { milestone: Milestone | null }) {
     })),
     { label: "오늘", swatch: <span className="size-2.5 rounded-sm bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]" /> },
     { label: "회의", swatch: <span className="h-3 w-0 border-l-2 border-dashed border-[#9A6DD7]" /> },
-    ...(milestone
-      ? [
-          {
-            label: milestone.name,
-            swatch: <span className="size-2.5 rounded-sm" style={{ background: MILESTONE_COLOR.bg, boxShadow: `inset 0 0 0 1px ${MILESTONE_COLOR.line}` }} />,
-          },
-        ]
-      : []),
   ];
   return (
     <div className="flex flex-wrap gap-3 text-xs text-muted">

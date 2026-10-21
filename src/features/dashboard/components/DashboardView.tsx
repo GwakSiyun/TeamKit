@@ -9,7 +9,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { Tag } from "@/components/ui/Tag";
 import { useCurrentProject } from "@/features/projects/ProjectContext";
-import type { Milestone } from "@/features/projects/types";
+import { milestonesOf, upcomingMilestones } from "@/features/projects/milestones";
 import { projectBase } from "@/features/projects/navigation";
 import { lateDays } from "@/features/tasks/deadline";
 import { useTasks } from "@/features/tasks/hooks";
@@ -23,18 +23,11 @@ import { daysBetween, formatShort, todayISO, weekdayOf } from "@/lib/dates";
 import { ganttGroups, ganttRange, taskSpan } from "../gantt";
 import { GanttChart, GanttLegend } from "./GanttChart";
 import { GithubActivity } from "./GithubActivity";
+import { MilestoneChips } from "./MilestoneChips";
 import { StatCard } from "./StatCard";
 import { TaskList } from "./TaskList";
 
 const DUE_SOON_DAYS = 7;
-
-/** "1차 배포(10/30)까지 10일" · "오늘 1차 배포" · "1차 배포(10/30) 지남" */
-function milestoneLabel(m: Milestone, today: string): string {
-  const left = daysBetween(today, m.date);
-  if (left > 0) return `${m.name}(${formatShort(m.date)})까지 ${left}일`;
-  if (left === 0) return `오늘 ${m.name}`;
-  return `${m.name}(${formatShort(m.date)}) 지남`;
-}
 
 function hhmm(hour: number): string {
   return `${String(hour).padStart(2, "0")}:00`;
@@ -79,8 +72,13 @@ export function DashboardView() {
   if (state.status === "error") return <Notice tone="error">할 일을 불러오지 못했어요. 새로고침해주세요.</Notice>;
 
   const tasks = state.tasks;
-  const milestone = project.milestone ?? null;
-  const header = <PageHeader title="대시보드" description={`${month}월 ${day}일 ${weekdayOf(today)}요일${milestone ? ` · ${milestoneLabel(milestone, today)}` : ""}`} />;
+  const milestones = milestonesOf(project);
+  const header = (
+    <div className="flex flex-col gap-3">
+      <PageHeader title="대시보드" description={`${month}월 ${day}일 ${weekdayOf(today)}요일`} />
+      <MilestoneChips milestones={milestones} today={today} />
+    </div>
+  );
 
   if (tasks.length === 0) {
     return (
@@ -125,7 +123,7 @@ export function DashboardView() {
   const range = ganttRange(
     tasks,
     today,
-    milestone && milestone.date >= today ? [milestone.date] : [],
+    upcomingMilestones(milestones, today).map((m) => m.date),
   );
   // 정해진 회의 = 확정된 투표 + 회의록에서 등록한 다음 회의(1시간).
   // 오늘 이후 가장 가까운 것 → "다음 회의" 카드, 전부 → 간트 점선
@@ -173,9 +171,9 @@ export function DashboardView() {
         )}
       </div>
 
-      <Section title="일정" right={<GanttLegend milestone={milestone} />}>
+      <Section title="일정" right={<GanttLegend />}>
         {groups.length > 0 ? (
-          <GanttChart range={range} groups={groups} today={today} meetings={meetingDates} milestone={milestone} onOpenTask={(id) => setModal({ kind: "detail", taskId: id })} />
+          <GanttChart range={range} groups={groups} today={today} meetings={meetingDates} milestones={milestones} onOpenTask={(id) => setModal({ kind: "detail", taskId: id })} />
         ) : (
           <Notice tone="info">시작일이나 마감일이 있는 할 일이 이 기간에 없어요.</Notice>
         )}

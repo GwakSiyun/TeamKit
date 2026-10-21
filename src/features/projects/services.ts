@@ -9,6 +9,7 @@ import {
   query,
   serverTimestamp,
   updateDoc,
+  deleteField,
   where,
   writeBatch,
   type DocumentReference,
@@ -16,6 +17,7 @@ import {
 import { callGithubApi } from "@/features/github/api";
 import { firebaseAuth, firestore } from "@/lib/firebase";
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from "./inviteCode";
+import { MAX_MILESTONES, MILESTONE_NAME_MAX } from "./milestones";
 import type { JoinResult, Milestone, Project, ProjectResult } from "./types";
 
 const MAX_CODE_ATTEMPTS = 5;
@@ -257,29 +259,28 @@ export async function removeMember(project: Project, memberId: string): Promise<
   }
 }
 
-export const MILESTONE_NAME_MAX = 20;
-
 export type MilestoneResult =
-  | { ok: true; github: "none" | "synced" | "failed"; githubUrl?: string | null; githubMessage?: string }
+  | { ok: true; github: "none" | "synced" | "failed"; githubMessage?: string }
   | { ok: false; message: string };
 
-/** 마일스톤 설정 · 삭제(null) (만든 사람만). 레포가 연결돼 있으면 GitHub Milestone 도 만들기 · 고치기 · 닫기 */
-export async function setMilestone(project: Project, milestone: Milestone | null): Promise<MilestoneResult> {
-  if (milestone) {
-    const name = milestone.name.trim();
-    if (!name) return { ok: false, message: "이름을 입력해주세요. 예) 1차 배포" };
-    if (name.length > MILESTONE_NAME_MAX) return { ok: false, message: `이름은 ${MILESTONE_NAME_MAX}자까지예요.` };
-    if (!milestone.date) return { ok: false, message: "날짜를 정해주세요." };
-    milestone = { name, date: milestone.date };
+/**
+ * 마일스톤 목록 저장 (만든 사람만). 예전 형식(milestone 하나)은 이때 지운다.
+ * 레포가 연결돼 있으면 GitHub Milestone 도 맞춘다 (새로 생긴 건 만들고, 바뀐 건 고치고, 빠진 건 닫기).
+ */
+export async function saveMilestones(project: Project, list: Milestone[]): Promise<MilestoneResult> {
+  if (list.length > MAX_MILESTONES) return { ok: false, message: `마일스톤은 ${MAX_MILESTONES}개까지예요.` };
+  const clean = list.map((m) => ({ id: m.id, name: m.name.trim(), date: m.date }));
+  if (clean.some((m) => !m.name || m.name.length > MILESTONE_NAME_MAX || !m.date)) {
+    return { ok: false, message: `이름(1~${MILESTONE_NAME_MAX}자)과 날짜를 확인해주세요.` };
   }
   try {
-    await updateDoc(doc(firestore(), "projects", project.id), { milestone });
+    await updateDoc(doc(firestore(), "projects", project.id), { milestones: clean, ...(project.milestone !== undefined ? { milestone: deleteField() } : {}) });
   } catch (e) {
     if (isPermissionDenied(e)) return { ok: false, message: "프로젝트를 만든 사람만 마일스톤을 정할 수 있어요." };
     return { ok: false, message: failureMessage(e) };
   }
-  // 레포가 연결돼 있으면 GitHub 마일스톤도 맞춘다. TeamKit 저장은 이미 끝났으니 실패는 따로 알린다
+  // TeamKit 저장은 끝났으니 GitHub 반영 실패는 따로 알린다
   if (!project.github) return { ok: true, github: "none" };
-  const synced = await callGithubApi<{ url?: string | null }>("milestone", { projectId: project.id });
-  return synced.ok ? { ok: true, github: "synced", githubUrl: synced.url ?? null } : { ok: true, github: "failed", githubMessage: synced.message };
+  const synced = await callGithubApi("milestone", { projectId: project.id });
+  return synced.ok ? { ok: true, github: "synced" } : { ok: true, github: "failed", githubMessage: synced.message };
 }
