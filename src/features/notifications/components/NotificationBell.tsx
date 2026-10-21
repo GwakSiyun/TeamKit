@@ -65,7 +65,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute top-full right-0 z-40 mt-1.5 flex w-[min(360px,calc(100vw-32px))] flex-col overflow-hidden rounded-lg bg-white text-sm shadow-[0_8px_24px_rgba(15,15,15,0.14),0_0_0_1px_rgba(15,15,15,0.06)]">
+        <div className="absolute top-full right-0 z-40 mt-1.5 flex w-[min(360px,calc(100vw-32px))] flex-col overflow-hidden rounded-lg bg-surface text-sm shadow-[0_8px_24px_rgba(15,15,15,0.14),0_0_0_1px_rgba(15,15,15,0.06)]">
           <div className="flex items-center justify-between border-b border-line px-3.5 py-2.5">
             <span className="font-semibold">알림</span>
             {unread.length > 0 && (
@@ -87,7 +87,7 @@ export function NotificationBell() {
                   <button
                     type="button"
                     onClick={() => openItem(n)}
-                    className={`flex w-full cursor-pointer gap-2.5 border-b border-[#F1F1EF] px-3.5 py-2.5 text-left hover:bg-side ${n.read ? "" : "bg-[#F2F7FC]"}`}
+                    className={`flex w-full cursor-pointer gap-2.5 border-b border-divider px-3.5 py-2.5 text-left hover:bg-side ${n.read ? "" : "bg-accent-soft"}`}
                   >
                     <Avatar seed={n.actorId} name={n.actorName} size={26} />
                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
