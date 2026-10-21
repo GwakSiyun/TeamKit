@@ -9,9 +9,12 @@ export interface MilestoneInput {
 
 export type SyncResult = { ok: true; number: number | null; url: string | null } | { ok: false; message: string };
 
-/** GitHub 은 마감일을 시각까지 받는다 → 한국 기준 그날 안에 들도록 정오(UTC 03:00)로 보낸다 */
+/**
+ * GitHub 은 마감일을 시각까지 받고, 화면에는 미국(태평양) 시간 기준 날짜로 보여준다.
+ * UTC 정오(한국 밤 9시 · 미국 새벽 5시)로 보내야 양쪽 다 같은 날짜가 된다. (UTC 03:00 이면 미국 기준 전날로 보임)
+ */
 function dueOn(date: string): string {
-  return `${date}T03:00:00Z`;
+  return `${date}T12:00:00Z`;
 }
 
 async function readMilestone(res: Response): Promise<{ number: number; url: string | null }> {
