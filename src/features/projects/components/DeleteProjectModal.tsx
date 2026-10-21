@@ -44,9 +44,8 @@ export function DeleteProjectModal({ project, open, onClose }: { project: Projec
       <form onSubmit={handleSubmit} noValidate>
         <ModalBody>
           <Notice tone="error">
-            <b>{project.name}</b> 프로젝트의 할 일 · 회의록 · 일정 투표가 모두 지워지고, 팀원 {project.memberIds.length}명 모두 더 이상 들어올 수
-            없어요.{project.github && " 연결된 GitHub 레포의 웹훅도 해제돼요."}{" "}
-            <b>되돌릴 수 없어요.</b>
+            <b>{project.name}</b> 프로젝트의 할 일 · 회의록 · 일정 투표가 모두 지워지고, 팀원 {project.memberIds.length}명 모두 더 이상 들어올 수 없어요.
+            {project.github && " 연결된 GitHub 레포의 웹훅도 해제돼요."} <b>되돌릴 수 없어요.</b>
           </Notice>
           <Field
             id="delete-project-confirm"

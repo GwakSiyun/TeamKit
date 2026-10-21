@@ -33,9 +33,7 @@ export function useTaskHistory(projectId: string, taskId: string): HistoryEntry[
 
   useEffect(() => {
     const q = query(collection(firestore(), "projects", projectId, "tasks", taskId, "history"), orderBy("at", "desc"));
-    return onSnapshot(q, (snap) =>
-      setEntries(snap.docs.map((d) => ({ id: d.id, ...(d.data({ serverTimestamps: "estimate" }) as Omit<HistoryEntry, "id">) }))),
-    );
+    return onSnapshot(q, (snap) => setEntries(snap.docs.map((d) => ({ id: d.id, ...(d.data({ serverTimestamps: "estimate" }) as Omit<HistoryEntry, "id">) }))));
   }, [projectId, taskId]);
 
   return entries;

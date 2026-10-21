@@ -129,7 +129,9 @@ export function DashboardView() {
   // 오늘 이후 가장 가까운 것 → "다음 회의" 카드, 전부 → 간트 점선
   const confirmed = [
     ...(pollsState.status === "ready" ? pollsState.polls : []).flatMap((p) =>
-      p.status === "confirmed" && p.confirmedSlot ? [{ title: p.title, date: p.confirmedSlot.date, hour: p.confirmedSlot.hour, duration: p.durationHours }] : [],
+      p.status === "confirmed" && p.confirmedSlot
+        ? [{ title: p.title, date: p.confirmedSlot.date, hour: p.confirmedSlot.hour, duration: p.durationHours }]
+        : [],
     ),
     ...(meetingsState.status === "ready" ? meetingsState.meetings : []).flatMap((m) =>
       m.nextMeeting ? [{ title: `「${m.title}」에서 정함`, date: m.nextMeeting.date, hour: m.nextMeeting.hour, duration: 1 }] : [],
@@ -173,7 +175,14 @@ export function DashboardView() {
 
       <Section title="일정" right={<GanttLegend />}>
         {groups.length > 0 ? (
-          <GanttChart range={range} groups={groups} today={today} meetings={meetingDates} milestones={milestones} onOpenTask={(id) => setModal({ kind: "detail", taskId: id })} />
+          <GanttChart
+            range={range}
+            groups={groups}
+            today={today}
+            meetings={meetingDates}
+            milestones={milestones}
+            onOpenTask={(id) => setModal({ kind: "detail", taskId: id })}
+          />
         ) : (
           <Notice tone="info">시작일이나 마감일이 있는 할 일이 이 기간에 없어요.</Notice>
         )}

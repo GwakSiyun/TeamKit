@@ -12,8 +12,7 @@ const MESSAGES: Record<string, string> = {
   "auth/popup-closed-by-user": "GitHub 로그인 창이 닫혔어요. 다시 시도해주세요.",
   "auth/cancelled-popup-request": "GitHub 로그인 창이 닫혔어요. 다시 시도해주세요.",
   "auth/popup-blocked": "브라우저가 팝업을 막았어요. 팝업을 허용한 뒤 다시 시도해주세요.",
-  "auth/account-exists-with-different-credential":
-    "이 GitHub 계정과 같은 이메일로 가입한 계정이 있어요. 이메일로 로그인한 뒤 GitHub를 연결해주세요.",
+  "auth/account-exists-with-different-credential": "이 GitHub 계정과 같은 이메일로 가입한 계정이 있어요. 이메일로 로그인한 뒤 GitHub를 연결해주세요.",
   "auth/credential-already-in-use": "이 GitHub 계정은 이미 다른 TeamKit 계정에 연결돼 있어요.",
   "auth/provider-already-linked": "이미 GitHub가 연결돼 있어요.",
   "auth/user-mismatch": "지금 로그인한 계정과 연결된 GitHub 계정으로 인증해주세요.",

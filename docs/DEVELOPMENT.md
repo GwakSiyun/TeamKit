@@ -66,6 +66,7 @@ gitGraph
 | 한 기능에서만 쓰는 조각은 `features/<기능>/components/` | 공통 UI와 기능 전용 UI 구분 |
 | 모달 · 드롭다운처럼 잠깐 열리는 UI의 열림 상태는 `useTransientState` (`src/hooks/`) | Next 16(cacheComponents)은 이전 화면을 숨겨만 둬서, 일반 `useState` 면 뒤로가기 시 열린 채로 돌아온다 |
 | 모달은 **취소 버튼과 X 버튼을 같이 두지 않는다**. `Modal` 은 X 가 기본 숨김이고, 취소 버튼이 없는 모달만 `showCloseButton` | 닫는 방법이 겹치지 않게 (ESC · 배경 클릭은 항상 동작) |
+| 코드 모양은 Prettier 로 통일 (`.prettierrc`: 큰따옴표 · 세미콜론 · 한 줄 160자). 커밋 전 `npm run format`, 확인은 `npm run format:check` | 사람마다 다른 따옴표 · 줄바꿈으로 diff 가 지저분해지지 않게 |
 | 객체 모양은 `interface`, 유니언·별칭은 `type` | |
 | `any` 금지 → `unknown` + 타입 좁히기 | 타입 안정성 |
 | 색 · 글꼴은 `globals.css` 디자인 토큰(`text-muted`, `bg-side`, `border-line` …)만 사용 | 디자인 캔버스와 일치 |

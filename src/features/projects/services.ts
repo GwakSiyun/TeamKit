@@ -67,10 +67,7 @@ export async function createProject(rawName: string): Promise<ProjectResult> {
   return { ok: false, message: "초대 코드를 만들지 못했어요. 다시 시도해주세요." };
 }
 
-export type InviteCheck =
-  | { status: "invalid"; message: string }
-  | { status: "member"; projectId: string }
-  | { status: "joinable" };
+export type InviteCheck = { status: "invalid"; message: string } | { status: "member"; projectId: string } | { status: "joinable" };
 
 /**
  * 초대 링크 열었을 때 미리 확인 (참여는 하지 않음): 코드가 맞는지, 이미 멤버인지.
@@ -288,9 +285,7 @@ export async function removeMember(project: Project, memberId: string): Promise<
   }
 }
 
-export type MilestoneResult =
-  | { ok: true; github: "none" | "synced" | "failed"; githubMessage?: string }
-  | { ok: false; message: string };
+export type MilestoneResult = { ok: true; github: "none" | "synced" | "failed"; githubMessage?: string } | { ok: false; message: string };
 
 /**
  * 마일스톤 목록 저장 (만든 사람만). 예전 형식(milestone 하나)은 이때 지운다.

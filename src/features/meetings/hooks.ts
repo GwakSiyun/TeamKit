@@ -32,7 +32,9 @@ export function useMeeting(projectId: string, meetingId: string): MeetingState {
     return onSnapshot(
       doc(firestore(), "projects", projectId, "meetings", meetingId),
       (snap) =>
-        setState(snap.exists() ? { status: "ready", meeting: { id: snap.id, ...(snap.data({ serverTimestamps: "estimate" }) as MeetingDoc) } } : { status: "missing" }),
+        setState(
+          snap.exists() ? { status: "ready", meeting: { id: snap.id, ...(snap.data({ serverTimestamps: "estimate" }) as MeetingDoc) } } : { status: "missing" },
+        ),
       () => setState({ status: "missing" }),
     );
   }, [projectId, meetingId]);

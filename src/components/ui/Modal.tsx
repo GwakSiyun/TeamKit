@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useEffect, useId, useRef, type ReactNode } from 'react';
+import { useEffect, useId, useRef, type ReactNode } from "react";
 
 interface ModalProps {
   open: boolean;
@@ -22,15 +22,7 @@ interface ModalProps {
  * 바깥(배경) 클릭으로 닫히고, 열려 있는 동안 뒤 페이지 스크롤을 막는다.
  * 본문은 <ModalBody>, 하단 버튼은 <ModalFooter> 로 감싼다.
  */
-export function Modal({
-  open,
-  onClose,
-  title,
-  description,
-  width = 480,
-  children,
-  showCloseButton = false,
-}: ModalProps) {
+export function Modal({ open, onClose, title, description, width = 480, children, showCloseButton = false }: ModalProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const descId = useId();
@@ -45,7 +37,7 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
@@ -83,16 +75,7 @@ export function Modal({
                 aria-label="닫기"
                 className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-sub hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
               >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" aria-hidden="true">
                   <path d="M6 6l12 12M18 6L6 18" />
                 </svg>
               </button>
@@ -109,13 +92,7 @@ export function ModalBody({ children }: { children: ReactNode }) {
   return <div className="flex flex-col gap-4 px-6 pt-5 pb-2">{children}</div>;
 }
 
-export function ModalFooter({
-  children,
-  hint,
-}: {
-  children: ReactNode;
-  hint?: ReactNode;
-}) {
+export function ModalFooter({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
     <div className="mt-2 flex items-center justify-between gap-2 border-t border-line px-6 py-4">
       <div className="text-xs text-muted">{hint}</div>

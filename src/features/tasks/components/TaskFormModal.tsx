@@ -107,13 +107,7 @@ export function TaskFormModal({ open, onClose, task, initial, onCreate, heading 
             onChange={(e) => update("assigneeId", e.target.value || null)}
           />
           <div className="grid grid-cols-2 gap-3">
-            <Field
-              id="task-start"
-              label="시작일"
-              type="date"
-              value={values.startDate ?? ""}
-              onChange={(e) => update("startDate", e.target.value || null)}
-            />
+            <Field id="task-start" label="시작일" type="date" value={values.startDate ?? ""} onChange={(e) => update("startDate", e.target.value || null)} />
             <Field
               id="task-due"
               label="마감일"
@@ -124,7 +118,15 @@ export function TaskFormModal({ open, onClose, task, initial, onCreate, heading 
             />
           </div>
         </ModalBody>
-        <ModalFooter hint={task ? undefined : <>카드 번호 <span className="font-mono">{taskKey(project.taskCounter + 1)}</span>가 자동으로 붙어요</>}>
+        <ModalFooter
+          hint={
+            task ? undefined : (
+              <>
+                카드 번호 <span className="font-mono">{taskKey(project.taskCounter + 1)}</span>가 자동으로 붙어요
+              </>
+            )
+          }
+        >
           <button type="button" onClick={close} className={buttonClass("secondary")}>
             취소
           </button>

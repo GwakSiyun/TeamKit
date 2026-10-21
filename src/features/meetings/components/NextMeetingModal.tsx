@@ -51,7 +51,13 @@ export function NextMeetingModal({ projectId, meetingId, text, initialDate, init
           {error && <Notice tone="error">{error}</Notice>}
           <div className="grid grid-cols-2 gap-3">
             <Field id="next-meeting-date" label="날짜" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-            <SelectField id="next-meeting-hour" label="시작 시각" options={HOUR_OPTIONS} value={String(hour)} onChange={(e) => setHour(Number(e.target.value))} />
+            <SelectField
+              id="next-meeting-hour"
+              label="시작 시각"
+              options={HOUR_OPTIONS}
+              value={String(hour)}
+              onChange={(e) => setHour(Number(e.target.value))}
+            />
           </div>
         </ModalBody>
         <ModalFooter>

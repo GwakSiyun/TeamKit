@@ -217,7 +217,12 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
                     <button
                       type="button"
                       disabled={pending}
-                      onClick={() => void save(list.filter((x) => x.id !== m.id), `「${m.name}」${eulReul(m.name)} 지웠어요.`)}
+                      onClick={() =>
+                        void save(
+                          list.filter((x) => x.id !== m.id),
+                          `「${m.name}」${eulReul(m.name)} 지웠어요.`,
+                        )
+                      }
                       className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-danger-soft disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       삭제
@@ -311,7 +316,8 @@ export function ProjectSettingsView() {
           )}
         </div>
         <p className="text-xs text-muted">
-          &lsquo;초대 링크 공유&rsquo;를 누르면 카카오톡 · 메시지 등으로 바로 보낼 수 있어요 (PC 에선 링크 복사). 받은 사람은 링크를 누르고 &lsquo;참여하기&rsquo;만 하면 들어와요. 코드는 &lsquo;초대 코드로 참여&rsquo;에 입력해도 돼요.
+          &lsquo;초대 링크 공유&rsquo;를 누르면 카카오톡 · 메시지 등으로 바로 보낼 수 있어요 (PC 에선 링크 복사). 받은 사람은 링크를 누르고
+          &lsquo;참여하기&rsquo;만 하면 들어와요. 코드는 &lsquo;초대 코드로 참여&rsquo;에 입력해도 돼요.
           {isOwner && " 코드가 퍼졌다면 재발급하세요. 예전 코드 · 링크는 바로 못 쓰게 되고, 이미 들어온 멤버는 그대로예요."}
         </p>
       </Section>

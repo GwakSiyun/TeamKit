@@ -31,7 +31,16 @@ export function ResetPasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-      <Field id="reset-email" label="이메일" type="email" autoComplete="email" placeholder="you@example.com" value={email} error={error} onChange={(e) => setEmail(e.target.value)} />
+      <Field
+        id="reset-email"
+        label="이메일"
+        type="email"
+        autoComplete="email"
+        placeholder="you@example.com"
+        value={email}
+        error={error}
+        onChange={(e) => setEmail(e.target.value)}
+      />
       <button type="submit" disabled={pending} className={buttonClass("primary", "h-10 w-full")}>
         {pending ? "보내는 중…" : sentTo ? "다시 보내기" : "재설정 링크 보내기"}
       </button>

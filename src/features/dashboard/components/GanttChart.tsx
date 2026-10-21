@@ -31,16 +31,25 @@ type Bind = ReturnType<typeof useHoverTip>["bind"];
 
 /** 그날의 회의 · 마일스톤 설명 (툴팁). 없으면 null */
 function dayNote(d: string, meetings: MeetingsByDate, milestones: readonly Milestone[]): ReactNode {
-  const lines = [
-    ...milestones.filter((m) => m.date === d).map((m) => `${m.name} · ${formatShort(d)}`),
-    ...(meetings.get(d) ?? []).map((m) => `회의 · ${m}`),
-  ];
+  const lines = [...milestones.filter((m) => m.date === d).map((m) => `${m.name} · ${formatShort(d)}`), ...(meetings.get(d) ?? []).map((m) => `회의 · ${m}`)];
   if (lines.length === 0) return null;
   return lines.map((l) => <div key={l}>{l}</div>);
 }
 
 /** 주말 · 오늘 · 마일스톤 배경 칸 + 회의 날 세로 점선 (행마다 같은 그리드에 깔린다). 회의 · 마일스톤 칸은 마우스를 올리면 설명 */
-function Backdrop({ days, today, meetings, milestones, bind }: { days: string[]; today: string; meetings: MeetingsByDate; milestones: readonly Milestone[]; bind: Bind }) {
+function Backdrop({
+  days,
+  today,
+  meetings,
+  milestones,
+  bind,
+}: {
+  days: string[];
+  today: string;
+  meetings: MeetingsByDate;
+  milestones: readonly Milestone[];
+  bind: Bind;
+}) {
   return (
     <>
       {days.map((d, i) => {
@@ -174,7 +183,10 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
       {/* 마일스톤 깃발 줄: 그 날짜 칸에 깃발 + 이름 (범위 안에 있을 때만). 이름이 겹치면 아랫줄로 */}
       {visibleMilestones.length > 0 && (
         <div className="grid border-b border-divider py-1" style={{ ...grid, gridTemplateRows: `repeat(${laneCount}, 20px)` }}>
-          <div className={`${STICKY} flex items-center bg-surface px-3 text-[11px] font-medium text-faint`} style={{ gridRow: `1 / ${laneCount + 1}`, gridColumn: 1 }}>
+          <div
+            className={`${STICKY} flex items-center bg-surface px-3 text-[11px] font-medium text-faint`}
+            style={{ gridRow: `1 / ${laneCount + 1}`, gridColumn: 1 }}
+          >
             마일스톤
           </div>
           {visibleMilestones.map((m) => {
@@ -225,7 +237,10 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
       {groups.map((g) => (
         <div key={g.id || "none"}>
           <div className="grid h-8 border-b border-line bg-side" style={grid}>
-            <div className="sticky left-0 z-[2] flex w-fit items-center gap-2 px-3 text-[13px] font-semibold whitespace-nowrap" style={{ gridRow: 1, gridColumn: "1 / -1" }}>
+            <div
+              className="sticky left-0 z-[2] flex w-fit items-center gap-2 px-3 text-[13px] font-semibold whitespace-nowrap"
+              style={{ gridRow: 1, gridColumn: "1 / -1" }}
+            >
               {g.id ? <Avatar seed={g.id} name={g.name} size={18} /> : null}
               {g.name}
               <span className="text-xs font-normal text-muted">

@@ -14,7 +14,17 @@ const FEEDBACK: Partial<Record<ShareOutcome, string>> = {
 };
 
 /** 초대 링크 공유 버튼 (공유 시트, 안 되면 링크 복사). 프로젝트 설정 · 상단바 공통 */
-export function ShareInviteButton({ project, label = "초대 링크 공유", variant = "primary", extra = "" }: { project: Pick<Project, "inviteCode" | "name">; label?: string; variant?: ButtonVariant; extra?: string }) {
+export function ShareInviteButton({
+  project,
+  label = "초대 링크 공유",
+  variant = "primary",
+  extra = "",
+}: {
+  project: Pick<Project, "inviteCode" | "name">;
+  label?: string;
+  variant?: ButtonVariant;
+  extra?: string;
+}) {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   async function handleClick(): Promise<void> {

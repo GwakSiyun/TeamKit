@@ -122,7 +122,8 @@ export function PollDetailView() {
       <div className="-mt-2 flex flex-col">
         <Prop icon="calendar" label="기간">
           <span className="tabular-nums">
-            {formatShort(poll.startDate)}({weekdayOf(poll.startDate)}) → {formatShort(poll.endDate)}({weekdayOf(poll.endDate)}) · {String(poll.startHour).padStart(2, "0")}
+            {formatShort(poll.startDate)}({weekdayOf(poll.startDate)}) → {formatShort(poll.endDate)}({weekdayOf(poll.endDate)}) ·{" "}
+            {String(poll.startHour).padStart(2, "0")}
             :00–{String(poll.endHour).padStart(2, "0")}:00
           </span>
         </Prop>
@@ -141,8 +142,8 @@ export function PollDetailView() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-success-soft px-4 py-3 text-success-fg">
           <span className="flex items-center gap-2 text-sm">
             <Icon name="check" size={16} />
-            <b className="font-semibold">{formatSlot(poll.confirmedSlot.date, poll.confirmedSlot.hour, poll.durationHours)}</b>로 확정됐어요. 대시보드에 다음 회의로
-            표시돼요.
+            <b className="font-semibold">{formatSlot(poll.confirmedSlot.date, poll.confirmedSlot.hour, poll.durationHours)}</b>로 확정됐어요. 대시보드에 다음
+            회의로 표시돼요.
           </span>
           {isCreator && (
             <button type="button" onClick={() => setConfirming({ kind: "reopen" })} className={buttonClass("secondary", "h-7")}>

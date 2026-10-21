@@ -49,8 +49,7 @@ function findAssignee(text: string, members: readonly SuggestMember[]): { id: st
   return { id: best.id, rest: text.slice(0, best.index) + text.slice(best.index + best.match.length) };
 }
 
-const DATE_RE =
-  /(?:(이번\s?주|다음\s?주|담주|다다음\s?주)\s*)?([월화수목금토일])요일|(오늘|내일|모레)|(\d{1,2})월\s?(\d{1,2})일|(\d{1,2})\/(\d{1,2})/g;
+const DATE_RE = /(?:(이번\s?주|다음\s?주|담주|다다음\s?주)\s*)?([월화수목금토일])요일|(오늘|내일|모레)|(\d{1,2})월\s?(\d{1,2})일|(\d{1,2})\/(\d{1,2})/g;
 
 function weekOffset(qualifier: string | undefined): number | null {
   if (!qualifier) return null;
@@ -159,8 +158,11 @@ const TRAILING = [
 ] as const;
 
 function cleanTitle(text: string): string {
-  let t = text.replace(/[.!?。,]+/g, " ").replace(/\s+/g, " ").trim();
-  for (let changed = true; changed; ) {
+  let t = text
+    .replace(/[.!?。,]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  for (let changed = true; changed;) {
     changed = false;
     const lead = t.replace(LEADING, "");
     if (lead !== t) {

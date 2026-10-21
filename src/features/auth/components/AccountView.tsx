@@ -118,7 +118,14 @@ function PasswordForm() {
 
   return (
     <form onSubmit={handleSubmit} noValidate className="flex max-w-md flex-col gap-3">
-      <Field id="pw-current" label="현재 비밀번호" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} />
+      <Field
+        id="pw-current"
+        label="현재 비밀번호"
+        type="password"
+        autoComplete="current-password"
+        value={current}
+        onChange={(e) => setCurrent(e.target.value)}
+      />
       <Field
         id="pw-next"
         label="새 비밀번호"
@@ -183,11 +190,7 @@ export function AccountView() {
       </Section>
 
       <Section title="비밀번호">
-        {withPassword ? (
-          <PasswordForm />
-        ) : (
-          <p className="text-sm text-muted">GitHub로 가입한 계정이라 비밀번호가 없어요. GitHub 계정으로 로그인하세요.</p>
-        )}
+        {withPassword ? <PasswordForm /> : <p className="text-sm text-muted">GitHub로 가입한 계정이라 비밀번호가 없어요. GitHub 계정으로 로그인하세요.</p>}
       </Section>
 
       <Section title="화면 테마">

@@ -16,7 +16,5 @@ const TONES: Record<TagTone, string> = {
 };
 
 export function Tag({ tone = "gray", children }: { tone?: TagTone; children: ReactNode }) {
-  return (
-    <span className={`inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>
-  );
+  return <span className={`inline-flex h-5 shrink-0 items-center gap-1 whitespace-nowrap rounded px-1.5 text-xs font-medium ${TONES[tone]}`}>{children}</span>;
 }

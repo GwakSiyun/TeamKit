@@ -3,7 +3,20 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { arrayRemove, arrayUnion, collection, deleteDoc, deleteField, doc, getDoc, getDocs, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import {
+  arrayRemove,
+  arrayUnion,
+  collection,
+  deleteDoc,
+  deleteField,
+  doc,
+  getDoc,
+  getDocs,
+  serverTimestamp,
+  setDoc,
+  updateDoc,
+  writeBatch,
+} from "firebase/firestore";
 
 const TASK = { title: "로그인 화면", description: "", status: "todo", statusSource: "manual", assigneeId: null, startDate: null, dueDate: null };
 
@@ -96,7 +109,16 @@ describe("프로젝트 만들기", () => {
   });
   test("초대 코드 문서 없이 프로젝트만 만들 수 없다", async () => {
     const d = db("alice");
-    await assertFails(setDoc(doc(d, "projects", "new1"), { name: "x", inviteCode: "ABCD23", ownerId: "alice", memberIds: ["alice"], taskCounter: 0, createdAt: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(d, "projects", "new1"), {
+        name: "x",
+        inviteCode: "ABCD23",
+        ownerId: "alice",
+        memberIds: ["alice"],
+        taskCounter: 0,
+        createdAt: serverTimestamp(),
+      }),
+    );
   });
   test("다른 사람을 멤버로 넣어서 만들 수 없다", async () => {
     await assertFails(createBatch("alice", { memberIds: ["alice", "bob"] }).commit());
@@ -247,7 +269,9 @@ describe("할 일", () => {
   test("번호를 안 올리고 만들 수 없다 (중복 번호 방지)", async () => {
     await seedProject();
     const d = db("alice");
-    await assertFails(setDoc(doc(d, "projects", PID, "tasks", "t1"), { ...TASK, number: 0, createdBy: "alice", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(d, "projects", PID, "tasks", "t1"), { ...TASK, number: 0, createdBy: "alice", createdAt: serverTimestamp(), updatedAt: serverTimestamp() }),
+    );
   });
   test("멤버가 아닌 사람을 담당자로 지정할 수 없다", async () => {
     await seedProject();
@@ -279,12 +303,28 @@ describe("할 일", () => {
   test("변경 기록에 남의 이름을 쓸 수 없다", async () => {
     await seedProject({ withBob: true });
     await seedTask();
-    await assertFails(setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "done", source: "manual", actor: "alice", at: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), {
+        from: "todo",
+        to: "done",
+        source: "manual",
+        actor: "alice",
+        at: serverTimestamp(),
+      }),
+    );
   });
   test("변경 기록에 GitHub 출처를 직접 쓸 수 없다 (서버 전용)", async () => {
     await seedProject({ withBob: true });
     await seedTask();
-    await assertFails(setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), { from: "todo", to: "done", source: "github", actor: "bob", at: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(db("bob"), "projects", PID, "tasks", "t1", "history", "h9"), {
+        from: "todo",
+        to: "done",
+        source: "github",
+        actor: "bob",
+        at: serverTimestamp(),
+      }),
+    );
   });
 });
 
@@ -311,7 +351,16 @@ describe("할 일 삭제 권한", () => {
   });
 });
 
-const POLL = { title: "2주차 회고", startDate: "2026-10-19", endDate: "2026-10-25", startHour: 10, endHour: 22, durationHours: 2, status: "open", confirmedSlot: null };
+const POLL = {
+  title: "2주차 회고",
+  startDate: "2026-10-19",
+  endDate: "2026-10-25",
+  startHour: 10,
+  endHour: 22,
+  durationHours: 2,
+  status: "open",
+  confirmedSlot: null,
+};
 
 async function seedPoll({ status = "open", createdBy = "alice" } = {}) {
   await env.withSecurityRulesDisabled(async (ctx) => {
@@ -330,11 +379,15 @@ describe("일정 투표", () => {
   });
   test("기간이 14일을 넘으면 거부", async () => {
     await seedProject();
-    await assertFails(setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, endDate: "2026-11-05", createdBy: "alice", createdAt: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, endDate: "2026-11-05", createdBy: "alice", createdAt: serverTimestamp() }),
+    );
   });
   test("처음부터 확정 상태로 만들 수 없다", async () => {
     await seedProject();
-    await assertFails(setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, status: "confirmed", createdBy: "alice", createdAt: serverTimestamp() }));
+    await assertFails(
+      setDoc(doc(db("alice"), "projects", PID, "polls", "p1"), { ...POLL, status: "confirmed", createdBy: "alice", createdAt: serverTimestamp() }),
+    );
   });
   test("만든 사람은 확정할 수 있다", async () => {
     await seedProject({ withBob: true });
@@ -349,7 +402,9 @@ describe("일정 투표", () => {
   test("본인 가능 시간은 쓸 수 있다", async () => {
     await seedProject({ withBob: true });
     await seedPoll();
-    await assertSucceeds(setDoc(doc(db("bob"), "projects", PID, "polls", "p1", "responses", "bob"), { slots: ["2026-10-20T19"], updatedAt: serverTimestamp() }));
+    await assertSucceeds(
+      setDoc(doc(db("bob"), "projects", PID, "polls", "p1", "responses", "bob"), { slots: ["2026-10-20T19"], updatedAt: serverTimestamp() }),
+    );
   });
   test("남의 가능 시간은 쓸 수 없다", async () => {
     await seedProject({ withBob: true });
@@ -390,7 +445,9 @@ describe("GitHub 연동 데이터", () => {
   test("브라우저는 할 일의 PR 정보를 위조할 수 없다", async () => {
     await seedProject();
     await seedTask();
-    await assertFails(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { github: { prNumber: 1, prState: "merged" }, updatedAt: serverTimestamp() }));
+    await assertFails(
+      updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { github: { prNumber: 1, prState: "merged" }, updatedAt: serverTimestamp() }),
+    );
   });
   test("브라우저는 할 일을 만들 때 브랜치를 넣을 수 없다", async () => {
     await seedProject();
@@ -400,7 +457,10 @@ describe("GitHub 연동 데이터", () => {
     await seedProject();
     await seedTask();
     await env.withSecurityRulesDisabled(async (ctx) => {
-      await updateDoc(doc(ctx.firestore(), "projects", PID, "tasks", "t1"), { branch: "feature/TM-1", github: { prNumber: 3, prTitle: "x", prState: "open", prUrl: "u" } });
+      await updateDoc(doc(ctx.firestore(), "projects", PID, "tasks", "t1"), {
+        branch: "feature/TM-1",
+        github: { prNumber: 3, prTitle: "x", prState: "open", prUrl: "u" },
+      });
     });
     await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "tasks", "t1"), { title: "로그인 화면 v2", updatedAt: serverTimestamp() }));
   });
@@ -440,9 +500,7 @@ describe("회의록", () => {
   test("할 일 후보를 보드에 추가 표시할 수 있다", async () => {
     await seedProject({ withBob: true });
     await seedMeeting();
-    await assertSucceeds(
-      updateDoc(doc(db("alice"), "projects", PID, "meetings", "m1"), { actionItems: [{ ...MEETING.actionItems[0], taskNumber: 1 }] }),
-    );
+    await assertSucceeds(updateDoc(doc(db("alice"), "projects", PID, "meetings", "m1"), { actionItems: [{ ...MEETING.actionItems[0], taskNumber: 1 }] }));
   });
   test("회의 내용 · 결정사항은 고칠 수 없다", async () => {
     await seedProject({ withBob: true });
@@ -473,9 +531,7 @@ describe("회의록", () => {
   test("멤버가 아니면 다음 회의를 등록할 수 없다", async () => {
     await seedProject({ withBob: true });
     await seedMeeting();
-    await assertFails(
-      updateDoc(doc(db("mallory"), "projects", PID, "meetings", "m1"), { nextMeeting: { date: "2026-10-20", hour: 10, text: "x" } }),
-    );
+    await assertFails(updateDoc(doc(db("mallory"), "projects", PID, "meetings", "m1"), { nextMeeting: { date: "2026-10-20", hour: 10, text: "x" } }));
   });
   test("만든 사람은 회의록을 지울 수 있다", async () => {
     await seedProject({ withBob: true });
@@ -513,7 +569,14 @@ describe("프로젝트 설정 (만든 사람)", () => {
   test("만든 사람은 마일스톤 목록을 저장 · 비울 수 있다", async () => {
     await seedProject({ withBob: true });
     const ref = doc(db("alice"), "projects", PID);
-    await assertSucceeds(updateDoc(ref, { milestones: [{ id: "a1", name: "1차 배포", date: "2026-10-30" }, { id: "b2", name: "최종 발표", date: "2026-11-13" }] }));
+    await assertSucceeds(
+      updateDoc(ref, {
+        milestones: [
+          { id: "a1", name: "1차 배포", date: "2026-10-30" },
+          { id: "b2", name: "최종 발표", date: "2026-11-13" },
+        ],
+      }),
+    );
     await assertSucceeds(updateDoc(ref, { milestones: [] }));
   });
   test("예전 형식(milestone 하나)은 지우면서 목록으로 옮길 수 있다", async () => {

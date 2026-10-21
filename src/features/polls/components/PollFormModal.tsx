@@ -75,10 +75,25 @@ export function PollFormModal({ onClose }: { onClose: () => void }) {
       <form onSubmit={handleSubmit} noValidate>
         <ModalBody>
           {error && <Notice tone="error">{error}</Notice>}
-          <Field id="poll-title" label="제목" placeholder="예) 2주차 회고" maxLength={60} autoFocus value={v.title} onChange={(e) => update("title", e.target.value)} />
+          <Field
+            id="poll-title"
+            label="제목"
+            placeholder="예) 2주차 회고"
+            maxLength={60}
+            autoFocus
+            value={v.title}
+            onChange={(e) => update("title", e.target.value)}
+          />
           <div className="grid grid-cols-2 gap-3">
             <Field id="poll-start" label="시작일" type="date" value={v.startDate} onChange={(e) => update("startDate", e.target.value)} />
-            <Field id="poll-end" label="종료일" type="date" hint={`최대 ${MAX_POLL_DAYS}일`} value={v.endDate} onChange={(e) => update("endDate", e.target.value)} />
+            <Field
+              id="poll-end"
+              label="종료일"
+              type="date"
+              hint={`최대 ${MAX_POLL_DAYS}일`}
+              value={v.endDate}
+              onChange={(e) => update("endDate", e.target.value)}
+            />
             <SelectField
               id="poll-from"
               label="하루 중 시작"
@@ -86,7 +101,13 @@ export function PollFormModal({ onClose }: { onClose: () => void }) {
               value={String(v.startHour)}
               onChange={(e) => update("startHour", Number(e.target.value))}
             />
-            <SelectField id="poll-to" label="하루 중 끝" options={HOUR_OPTIONS.slice(1)} value={String(v.endHour)} onChange={(e) => update("endHour", Number(e.target.value))} />
+            <SelectField
+              id="poll-to"
+              label="하루 중 끝"
+              options={HOUR_OPTIONS.slice(1)}
+              value={String(v.endHour)}
+              onChange={(e) => update("endHour", Number(e.target.value))}
+            />
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium text-sub">회의 길이</span>

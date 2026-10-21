@@ -76,7 +76,11 @@ export function MeetingsView() {
             {state.meetings.map((m) => {
               const added = m.actionItems.filter((a) => a.taskNumber !== null).length;
               return (
-                <Link key={m.id} href={`${base}/${m.id}`} className={`${ROW} ${GRID} rounded border-b border-divider px-2 py-2.5 text-sm tabular-nums hover:bg-side`}>
+                <Link
+                  key={m.id}
+                  href={`${base}/${m.id}`}
+                  className={`${ROW} ${GRID} rounded border-b border-divider px-2 py-2.5 text-sm tabular-nums hover:bg-side`}
+                >
                   <span className="w-full truncate font-semibold lg:w-auto">{m.title}</span>
                   <span className="text-sub">{m.createdAt ? formatDateTime(m.createdAt.toDate()) : "—"}</span>
                   <SourceLabel meeting={m} />
