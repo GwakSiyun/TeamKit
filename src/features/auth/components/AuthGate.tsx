@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, type ReactNode } from "react";
 import { useAuth } from "../AuthProvider";
+import { loginUrlFor, nextPath } from "../redirect";
 
 interface AuthGateProps {
   /** "signed-in": 로그인한 사람만 / "signed-out": 로그인 안 한 사람만 (로그인·회원가입 화면) */
@@ -17,7 +18,8 @@ export function AuthGate({ require, children }: AuthGateProps) {
 
   useEffect(() => {
     if (loading || allowed) return;
-    router.replace(require === "signed-in" ? "/login" : "/projects");
+    // 로그인 안 했으면 로그인 뒤 이 화면으로 돌아오게, 이미 로그인했으면 돌아갈 곳(?next)으로
+    router.replace(require === "signed-in" ? loginUrlFor(window.location.pathname) : nextPath());
   }, [loading, allowed, require, router]);
 
   if (loading || !allowed) {

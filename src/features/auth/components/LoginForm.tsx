@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { nextPath } from "../redirect";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Field } from "@/components/ui/Field";
@@ -27,7 +28,7 @@ export function LoginForm() {
     setError(null);
     const result = await signInWithEmail(email.trim(), password);
     setPending(false);
-    if (result.ok) router.replace("/projects");
+    if (result.ok) router.replace(nextPath());
     else setError(result.message);
   }
 

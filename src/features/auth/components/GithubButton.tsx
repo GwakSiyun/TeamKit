@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { nextPath } from "../redirect";
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Notice } from "@/components/ui/Notice";
@@ -16,7 +17,7 @@ export function GithubButton({ label }: { label: string }) {
     setError(null);
     const result = await signInWithGithub();
     setPending(false);
-    if (result.ok) router.replace("/projects");
+    if (result.ok) router.replace(nextPath());
     else setError(result.message);
   }
 

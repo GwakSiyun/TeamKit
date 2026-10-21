@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { nextPath } from "../redirect";
 import { useState, type FormEvent } from "react";
 import { buttonClass } from "@/components/ui/button";
 import { Field } from "@/components/ui/Field";
@@ -51,7 +52,7 @@ export function SignupForm() {
     setServerError(null);
     const result = await signUpWithEmail(values.name.trim(), values.email.trim(), values.password);
     setPending(false);
-    if (result.ok) router.replace("/projects");
+    if (result.ok) router.replace(nextPath());
     else setServerError(result.message);
   }
 
