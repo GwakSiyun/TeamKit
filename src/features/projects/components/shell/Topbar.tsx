@@ -3,6 +3,7 @@
 import { BackLink } from "@/components/common/BackLink";
 import { AvatarStack } from "@/components/ui/Avatar";
 import { useCurrentProject } from "../../ProjectContext";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 import { ShareInviteButton } from "../ShareInviteButton";
 import { MobileNav } from "./MobileNav";
 
@@ -15,7 +16,8 @@ export function Topbar() {
         <MobileNav />
         <BackLink href="/projects" label="내 프로젝트로 돌아가기" />
       </div>
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <NotificationBell />
         <span className="hidden sm:inline-flex">
           <AvatarStack people={members} />
         </span>
