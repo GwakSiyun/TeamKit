@@ -109,6 +109,22 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
     return true;
   }
 
+  // 수정 중인 줄 (같은 id 라서 GitHub 쪽도 같은 마일스톤의 이름 · 날짜만 바뀐다)
+  const [editing, setEditing] = useTransientState<Milestone | null>(null);
+
+  async function handleEdit(): Promise<void> {
+    if (!editing) return;
+    if (!editing.name.trim() || !editing.date) {
+      setMessage({ tone: "error", text: "이름과 날짜를 모두 넣어주세요." });
+      return;
+    }
+    const ok = await save(
+      list.map((m) => (m.id === editing.id ? editing : m)),
+      `「${editing.name.trim()}」${eulReul(editing.name.trim())} 고쳤어요.`,
+    );
+    if (ok) setEditing(null);
+  }
+
   async function handleAdd(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     if (!name.trim() || !date) {
@@ -134,28 +150,82 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
         <p className="text-sm text-muted">아직 없어요.{isOwner && " 1차 배포 · 최종 발표처럼 중요한 날을 추가해 보세요."}</p>
       ) : (
         <ul className="-mt-1 flex max-w-xl flex-col">
-          {list.map((m) => (
-            <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-sm">
-              <span className={m.date < today ? "text-faint" : "text-danger"}>
-                <Icon name="flag" size={14} />
-              </span>
-              <span className="min-w-0 flex-1 truncate font-medium">{m.name}</span>
-              <span className="text-sub tabular-nums">
-                {formatShort(m.date)}({weekdayOf(m.date)})
-              </span>
-              <span className="w-12 text-right text-xs font-semibold text-muted tabular-nums">{dDay(m.date, today)}</span>
-              {isOwner && (
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => void save(list.filter((x) => x.id !== m.id), `「${m.name}」${eulReul(m.name)} 지웠어요.`)}
-                  className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-[#FFF5F4] disabled:cursor-not-allowed disabled:opacity-50"
+          {list.map((m) =>
+            editing?.id === m.id ? (
+              <li key={m.id} className="border-b border-[#F1F1EF] px-2 py-2">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void handleEdit();
+                  }}
+                  noValidate
+                  className="flex flex-wrap items-center gap-2"
                 >
-                  삭제
-                </button>
-              )}
-            </li>
-          ))}
+                  <label htmlFor={`milestone-edit-name-${m.id}`} className="sr-only">
+                    마일스톤 이름
+                  </label>
+                  <input
+                    id={`milestone-edit-name-${m.id}`}
+                    value={editing.name}
+                    maxLength={MILESTONE_NAME_MAX}
+                    autoFocus
+                    onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+                    className={controlClass(null, "h-8 min-w-0 flex-1")}
+                  />
+                  <label htmlFor={`milestone-edit-date-${m.id}`} className="sr-only">
+                    마일스톤 날짜
+                  </label>
+                  <input
+                    id={`milestone-edit-date-${m.id}`}
+                    type="date"
+                    value={editing.date}
+                    onChange={(e) => setEditing({ ...editing, date: e.target.value })}
+                    className={controlClass(null, "h-8 w-auto")}
+                  />
+                  <button type="button" onClick={() => setEditing(null)} disabled={pending} className={buttonClass("ghost", "h-8")}>
+                    취소
+                  </button>
+                  <button type="submit" disabled={pending} className={buttonClass("secondary", "h-8")}>
+                    {pending ? "저장 중…" : "저장"}
+                  </button>
+                </form>
+              </li>
+            ) : (
+              <li key={m.id} className="flex items-center gap-3 border-b border-[#F1F1EF] px-2 py-2 text-sm">
+                <span className={m.date < today ? "text-faint" : "text-danger"}>
+                  <Icon name="flag" size={14} />
+                </span>
+                <span className="min-w-0 flex-1 truncate font-medium">{m.name}</span>
+                <span className="text-sub tabular-nums">
+                  {formatShort(m.date)}({weekdayOf(m.date)})
+                </span>
+                <span className="w-12 text-right text-xs font-semibold text-muted tabular-nums">{dDay(m.date, today)}</span>
+                {isOwner && (
+                  <span className="flex">
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => {
+                        setEditing({ id: m.id, name: m.name, date: m.date });
+                        setMessage(null);
+                      }}
+                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-sub hover:bg-hover hover:text-ink disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      수정
+                    </button>
+                    <button
+                      type="button"
+                      disabled={pending}
+                      onClick={() => void save(list.filter((x) => x.id !== m.id), `「${m.name}」${eulReul(m.name)} 지웠어요.`)}
+                      className="inline-flex h-6 cursor-pointer items-center rounded-md px-2 text-xs font-medium text-danger hover:bg-[#FFF5F4] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      삭제
+                    </button>
+                  </span>
+                )}
+              </li>
+            ),
+          )}
         </ul>
       )}
 

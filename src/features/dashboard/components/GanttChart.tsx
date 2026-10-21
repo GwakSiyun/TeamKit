@@ -64,6 +64,26 @@ function Backdrop({ days, today, meetings, milestones, bind }: { days: string[];
   );
 }
 
+/** 깃발 이름 너비 어림 (한글 11px · 그 밖 7px + 깃발 아이콘) → 차지하는 날 수. 날짜 칸은 좁게 잡아(32px) 넉넉히 */
+const FLAG_DAY_PX = 32;
+function flagSpanDays(name: string): number {
+  const px = 20 + [...name].reduce((sum, ch) => sum + (/[가-힣]/.test(ch) ? 11 : 7), 0);
+  return Math.max(1, Math.ceil(px / FLAG_DAY_PX));
+}
+
+/** 깃발끼리 겹치면 아랫줄로: 날짜순으로 놓으면서 앞 깃발 이름이 끝난 줄에만 넣는다 */
+function flagLanes(items: Array<{ id: string; index: number; span: number }>): Map<string, number> {
+  const laneEnds: number[] = [];
+  const lanes = new Map<string, number>();
+  for (const it of [...items].sort((a, b) => a.index - b.index)) {
+    let lane = laneEnds.findIndex((end) => end < it.index);
+    if (lane === -1) lane = laneEnds.length;
+    laneEnds[lane] = it.index + it.span - 1;
+    lanes.set(it.id, lane);
+  }
+  return lanes;
+}
+
 /** 회의 날짜("YYYY-MM-DD") → 그날 회의 이름들 ("10:00 「1주차 회의」에서 정함") */
 export type MeetingsByDate = ReadonlyMap<string, string[]>;
 
@@ -134,6 +154,8 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
   const tip = useHoverTip();
   const milestoneDays = new Set(milestones.map((m) => m.date));
   const visibleMilestones = milestones.filter((m) => days.includes(m.date));
+  const lanes = flagLanes(visibleMilestones.map((m) => ({ id: m.id, index: days.indexOf(m.date), span: flagSpanDays(m.name) })));
+  const laneCount = Math.max(1, ...[...lanes.values()].map((l) => l + 1));
   const grid = columnStyle(days.length);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -149,10 +171,10 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
 
   return (
     <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
-      {/* 마일스톤 깃발 줄: 그 날짜 칸에 깃발 + 이름 (범위 안에 있을 때만) */}
+      {/* 마일스톤 깃발 줄: 그 날짜 칸에 깃발 + 이름 (범위 안에 있을 때만). 이름이 겹치면 아랫줄로 */}
       {visibleMilestones.length > 0 && (
-        <div className="grid h-7 border-b border-[#F1F1EF]" style={grid}>
-          <div className={`${STICKY} flex items-center bg-white px-3 text-[11px] font-medium text-faint`} style={{ gridRow: 1, gridColumn: 1 }}>
+        <div className="grid border-b border-[#F1F1EF] py-1" style={{ ...grid, gridTemplateRows: `repeat(${laneCount}, 20px)` }}>
+          <div className={`${STICKY} flex items-center bg-white px-3 text-[11px] font-medium text-faint`} style={{ gridRow: `1 / ${laneCount + 1}`, gridColumn: 1 }}>
             마일스톤
           </div>
           {visibleMilestones.map((m) => {
@@ -162,7 +184,7 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
                 key={m.id}
                 {...tip.bind(dayNote(m.date, meetings, milestones))}
                 className="relative z-[1] flex min-w-0 items-center gap-1 self-center pl-1 text-[11px] font-semibold whitespace-nowrap text-danger"
-                style={{ gridRow: 1, gridColumn: `${i + 2} / span 1` }}
+                style={{ gridRow: (lanes.get(m.id) ?? 0) + 1, gridColumn: `${i + 2} / span 1` }}
               >
                 <Icon name="flag" size={13} />
                 <span className="overflow-visible">{m.name}</span>

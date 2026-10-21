@@ -7,7 +7,7 @@ import { daysBetween, formatShort, weekdayOf } from "@/lib/dates";
 const URGENT_DAYS = 3;
 
 /**
- * 대시보드 제목 아래 마일스톤 D-day 칩. 다가오는 것만 날짜순, 가장 가까운 것만 진하게.
+ * 대시보드 제목 아래 마일스톤 D-day 칩. 다가오는 것만 날짜순, 가장 가까운 날짜인 것은 진하게, D-3 이내는 빨강.
  * 다 지났으면 마지막 것 하나만 흐리게 "끝남".
  */
 export function MilestoneChips({ milestones, today }: { milestones: readonly Milestone[]; today: string }) {
@@ -17,11 +17,12 @@ export function MilestoneChips({ milestones, today }: { milestones: readonly Mil
 
   return (
     <div className="flex flex-wrap gap-2">
-      {shown.map((m, i) => {
+      {shown.map((m) => {
         const left = daysBetween(today, m.date);
         const past = left < 0;
-        const next = !past && i === 0;
-        const urgent = next && left <= URGENT_DAYS;
+        // 가장 가까운 날짜인 것은 모두 강조 (같은 날 여러 개여도), D-3 이내는 모두 빨강
+        const next = !past && m.date === upcoming[0]?.date;
+        const urgent = !past && left <= URGENT_DAYS;
         const tone = urgent
           ? "bg-danger text-white"
           : next
