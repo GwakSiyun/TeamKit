@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import { APP_NAME } from "@/constants/app";
 import { AuthProvider } from "@/features/auth/AuthProvider";
+import { THEME_INIT_SCRIPT } from "@/features/theme/theme";
 import "./globals.css";
 
 const notoSansKr = Noto_Sans_KR({
@@ -33,7 +34,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="ko" className={`${notoSansKr.variable} ${jetbrainsMono.variable} h-full antialiased`}>
+    // data-theme 은 아래 스크립트가 React 보다 먼저 넣으므로 서버 HTML 과 달라도 경고하지 않게
+    <html lang="ko" className={`${notoSansKr.variable} ${jetbrainsMono.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-full flex flex-col">
         <AuthProvider>{children}</AuthProvider>
       </body>
