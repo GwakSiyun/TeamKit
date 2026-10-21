@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { buttonClass } from "@/components/ui/button";
@@ -26,13 +27,22 @@ export function BoardView() {
   const state = useTasks(project.id);
   const [filter, setFilter] = useState<Filter>("all");
   const [modal, setModal] = useTransientState<OpenModal>(null);
+  // 알림에서 들어오면 ?task=할일ID 로 그 할 일 상세를 바로 연다 (닫으면 주소에서 지움)
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const linkedTaskId = searchParams.get("task");
+  const current: OpenModal = modal ?? (linkedTaskId ? { kind: "detail", taskId: linkedTaskId } : null);
+  function closeModal(): void {
+    setModal(null);
+    if (linkedTaskId) router.replace(`/p/${project.id}/board`);
+  }
   const today = todayISO();
   const nameOf = (uid: string | null): string | null => (uid ? (members.find((m) => m.id === uid)?.name ?? null) : null);
 
   const tasks = state.status === "ready" ? state.tasks : [];
   const mine = tasks.filter((t) => t.assigneeId === user?.uid);
   const shown = filter === "mine" ? mine : tasks;
-  const selected = modal && modal.kind !== "create" ? (tasks.find((t) => t.id === modal.taskId) ?? null) : null;
+  const selected = current && current.kind !== "create" ? (tasks.find((t) => t.id === current.taskId) ?? null) : null;
 
   const tab = (value: Filter, label: string, count: number) => (
     <button
@@ -103,12 +113,12 @@ export function BoardView() {
         </div>
       )}
 
-      {modal?.kind === "create" && <TaskFormModal open onClose={() => setModal(null)} />}
-      {modal?.kind === "edit" && selected && (
+      {current?.kind === "create" && <TaskFormModal open onClose={closeModal} />}
+      {current?.kind === "edit" && selected && (
         <TaskFormModal open task={selected} onClose={() => setModal({ kind: "detail", taskId: selected.id })} />
       )}
-      {modal?.kind === "detail" && selected && (
-        <TaskDetailModal task={selected} today={today} onClose={() => setModal(null)} onEdit={() => setModal({ kind: "edit", taskId: selected.id })} />
+      {current?.kind === "detail" && selected && (
+        <TaskDetailModal task={selected} today={today} onClose={closeModal} onEdit={() => setModal({ kind: "edit", taskId: selected.id })} />
       )}
     </>
   );
