@@ -11,6 +11,7 @@ import { Tag } from "@/components/ui/Tag";
 import { useAuth } from "../AuthProvider";
 import { changePassword, hasPassword, isGithubLinked, logout, updateName } from "../services";
 import { validateName, validatePassword } from "../validation";
+import { ThemeSelect } from "@/features/theme/ThemeSelect";
 import { GithubLinkRow } from "./GithubLinkRow";
 
 type Message = { tone: "success" | "error"; text: string } | null;
@@ -187,6 +188,10 @@ export function AccountView() {
         ) : (
           <p className="text-sm text-muted">GitHub로 가입한 계정이라 비밀번호가 없어요. GitHub 계정으로 로그인하세요.</p>
         )}
+      </Section>
+
+      <Section title="화면 테마">
+        <ThemeSelect />
       </Section>
 
       <Section title="로그인 방식">
