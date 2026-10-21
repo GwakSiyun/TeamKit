@@ -11,8 +11,6 @@ export const metadata: Metadata = {
     title: "TeamKit 프로젝트에 초대받았어요",
     description: "링크를 누르고 '참여하기'만 하면 팀의 할 일 · 회의록 · 일정을 함께 볼 수 있어요.",
     siteName: "TeamKit",
-    // openGraph 를 덮어쓰면 상위의 이미지가 빠질 수 있어 공통 미리보기 이미지를 직접 지정
-    images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: "TeamKit" }],
   },
 };
 
