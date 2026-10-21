@@ -9,7 +9,7 @@ export function NoAccess() {
     <EmptyState
       icon={<Icon name="lock" size={24} />}
       title="이 프로젝트에 접근할 수 없어요"
-      description="프로젝트 멤버만 볼 수 있어요. 팀원에게 초대 코드를 받아 참여하세요."
+      description="프로젝트 멤버만 볼 수 있어요. 팀원에게 초대 링크나 코드를 받아 참여하세요."
       actions={
         <Link href="/projects" className={buttonClass("primary")}>
           내 프로젝트로
