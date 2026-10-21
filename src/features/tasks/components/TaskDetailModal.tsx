@@ -191,7 +191,7 @@ export function TaskDetailModal({
               <button
                 type="button"
                 onClick={() => setConfirmDelete(true)}
-                className="inline-flex h-7 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-[#FFF5F4] focus-visible:outline-2 focus-visible:outline-accent"
+                className="inline-flex h-7 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-danger-soft focus-visible:outline-2 focus-visible:outline-accent"
               >
                 삭제
               </button>

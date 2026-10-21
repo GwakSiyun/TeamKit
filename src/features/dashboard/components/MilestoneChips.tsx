@@ -26,7 +26,7 @@ export function MilestoneChips({ milestones, today }: { milestones: readonly Mil
         const tone = urgent
           ? "bg-danger text-white"
           : next
-            ? "bg-[#FDF0EF] text-[#B42318] shadow-[inset_0_0_0_1px_#F3C4C0]"
+            ? "bg-danger-soft text-danger-fg shadow-[inset_0_0_0_1px_var(--color-danger-line)]"
             : "bg-side text-sub";
         return (
           <span key={m.id} className={`inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-[13px] ${tone} ${past ? "opacity-60" : ""}`}>
