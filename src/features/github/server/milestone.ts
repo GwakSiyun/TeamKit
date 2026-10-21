@@ -71,12 +71,6 @@ export async function syncMilestone(token: string, fullName: string, milestone: 
   return failure(created.status);
 }
 
-/** PR 을 마일스톤에 넣기 (PR 은 GitHub 에서 이슈 번호를 같이 쓴다). 실패해도 웹훅 처리는 계속 */
-export async function attachToMilestone(token: string, fullName: string, prNumber: number, milestone: number): Promise<boolean> {
-  const res = await githubFetch(token, `/repos/${fullName}/issues/${prNumber}`, { method: "PATCH", body: JSON.stringify({ milestone }) });
-  return res.ok;
-}
-
 export interface ListedMilestone extends MilestoneInput {
   id: string;
 }
@@ -130,9 +124,4 @@ export function numbersOf(repoNumbers: unknown, legacyNumber: unknown): Mileston
     return Object.fromEntries(Object.entries(repoNumbers as Record<string, unknown>).filter((e): e is [string, number] => typeof e[1] === "number"));
   }
   return typeof legacyNumber === "number" && legacyNumber > 0 ? { legacy: legacyNumber } : {};
-}
-
-/** 한국 기준 오늘 "YYYY-MM-DD" (서버는 UTC) */
-export function todayKST(now: Date = new Date()): string {
-  return new Date(now.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
 }

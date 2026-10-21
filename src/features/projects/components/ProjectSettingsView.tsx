@@ -197,7 +197,7 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
       <p className="text-xs text-muted">
         {isOwner ? `최대 ${MAX_MILESTONES}개. ` : "마일스톤은 프로젝트를 만든 사람이 정해요. "}
         대시보드 제목 아래 D-day 로 보이고, 일정 차트 위에 깃발로 표시돼요.
-        {project.github && " 연결된 GitHub 레포에도 같은 마일스톤이 생기고, 카드 번호가 있는 새 PR 은 가장 가까운 마일스톤에 자동으로 들어가요."}
+        {project.github && " 연결된 GitHub 레포에도 같은 이름 · 마감일로 마일스톤이 생겨요."}
       </p>
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
     </Section>
