@@ -48,7 +48,7 @@ function Backdrop({ days, today, meetings, milestones, bind }: { days: string[];
         const meeting = meetings.has(d);
         const isMilestone = milestones.some((m) => m.date === d);
         if (d !== today && !weekend && !meeting && !isMilestone) return null;
-        const bg = d === today ? "bg-[#EAF3FB]" : isMilestone ? "" : weekend ? "bg-[#FAFAF9]" : "";
+        const bg = d === today ? "bg-accent-soft" : isMilestone ? "" : weekend ? "bg-weekend" : "";
         const note = dayNote(d, meetings, milestones);
         return (
           <div
@@ -277,7 +277,7 @@ export function GanttLegend() {
       label: BAR_COLORS[k].label,
       swatch: <span className="size-2.5 rounded-sm" style={{ background: BAR_COLORS[k].bg }} />,
     })),
-    { label: "오늘", swatch: <span className="size-2.5 rounded-sm bg-[#EAF3FB] shadow-[inset_0_0_0_1px_var(--color-accent)]" /> },
+    { label: "오늘", swatch: <span className="size-2.5 rounded-sm bg-accent-soft shadow-[inset_0_0_0_1px_var(--color-accent)]" /> },
     { label: "회의", swatch: <span className="h-3 w-0 border-l-2 border-dashed border-[#9A6DD7]" /> },
   ];
   return (

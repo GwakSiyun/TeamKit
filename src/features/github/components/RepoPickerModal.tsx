@@ -66,7 +66,7 @@ export function RepoPickerModal({ onClose }: { onClose: () => void }) {
               <label
                 key={r.fullName}
                 className={`flex items-center gap-2.5 rounded-md px-2 py-2 ${r.admin ? "cursor-pointer hover:bg-side" : "cursor-not-allowed opacity-50"} ${
-                  selected === r.fullName ? "bg-[#F1F7FB]" : ""
+                  selected === r.fullName ? "bg-accent-soft" : ""
                 }`}
               >
                 <input

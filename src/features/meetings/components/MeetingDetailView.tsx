@@ -116,7 +116,7 @@ export function MeetingDetailView() {
             <button
               type="button"
               onClick={() => setConfirmingDelete(true)}
-              className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-[#FFF5F4]"
+              className="inline-flex h-8 cursor-pointer items-center rounded-md px-3 text-sm font-medium text-danger hover:bg-danger-soft"
             >
               삭제
             </button>
@@ -141,7 +141,7 @@ export function MeetingDetailView() {
           <h2 className="border-b border-line pb-1.5 text-base font-bold">회의 내용</h2>
           <ol className="flex flex-col">
             {meeting.segments.map((seg, i) => {
-              const tone = decisionSegs.has(i) ? "border-[#4DAB6F] bg-[#F3F9F5]" : actionSegs.has(i) ? "border-accent bg-[#F2F7FC]" : "border-transparent";
+              const tone = decisionSegs.has(i) ? "border-[#4DAB6F] bg-success-soft" : actionSegs.has(i) ? "border-accent bg-accent-soft" : "border-transparent";
               return (
                 <li key={i} id={segmentId(i)} className={`grid scroll-mt-20 grid-cols-[52px_minmax(0,1fr)] gap-2 border-l-2 px-2 py-1.5 text-sm leading-relaxed ${tone}`}>
                   <span className="pt-px font-mono text-xs text-faint tabular-nums">{seg.start !== null ? formatClock(seg.start) : i + 1}</span>

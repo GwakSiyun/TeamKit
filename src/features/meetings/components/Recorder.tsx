@@ -21,7 +21,7 @@ export function Recorder({ state, onStart, onStop, onReset, disabled = false }: 
     <div className="flex flex-col items-center gap-4 rounded-lg border border-line px-6 py-8 text-center">
       {(state.status === "idle" || state.status === "error" || state.status === "requesting") && (
         <>
-          <span className="inline-flex size-14 items-center justify-center rounded-full bg-[#FDF3F2] text-danger">
+          <span className="inline-flex size-14 items-center justify-center rounded-full bg-danger-soft text-danger">
             <Icon name="mic" size={26} />
           </span>
           <button type="button" onClick={onStart} disabled={disabled || state.status === "requesting"} className={buttonClass("primary", "h-9 px-4")}>
@@ -50,7 +50,7 @@ export function Recorder({ state, onStart, onStop, onReset, disabled = false }: 
 
       {state.status === "done" && (
         <>
-          <span className="flex items-center gap-1.5 text-sm font-medium text-[#2B6747]">
+          <span className="flex items-center gap-1.5 text-sm font-medium text-success-fg">
             <Icon name="check" size={16} />
             녹음 완료 · {formatClock(state.durationSec)}
           </span>
