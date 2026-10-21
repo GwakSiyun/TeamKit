@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BackLink } from "@/components/common/BackLink";
 import { BrandMark } from "@/components/common/BrandMark";
 import { UserMenu } from "@/features/auth/components/UserMenu";
+import { NotificationBell } from "@/features/notifications/components/NotificationBell";
 
 interface PlainLayoutProps {
   /** 헤더 아래 왼쪽에 보여줄 뒤로가기 (예: 프로젝트 → 내 프로젝트) */
@@ -18,7 +19,10 @@ export function PlainLayout({ back, children }: PlainLayoutProps) {
         <Link href="/projects" className="rounded focus-visible:outline-2 focus-visible:outline-accent">
           <BrandMark />
         </Link>
-        <UserMenu />
+        <div className="flex items-center gap-1">
+          <NotificationBell />
+          <UserMenu />
+        </div>
       </header>
       {back && (
         <nav aria-label="상위 화면" className="px-4 pt-3 sm:px-6">
