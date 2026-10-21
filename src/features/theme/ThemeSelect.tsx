@@ -4,9 +4,9 @@ import { useState } from "react";
 import { applyTheme, readTheme, type ThemeChoice } from "./theme";
 
 const OPTIONS: ReadonlyArray<{ value: ThemeChoice; label: string }> = [
-  { value: "system", label: "시스템 설정" },
   { value: "light", label: "라이트" },
   { value: "dark", label: "다크" },
+  { value: "system", label: "시스템 설정" },
 ];
 
 /** 화면 테마 고르기 (이 브라우저에만 저장) */
@@ -34,7 +34,7 @@ export function ThemeSelect() {
           </button>
         ))}
       </div>
-      <span className="text-xs text-muted">시스템 설정은 기기의 라이트 · 다크 모드를 따라가요. 이 브라우저에만 저장돼요.</span>
+      <span className="text-xs text-muted">기본은 라이트예요. 시스템 설정을 고르면 기기의 라이트 · 다크 모드를 따라가요. 이 브라우저에만 저장돼요.</span>
     </div>
   );
 }
