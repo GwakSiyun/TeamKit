@@ -1,7 +1,9 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { FieldValue, type Firestore } from "firebase-admin/firestore";
+import { FieldValue, type DocumentSnapshot, type Firestore } from "firebase-admin/firestore";
 import { forwardStatus, repoDocId, taskNumbersIn, type PrState } from "@/features/github/sync";
 import type { TaskStatus } from "@/features/tasks/types";
+import { githubTokenOf } from "@/features/github/server/http";
+import { attachToMilestone } from "@/features/github/server/milestone";
 import { adminDb } from "@/lib/server/firebaseAdmin";
 
 /** 웹훅 하나를 카드에 반영할 내용으로 정리한 것 */
@@ -114,6 +116,21 @@ async function applyToTasks(db: Firestore, projectId: string, change: Change): P
   return moved;
 }
 
+/**
+ * 카드 번호가 있는 PR 이 열리면(다시 열림 · 초안 해제 포함) 프로젝트 마일스톤에 자동으로 넣는다
+ * → GitHub 마일스톤 화면에 PR 진행률이 생긴다. 이미 다른 마일스톤에 들어간 PR 은 건드리지 않는다.
+ * 레포를 연결한 사람의 GitHub 토큰으로 처리, 실패해도 웹훅 처리는 성공으로 둔다.
+ */
+async function attachPrToMilestone(repo: DocumentSnapshot, fullName: string, payload: Payload, change: Change): Promise<boolean> {
+  const milestone = Number(repo.get("githubMilestone") ?? 0);
+  if (!milestone || change.type !== "pull_request" || change.numbers.length === 0 || !change.pr) return false;
+  if (!["opened", "reopened", "ready_for_review"].includes(str(payload.action))) return false;
+  if (obj(payload.pull_request).milestone) return false;
+  const token = await githubTokenOf(String(repo.get("connectedBy") ?? ""));
+  if (!token) return false;
+  return attachToMilestone(token, fullName, change.pr.prNumber, milestone);
+}
+
 export async function POST(request: Request): Promise<Response> {
   const raw = await request.text();
   const event = request.headers.get("x-github-event") ?? "";
@@ -160,5 +177,6 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const moved = await applyToTasks(db, projectId, change);
-  return Response.json({ ok: true, tasks: change.numbers, moved });
+  const attached = await attachPrToMilestone(repo, fullName, payload, change);
+  return Response.json({ ok: true, tasks: change.numbers, moved, attached });
 }

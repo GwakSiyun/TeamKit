@@ -102,7 +102,12 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
       setName("");
       setDate("");
     }
-    setMessage({ tone: "success", text: next ? "마일스톤을 저장했어요. 대시보드에 표시돼요." : "마일스톤을 지웠어요." });
+    if (result.github === "failed") {
+      setMessage({ tone: "error", text: `TeamKit 에는 저장했지만 GitHub 에는 반영하지 못했어요. ${result.githubMessage ?? ""}` });
+      return;
+    }
+    const where = result.github === "synced" ? (next ? " GitHub 레포의 마일스톤에도 반영했어요." : " GitHub 마일스톤은 닫았어요.") : "";
+    setMessage({ tone: "success", text: (next ? "마일스톤을 저장했어요. 대시보드에 표시돼요." : "마일스톤을 지웠어요.") + where });
   }
 
   const summary = current ? `${current.name} · ${formatShort(current.date)}(${weekdayOf(current.date)})` : "정하지 않음";
@@ -162,7 +167,10 @@ function MilestoneSection({ isOwner }: { isOwner: boolean }) {
           </button>
         )}
       </form>
-      <p className="text-xs text-muted">대시보드 제목 옆에 &lsquo;1차 배포(10/30)까지 10일&rsquo;처럼 남은 날이 보이고, 일정 차트에 그 날이 표시돼요.</p>
+      <p className="text-xs text-muted">
+        대시보드 제목 옆에 &lsquo;1차 배포(10/30)까지 10일&rsquo;처럼 남은 날이 보이고, 일정 차트에 그 날이 표시돼요.
+        {project.github && " 연결된 GitHub 레포에도 같은 마일스톤이 생기고, 카드 번호가 있는 PR 은 자동으로 들어가요."}
+      </p>
       {message && <Notice tone={message.tone}>{message.text}</Notice>}
     </Section>
   );

@@ -3,7 +3,7 @@ import { firebaseAuth } from "@/lib/firebase";
 export type ApiResult<T> = ({ ok: true } & T) | { ok: false; message: string };
 
 /** 브라우저 → 우리 서버 API (/api/github/*). 로그인 토큰을 붙여 보내고, 서버가 검증한다 */
-export async function callGithubApi<T extends object>(path: "repos" | "connect" | "disconnect", body: object = {}): Promise<ApiResult<T>> {
+export async function callGithubApi<T extends object>(path: "repos" | "connect" | "disconnect" | "milestone", body: object = {}): Promise<ApiResult<T>> {
   const user = firebaseAuth().currentUser;
   if (!user) return { ok: false, message: "로그인이 필요해요." };
   try {
