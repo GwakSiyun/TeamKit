@@ -20,7 +20,7 @@ export function TaskCard({ projectId, task, assigneeName, today, onOpen }: TaskC
   const late = lateDays(task, today);
 
   return (
-    <article className="flex flex-col gap-2 rounded-md bg-white px-2.5 pt-2.5 pb-1.5 shadow-[0_0_0_1px_rgba(15,15,15,0.08),0_1px_2px_rgba(15,15,15,0.06)] transition-shadow hover:shadow-[0_0_0_1px_rgba(15,15,15,0.1),0_2px_6px_rgba(15,15,15,0.08)]">
+    <article className="flex flex-col gap-2 rounded-md bg-surface px-2.5 pt-2.5 pb-1.5 shadow-[0_0_0_1px_rgba(15,15,15,0.08),0_1px_2px_rgba(15,15,15,0.06)] transition-shadow hover:shadow-[0_0_0_1px_rgba(15,15,15,0.1),0_2px_6px_rgba(15,15,15,0.08)]">
       <button type="button" onClick={onOpen} className="cursor-pointer text-left text-sm leading-snug font-medium hover:underline hover:decoration-[#C9C7C2]">
         {task.title}
       </button>
@@ -43,7 +43,7 @@ export function TaskCard({ projectId, task, assigneeName, today, onOpen }: TaskC
             <span className="text-xs text-muted tabular-nums">~{formatShort(task.dueDate)}</span>
           ))}
       </div>
-      <div className="flex justify-end border-t border-[#F1F1EF] pt-1">
+      <div className="flex justify-end border-t border-divider pt-1">
         <StatusButtons projectId={projectId} task={task} />
       </div>
     </article>

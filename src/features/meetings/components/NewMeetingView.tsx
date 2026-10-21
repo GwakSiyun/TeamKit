@@ -117,7 +117,7 @@ export function NewMeetingView() {
                   setError(null);
                 }}
                 className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-[5px] px-3 text-sm disabled:cursor-not-allowed ${
-                  mode === m.value ? "bg-white font-medium text-ink shadow-[0_1px_2px_rgba(15,15,15,0.1)]" : "text-sub"
+                  mode === m.value ? "bg-surface font-medium text-ink shadow-[0_1px_2px_rgba(15,15,15,0.1)]" : "text-sub"
                 }`}
               >
                 <Icon name={m.icon} size={14} />
@@ -131,7 +131,7 @@ export function NewMeetingView() {
           )}
 
           {mode === "file" && (
-            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-[#D9D8D4] px-6 py-8 text-center hover:bg-side">
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-dashed px-6 py-8 text-center hover:bg-side">
               <span className="inline-flex size-11 items-center justify-center rounded-[10px] bg-side text-muted">
                 <Icon name="upload" size={22} />
               </span>

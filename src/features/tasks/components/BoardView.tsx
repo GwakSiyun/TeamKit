@@ -91,7 +91,7 @@ export function BoardView() {
                     onOpen={() => setModal({ kind: "detail", taskId: task.id })}
                   />
                 ))}
-                {column.length === 0 && <div className="h-16 rounded-md border border-dashed border-[#D9D8D4]" />}
+                {column.length === 0 && <div className="h-16 rounded-md border border-dashed border-dashed" />}
                 {status === "todo" && (
                   <button type="button" onClick={() => setModal({ kind: "create" })} className={buttonClass("ghost", "justify-start text-muted")}>
                     <Icon name="plus" size={14} />새로 만들기

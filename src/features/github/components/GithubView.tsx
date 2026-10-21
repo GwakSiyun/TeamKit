@@ -70,7 +70,7 @@ export function GithubView() {
       ) : (
         <Section title="연결된 레포">
           <div className="flex flex-wrap items-center gap-3.5 rounded-lg border border-line p-4">
-            <span className="inline-flex size-10 items-center justify-center rounded-lg bg-ink text-white">
+            <span className="inline-flex size-10 items-center justify-center rounded-lg bg-ink text-page">
               <Icon name="github" size={22} />
             </span>
             <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
@@ -113,7 +113,7 @@ export function GithubView() {
         ) : (
           <ul className="flex flex-col">
             {events.map((e) => (
-              <li key={e.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-[#F1F1EF] px-2 py-2.5">
+              <li key={e.id} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-divider px-2 py-2.5">
                 <span className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-[13px]">
                     <b className="font-semibold">{e.author}</b> <span className="text-muted">{eventMeta(e).label}</span> ·{" "}

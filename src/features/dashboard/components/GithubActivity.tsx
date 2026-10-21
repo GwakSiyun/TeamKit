@@ -42,7 +42,7 @@ export function GithubActivity({ events, tasks, connected, githubHref, onOpenTas
       {events.map((e) => {
         const meta = eventMeta(e);
         return (
-          <li key={e.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-[#F1F1EF] px-2 py-2 text-sm sm:flex-nowrap">
+          <li key={e.id} className="flex flex-wrap items-center gap-x-2.5 gap-y-1 border-b border-divider px-2 py-2 text-sm sm:flex-nowrap">
             <Tag tone={meta.tone}>{meta.label}</Tag>
             <span className="min-w-0 flex-1 truncate">
               {e.url ? (

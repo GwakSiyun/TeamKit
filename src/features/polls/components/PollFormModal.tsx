@@ -64,7 +64,7 @@ export function PollFormModal({ onClose }: { onClose: () => void }) {
       role="radio"
       aria-checked={v.durationHours === value}
       onClick={() => update("durationHours", value)}
-      className={`h-7 cursor-pointer rounded-[5px] px-3 text-sm ${v.durationHours === value ? "bg-white font-medium text-ink shadow-[0_1px_2px_rgba(15,15,15,0.1)]" : "text-sub"}`}
+      className={`h-7 cursor-pointer rounded-[5px] px-3 text-sm ${v.durationHours === value ? "bg-surface font-medium text-ink shadow-[0_1px_2px_rgba(15,15,15,0.1)]" : "text-sub"}`}
     >
       {value}시간
     </button>

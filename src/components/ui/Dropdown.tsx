@@ -61,7 +61,7 @@ export function Dropdown({ button, label, buttonClassName, children, width = 240
         <div
           id={panelId}
           style={{ width }}
-          className="absolute top-full left-0 z-30 mt-1 flex flex-col rounded-lg bg-white p-1 text-sm text-ink shadow-[0_8px_24px_rgba(15,15,15,0.14),0_0_0_1px_rgba(15,15,15,0.06)]"
+          className="absolute top-full left-0 z-30 mt-1 flex flex-col rounded-lg bg-surface p-1 text-sm text-ink shadow-[0_8px_24px_rgba(15,15,15,0.14),0_0_0_1px_rgba(15,15,15,0.06)]"
         >
           {children(() => setOpen(false))}
         </div>

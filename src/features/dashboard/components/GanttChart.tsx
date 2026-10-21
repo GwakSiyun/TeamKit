@@ -17,7 +17,7 @@ const DAY_MIN = 24;
 const DAYS_BEFORE_TODAY = 2;
 
 /** 가로로 스크롤해도 이름 칸이 왼쪽에 붙어 있게 (sticky) */
-const STICKY = "sticky left-0 z-[2] border-r border-[#F1F1EF]";
+const STICKY = "sticky left-0 z-[2] border-r border-divider";
 
 function columnStyle(count: number): React.CSSProperties {
   // 이름 칸 너비는 컨테이너의 --gantt-label (좁은 화면 140px · 넓은 화면 240px)
@@ -173,8 +173,8 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
     <div ref={scrollRef} className="overflow-x-auto rounded-lg border border-line [--gantt-label:140px] sm:[--gantt-label:240px]">
       {/* 마일스톤 깃발 줄: 그 날짜 칸에 깃발 + 이름 (범위 안에 있을 때만). 이름이 겹치면 아랫줄로 */}
       {visibleMilestones.length > 0 && (
-        <div className="grid border-b border-[#F1F1EF] py-1" style={{ ...grid, gridTemplateRows: `repeat(${laneCount}, 20px)` }}>
-          <div className={`${STICKY} flex items-center bg-white px-3 text-[11px] font-medium text-faint`} style={{ gridRow: `1 / ${laneCount + 1}`, gridColumn: 1 }}>
+        <div className="grid border-b border-divider py-1" style={{ ...grid, gridTemplateRows: `repeat(${laneCount}, 20px)` }}>
+          <div className={`${STICKY} flex items-center bg-surface px-3 text-[11px] font-medium text-faint`} style={{ gridRow: `1 / ${laneCount + 1}`, gridColumn: 1 }}>
             마일스톤
           </div>
           {visibleMilestones.map((m) => {
@@ -197,7 +197,7 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
       {/* 날짜 머리글 */}
       <div className="grid h-10 border-b border-line text-[11px] text-muted" style={grid}>
         <Backdrop days={days} today={today} meetings={meetings} milestones={milestones} bind={tip.bind} />
-        <div data-gantt-label className={`${STICKY} flex items-center bg-white px-3 text-xs font-medium`} style={{ gridRow: 1, gridColumn: 1 }}>
+        <div data-gantt-label className={`${STICKY} flex items-center bg-surface px-3 text-xs font-medium`} style={{ gridRow: 1, gridColumn: 1 }}>
           담당자 · 할 일
         </div>
         {days.map((d, i) => {
@@ -234,12 +234,12 @@ export function GanttChart({ range, groups, today, meetings, milestones, onOpenT
             </div>
           </div>
           {g.bars.map((b) => (
-            <div key={b.task.id} className="grid h-[34px] border-b border-[#F1F1EF] hover:bg-side/60" style={grid}>
+            <div key={b.task.id} className="grid h-[34px] border-b border-divider hover:bg-side/60" style={grid}>
               <Backdrop days={days} today={today} meetings={meetings} milestones={milestones} bind={tip.bind} />
               <button
                 type="button"
                 onClick={() => onOpenTask(b.task.id)}
-                className={`${STICKY} flex min-w-0 cursor-pointer items-center gap-2 bg-white pr-3 pl-4 text-left text-[13px] hover:underline hover:decoration-[#C9C7C2] sm:pl-[38px]`}
+                className={`${STICKY} flex min-w-0 cursor-pointer items-center gap-2 bg-surface pr-3 pl-4 text-left text-[13px] hover:underline hover:decoration-[#C9C7C2] sm:pl-[38px]`}
                 style={{ gridRow: 1, gridColumn: 1 }}
               >
                 <span className="truncate">{b.task.title}</span>
