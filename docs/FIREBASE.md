@@ -108,6 +108,6 @@ erDiagram
 | `POST /api/meetings` | 브라우저 (Firebase ID 토큰) | 멤버 확인 → 음성이면 Groq Whisper(`whisper-large-v3-turbo`, 한국어) 호출 · 메모면 줄 단위로 나눔 → 규칙 기반 결정사항 · 할 일 후보 추출 → `meetings` 저장 |
 | `POST /api/github/repos` · `connect` · `disconnect` | 브라우저 (Firebase ID 토큰) | 레포 목록 · 웹훅 등록 · 해제 (연결 시 마일스톤이 있으면 GitHub 마일스톤도 생성) |
 | `POST /api/github/milestone` | 브라우저 (만든 사람) | 프로젝트 마일스톤 목록 → GitHub Milestone 들 만들기 · 고치기 · 빠진 것 닫기 (한 방향) |
-| `POST /api/github/webhook` | GitHub | 서명 검증 → 카드 번호 추출 → 카드 상태 · PR 정보 갱신, 카드 번호가 있는 새 PR 은 가장 가까운 다가오는 마일스톤에 자동 추가 |
+| `POST /api/github/webhook` | GitHub | 서명 검증 → 카드 번호 추출 → 카드 상태 · PR 정보 갱신 |
 
 리전은 App Hosting 백엔드 `asia-east1`, Firestore 는 `asia-northeast3`. Storage · Cloud Functions 는 쓰지 않는다.
