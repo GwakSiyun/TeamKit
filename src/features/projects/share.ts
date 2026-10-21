@@ -10,7 +10,7 @@ export function inviteUrl(code: string): string {
  */
 export async function shareInvite(code: string, projectName: string): Promise<ShareOutcome> {
   const url = inviteUrl(code);
-  const data: ShareData = { title: `${projectName} · TeamKit 초대`, text: `TeamKit 「${projectName}」 프로젝트에 초대했어요. 링크를 누르고 참여하기만 하면 돼요.`, url };
+  const data: ShareData = { title: `「${projectName}」 프로젝트 초대 · TeamKit`, text: `TeamKit 「${projectName}」 프로젝트에 초대했어요. 링크를 누르고 참여하기만 하면 돼요.`, url };
   if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare(data))) {
     try {
       await navigator.share(data);
