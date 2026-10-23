@@ -1,5 +1,8 @@
 import {
   EmailAuthProvider,
+  applyActionCode,
+  confirmPasswordReset,
+  verifyPasswordResetCode,
   GithubAuthProvider,
   createUserWithEmailAndPassword,
   getAdditionalUserInfo,
@@ -122,7 +125,10 @@ export function isGithubLinked(user: User): boolean {
 
 export async function requestPasswordReset(email: string): Promise<AuthResult> {
   try {
-    await sendPasswordResetEmail(firebaseAuth(), email);
+    const auth = firebaseAuth();
+    // 메일 · 링크 화면을 한국어로 (지정하지 않으면 영어 템플릿으로 감)
+    auth.languageCode = "ko";
+    await sendPasswordResetEmail(auth, email);
     return { ok: true };
   } catch (e) {
     // 가입 여부를 노출하지 않도록 없는 계정도 성공처럼 처리한다.
@@ -171,4 +177,39 @@ export async function changePassword(current: string, next: string): Promise<Aut
   } catch (e) {
     return { ok: false, message: authErrorMessage(e) };
   }
+}
+
+/** 메일 링크(oobCode)가 아직 쓸 수 있는지 확인하고, 비밀번호를 바꿀 계정 이메일을 돌려준다 */
+export async function checkResetCode(code: string): Promise<{ ok: true; email: string } | { ok: false; message: string }> {
+  try {
+    return { ok: true, email: await verifyPasswordResetCode(firebaseAuth(), code) };
+  } catch (e) {
+    return { ok: false, message: actionCodeMessage(e) };
+  }
+}
+
+export async function resetPassword(code: string, password: string): Promise<AuthResult> {
+  try {
+    await confirmPasswordReset(firebaseAuth(), code, password);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: actionCodeMessage(e) };
+  }
+}
+
+/** 이메일 인증 링크 처리 */
+export async function verifyEmail(code: string): Promise<AuthResult> {
+  try {
+    await applyActionCode(firebaseAuth(), code);
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, message: actionCodeMessage(e) };
+  }
+}
+
+function actionCodeMessage(e: unknown): string {
+  const code = e instanceof Error && "code" in e ? String((e as { code: unknown }).code) : "";
+  if (code === "auth/expired-action-code") return "링크가 만료됐어요. 비밀번호 재설정을 다시 요청해주세요.";
+  if (code === "auth/invalid-action-code") return "이미 사용했거나 올바르지 않은 링크예요. 비밀번호 재설정을 다시 요청해주세요.";
+  return authErrorMessage(e);
 }
