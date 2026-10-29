@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { FieldValue, type Firestore } from "firebase-admin/firestore";
+import { FieldValue, type DocumentSnapshot, type Firestore } from "firebase-admin/firestore";
 import { forwardStatus, repoDocId, taskNumbersIn, type PrState } from "@/features/github/sync";
 import type { TaskStatus } from "@/features/tasks/types";
 import { adminDb } from "@/lib/server/firebaseAdmin";
@@ -82,6 +82,42 @@ function toChange(event: string, p: Payload): Change | null {
   return null;
 }
 
+/**
+ * PR 머지로 완료가 되면 할 일 주인(담당자, 없으면 만든 사람)에게 알림.
+ * 브랜치 · 커밋으로 '진행 중'이 될 땐 보통 본인이 한 일이라 보내지 않는다.
+ * 주인의 GitHub 계정이 머지한 사람과 같아도 보내지 않는다 (내가 내 PR 을 머지한 경우).
+ */
+async function mergeNotification(
+  db: Firestore,
+  projectId: string,
+  change: Change,
+  task: DocumentSnapshot,
+): Promise<{ recipient: string; data: Record<string, unknown> } | null> {
+  if (change.type !== "pull_request" || change.pr?.prState !== "merged") return null;
+  const recipient = (task.get("assigneeId") as string | null) ?? (task.get("createdBy") as string | null);
+  if (!recipient) return null;
+  const owner = await db.doc(`users/${recipient}`).get();
+  const ownerLogin = owner.get("githubLogin");
+  if (typeof ownerLogin === "string" && ownerLogin.toLowerCase() === change.author.toLowerCase()) return null;
+  const project = await db.doc(`projects/${projectId}`).get();
+  return {
+    recipient,
+    data: {
+      type: "github",
+      projectId,
+      projectName: String(project.get("name") ?? ""),
+      taskId: task.id,
+      taskNumber: Number(task.get("number")),
+      taskTitle: String(task.get("title") ?? "").slice(0, 100),
+      actorId: `github:${change.author}`,
+      actorName: change.author,
+      text: `PR #${change.pr.prNumber}을 머지해서 '완료'로 옮겼어요`,
+      read: false,
+      createdAt: FieldValue.serverTimestamp(),
+    },
+  };
+}
+
 /** 카드 번호마다 상태를 앞으로만 옮기고, 브랜치 · PR 정보를 붙이고, 상태가 바뀌면 기록을 남긴다 */
 async function applyToTasks(db: Firestore, projectId: string, change: Change): Promise<number[]> {
   const moved: number[] = [];
@@ -107,6 +143,8 @@ async function applyToTasks(db: Firestore, projectId: string, change: Change): P
         actor: `github:${change.author}`,
         at: FieldValue.serverTimestamp(),
       });
+      const notification = next === "done" ? await mergeNotification(db, projectId, change, doc) : null;
+      if (notification) batch.set(db.collection(`users/${notification.recipient}/notifications`).doc(), notification.data);
       moved.push(n);
     }
     await batch.commit();
