@@ -8,7 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 import { Notice } from "@/components/ui/Notice";
 import { useAuth } from "@/features/auth/AuthProvider";
 import { loginUrlFor } from "@/features/auth/redirect";
-import { normalizeInviteCode } from "../inviteCode";
+import { inviteCodeFromLink } from "../inviteCode";
 import { checkInvite, joinProject, type InviteCheck } from "../services";
 
 type ViewState = { status: "checking" } | InviteCheck;
@@ -20,7 +20,7 @@ type ViewState = { status: "checking" } | InviteCheck;
  */
 export function JoinInviteView() {
   const params = useParams<{ code: string }>();
-  const code = normalizeInviteCode(decodeURIComponent(params.code ?? ""));
+  const code = inviteCodeFromLink(params.code ?? "");
   const { user, loading } = useAuth();
   const router = useRouter();
   const [state, setState] = useState<ViewState>({ status: "checking" });
