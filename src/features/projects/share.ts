@@ -12,7 +12,8 @@ export async function shareInvite(code: string, projectName: string): Promise<Sh
   const url = inviteUrl(code);
   const data: ShareData = {
     title: `「${projectName}」 프로젝트 초대 · TeamKit`,
-    text: `TeamKit 「${projectName}」 프로젝트에 초대했어요. 링크를 누르고 참여하기만 하면 돼요.`,
+    // 링크 뒤에 문구를 붙여 보내는 앱이 있어 영문 · 숫자로 시작하지 않게 한다 (코드에 섞여 들어가지 않도록)
+    text: `「${projectName}」 프로젝트에 초대했어요. TeamKit 링크를 누르고 참여하기만 하면 돼요.`,
     url,
   };
   if (typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare(data))) {
