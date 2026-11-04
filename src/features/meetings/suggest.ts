@@ -185,13 +185,22 @@ function cleanTitle(text: string): string {
     .trim();
 }
 
-export function suggestTask(text: string, members: readonly SuggestMember[], baseISO: string): TaskSuggestion {
+/** 말하는 사람 자신 ("중간 발표 자료는 제가 할게요") */
+const FIRST_PERSON = /(^|\s)(?:제가|저는|저도|내가|나는)(?=\s|$)/g;
+
+/**
+ * authorId: 회의록을 만든 사람. 팀원 이름이 없고 "제가 · 저는" 이 있으면 그 사람을 담당자로 본다
+ * (녹음이면 말한 사람이 작성자가 아닐 수도 있으니, 화면에서 확인 · 수정 후 추가한다).
+ */
+export function suggestTask(text: string, members: readonly SuggestMember[], baseISO: string, authorId: string | null = null): TaskSuggestion {
   const assignee = findAssignee(text, members);
-  const dates = findDates(assignee.rest, baseISO);
+  const firstPerson = assignee.rest.search(FIRST_PERSON) >= 0;
+  const withoutSelf = assignee.rest.replace(FIRST_PERSON, "$1");
+  const dates = findDates(withoutSelf, baseISO);
   const title = cleanTitle(dates.rest);
   return {
     title: title.length >= 2 ? title.slice(0, 100) : text.slice(0, 100),
-    assigneeId: assignee.id,
+    assigneeId: assignee.id ?? (firstPerson && authorId && members.some((m) => m.id === authorId) ? authorId : null),
     // "~부터" 가 없으면 회의한 날부터 시작 (마감일이 회의 날보다 앞이면 비워둔다)
     startDate: dates.startDate ?? (!dates.dueDate || dates.dueDate >= baseISO ? baseISO : null),
     dueDate: dates.dueDate,

@@ -102,7 +102,7 @@ export function MeetingDetailView() {
   const actionSegs = new Set(meeting.actionItems.map((a) => a.segment));
   // 날짜 표현("금요일까지")은 회의한 날 기준으로 계산
   const meetingDay = meeting.createdAt ? todayISO(meeting.createdAt.toDate()) : todayISO();
-  const suggestions = meeting.actionItems.map((a) => suggestTask(a.text, members, meetingDay));
+  const suggestions = meeting.actionItems.map((a) => suggestTask(a.text, members, meetingDay, meeting.createdBy));
   const nameOf = (id: string): string => members.find((m) => m.id === id)?.name ?? "알 수 없음";
   const addingItem = adding !== null ? meeting.actionItems[adding] : undefined;
 
