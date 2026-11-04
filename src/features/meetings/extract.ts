@@ -38,6 +38,12 @@ export const ACTION_KEYWORDS = [
   "까지 올",
 ] as const;
 
+/**
+ * 누군가에게 맡기거나 기한을 정하는 표현. 결정사항 문장은 이게 있어야 할 일 후보에도 넣는다
+ * ("~하는 걸로 할게요" 의 "할게요" 만으로는 할 일이 아니라 결정).
+ */
+const ASSIGN_KEYWORDS = ACTION_KEYWORDS.filter((k) => !["할게요", "하겠습니다", "해야"].includes(k));
+
 /** 회의 진행 멘트는 "~할게요" 여도 할 일이 아니다 */
 const NOT_ACTION = [
   "시작할게",
@@ -111,7 +117,10 @@ function clip(text: string): string {
   return text.length > MAX_TEXT ? `${text.slice(0, MAX_TEXT - 1)}…` : text;
 }
 
-/** 한 조각이 결정사항이면서 할 일일 수도 있다 ("레포 연결하는 걸로 할게요") → 양쪽에 다 넣는다 */
+/**
+ * 결정사항 문장("채팅은 조사만 하는 걸로 할게요")은 결정사항에만 넣는다.
+ * 결정이면서 누군가에게 맡기는 말이 있으면("소셜 로그인은 넣기로 했으니 기준씨가 금요일까지 맡아주세요") 할 일 후보에도 넣는다.
+ */
 export function extractCandidates(segments: readonly MeetingSegment[]): { decisions: MeetingDecision[]; actionItems: ActionItem[] } {
   const decisions: MeetingDecision[] = [];
   const actionItems: ActionItem[] = [];
@@ -126,7 +135,8 @@ export function extractCandidates(segments: readonly MeetingSegment[]): { decisi
           seenD.add(text);
           decisions.push({ text, segment });
         }
-        if (isAction(clause) && !seenA.has(text) && actionItems.length < MAX_CANDIDATES) {
+        const action = isAction(clause) && (!isDecision(clause) || matches(clause, ASSIGN_KEYWORDS));
+        if (action && !seenA.has(text) && actionItems.length < MAX_CANDIDATES) {
           seenA.add(text);
           actionItems.push({ text, segment, taskNumber: null });
         }
