@@ -36,7 +36,7 @@ export function PollFormModal({ onClose }: { onClose: () => void }) {
     if (!input.startDate || !input.endDate) return "기간을 정해주세요.";
     if (input.startDate > input.endDate) return "종료일은 시작일과 같거나 뒤여야 해요.";
     if (daysBetween(input.startDate, input.endDate) >= MAX_POLL_DAYS) return `기간은 최대 ${MAX_POLL_DAYS}일이에요.`;
-    if (input.startHour >= input.endHour) return "하루 중 끝 시각은 시작 시각보다 뒤여야 해요.";
+    if (input.startHour >= input.endHour) return "종료 시간은 시작 시간보다 뒤여야 해요.";
     if (input.endHour - input.startHour < input.durationHours) return "시간 범위가 회의 길이보다 짧아요.";
     return null;
   }
@@ -96,14 +96,14 @@ export function PollFormModal({ onClose }: { onClose: () => void }) {
             />
             <SelectField
               id="poll-from"
-              label="하루 중 시작"
+              label="시작 시간"
               options={HOUR_OPTIONS.slice(0, 24)}
               value={String(v.startHour)}
               onChange={(e) => update("startHour", Number(e.target.value))}
             />
             <SelectField
               id="poll-to"
-              label="하루 중 끝"
+              label="종료 시간"
               options={HOUR_OPTIONS.slice(1)}
               value={String(v.endHour)}
               onChange={(e) => update("endHour", Number(e.target.value))}
