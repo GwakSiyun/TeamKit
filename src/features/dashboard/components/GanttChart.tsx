@@ -96,21 +96,30 @@ function flagLanes(items: Array<{ id: string; index: number; span: number }>): M
 /** 회의 날짜("YYYY-MM-DD") → 그날 회의 이름들 ("10:00 「1주차 회의」에서 정함") */
 export type MeetingsByDate = ReadonlyMap<string, string[]>;
 
+/** 이보다 좁은 막대는 말줄임("…")만 남으므로 제목을 넣지 않는다 (11px 글자 두어 자 + "…") */
+const MIN_ELLIPSIS_WIDTH = 36;
+
+type LabelFit = "full" | "ellipsis" | "none";
+
 /**
- * 막대 안 제목: 글자가 막대에 다 들어가면 제목, 안 들어가면 완료는 ✓ 만 · 나머지는 색만 (제목은 마우스를 올리면 툴팁).
+ * 막대 안 제목: 다 들어가면 제목 전체, 안 들어가면 들어가는 만큼 + "…", 막대가 아주 짧으면 완료는 ✓ 만 · 나머지는 색만.
+ * 전체 제목은 마우스를 올리면 툴팁으로 본다.
  * 보이지 않는 측정용 글자의 실제 너비를 막대 너비와 비교한다 (화면 너비가 바뀌어도 다시 잼).
  */
 function InsideLabel({ title, done }: { title: string; done: boolean }) {
   const boxRef = useRef<HTMLSpanElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
-  const [fits, setFits] = useState(true);
+  const [fit, setFit] = useState<LabelFit>("full");
 
   useLayoutEffect(() => {
     const box = boxRef.current;
     const text = textRef.current;
     if (!box || !text) return;
     // ResizeObserver 는 observe 직후에도 한 번 불린다 → 처음 측정도 여기서
-    const observer = new ResizeObserver(() => setFits(text.offsetWidth <= box.clientWidth));
+    const observer = new ResizeObserver(() => {
+      const width = box.clientWidth;
+      setFit(text.offsetWidth <= width ? "full" : width >= MIN_ELLIPSIS_WIDTH ? "ellipsis" : "none");
+    });
     observer.observe(box);
     return () => observer.disconnect();
   }, [title, done]);
@@ -121,7 +130,9 @@ function InsideLabel({ title, done }: { title: string; done: boolean }) {
       <span ref={textRef} aria-hidden className="invisible absolute whitespace-nowrap">
         {label}
       </span>
-      {fits ? label : done ? "✓" : null}
+      {fit === "full" && label}
+      {fit === "ellipsis" && <span className="min-w-0 truncate">{label}</span>}
+      {fit === "none" && done && "✓"}
     </span>
   );
 }
